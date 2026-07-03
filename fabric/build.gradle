@@ -29,6 +29,7 @@ dependencies {
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
+    compileOnly files('libs/irl-core-1.1.jar')
 
     // Theatrical
     modImplementation "dev.imabad:Theatrical-fabric:${theatrical_version}"
@@ -92,6 +93,8 @@ publishing {
     // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
     repositories {
         // Add repositories to publish to here.
+        maven { url "https://maven.coderbot.dev" }
+        maven { url "https://api.modrinth.com/maven" }
     }
 }
 

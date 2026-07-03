@@ -23,6 +23,7 @@ subprojects {
             officialMojangMappings()
             parchment("org.parchmentmc.data:parchment-${rootProject.minecraft_version}:${rootProject.parchment_version}@zip")
         }
+        modImplementation "org.qualet:irl-core:1.1"
         // The following line declares the yarn mappings you may select this one as well.
         // mappings "net.fabricmc:yarn:1.20.1+build.10:v2"
     }

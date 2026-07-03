@@ -25,10 +25,10 @@ public class TheatricalExtraLightsConfig {
     private Float rgbBarBeamLength = 9.0f;
     private Boolean renderLens = true;
     private Float maxGoboDistance = 500.0f;
-    private Boolean render2DBeam = true;
+    private Boolean render2DBeam = false;
     private List<String> laserPassThroughBlocks = null;
 
-    private Boolean volumetricBeamEnabled = true;
+    private Boolean volumetricBeamEnabled = false;
     private Float volumetricBeamDistance = 64.0f;
     private Float volumetricBeamBrightness = 0.15f;
 

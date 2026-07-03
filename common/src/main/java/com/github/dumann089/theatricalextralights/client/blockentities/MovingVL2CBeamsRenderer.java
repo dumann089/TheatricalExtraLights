@@ -8,6 +8,13 @@ import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData;
 import com.github.dumann089.theatricalextralights.client.render.beam.VolumetricBeamRenderer;
+
+// ---> IMPORTS DE LA ARQUITECTURA IRL-CORE <---
+import com.github.dumann089.theatricalextralights.render.light.api.LightState;
+import com.github.dumann089.theatricalextralights.render.light.core.FixtureStateUpdater;
+import com.github.dumann089.theatricalextralights.render.light.core.LightManager;
+// ---------------------------------------------
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -170,7 +177,29 @@ public class MovingVL2CBeamsRenderer extends ExtraLightsFixtureRenderer<MovingVL
             int packedLight,
             int packedOverlay
     ) {
-        if (blockEntity.getIntensity() <= 0) return;
+        // =========================================================================
+        // <--- INTEGRACIÓN IRL-CORE: OPTIMIZACIÓN LUZ APAGADA --->
+        // =========================================================================
+        if (blockEntity.getIntensity() <= 0) {
+            LightState state = LightManager.getInstance().getStateFor(blockEntity);
+            state.intensity = 0; // Apagamos la luz en el motor
+            return;
+        }
+
+        // =========================================================================
+        // <--- INTEGRACIÓN IRL-CORE: CÁLCULO DE MATRIZ ZERO-ALLOCATION --->
+        // Calculamos la matriz aquí para que el motor externo funcione aunque
+        // los haces internos del mod estén desactivados por el usuario.
+        // =========================================================================
+        PoseStack irlPoseStack = new PoseStack();
+        preparePoseStack(blockEntity, irlPoseStack, facing, partialTicks, isFlipped, blockstate, isHanging);
+        // Desplazamiento local de la lente:
+        irlPoseStack.translate(0.5f, 0.781f, 0.2f);
+        Matrix4f headMatrix = irlPoseStack.last().pose();
+
+        LightState lightState = LightManager.getInstance().getStateFor(blockEntity);
+        FixtureStateUpdater.updateVL2C(blockEntity, lightState, headMatrix, partialTicks);
+        // =========================================================================
 
         if (blockEntity.getGobo() >= 0) {
             Vec3 localLensOffset = new Vec3(0.5f, 0.781f, 0.2f);
@@ -199,28 +228,30 @@ public class MovingVL2CBeamsRenderer extends ExtraLightsFixtureRenderer<MovingVL
             );
 
             // =========================================================================
+            // RENDERIZADO INTERNO (Vainilla/Architectury)
             // =========================================================================
             if (TheatricalExtraLightsConfig.isVolumetricBeamEnabled()) {
+                // Aquí podrías reutilizar headMatrix para no recalcular, pero para no alterar
+                // tu código original, lo dejamos igual:
                 PoseStack localStack = new PoseStack();
                 preparePoseStack(blockEntity, localStack, facing, partialTicks, isFlipped, blockstate, isHanging);
                 localStack.translate(localLensOffset.x, localLensOffset.y, localLensOffset.z);
 
-                Matrix4f headMatrix = localStack.last().pose();
+                Matrix4f localHeadMatrix = localStack.last().pose();
 
-                Vec3 origin  = new Vec3(headMatrix.m30(), headMatrix.m31(), headMatrix.m32());
-                Vec3 axisU   = new Vec3(headMatrix.m00(), headMatrix.m01(), headMatrix.m02()).normalize();
-                Vec3 axisV   = new Vec3(headMatrix.m10(), headMatrix.m11(), headMatrix.m12()).normalize();
-                Vec3 beamDir = new Vec3(-headMatrix.m20(), -headMatrix.m21(), -headMatrix.m22()).normalize();
+                Vec3 origin  = new Vec3(localHeadMatrix.m30(), localHeadMatrix.m31(), localHeadMatrix.m32());
+                Vec3 axisU   = new Vec3(localHeadMatrix.m00(), localHeadMatrix.m01(), localHeadMatrix.m02()).normalize();
+                Vec3 axisV   = new Vec3(localHeadMatrix.m10(), localHeadMatrix.m11(), localHeadMatrix.m12()).normalize();
+                Vec3 beamDir = new Vec3(-localHeadMatrix.m20(), -localHeadMatrix.m21(), -localHeadMatrix.m22()).normalize();
 
                 float zoomNorm      = blockEntity.getPartialZoom(partialTicks) / 255.0f;
                 float coneHalfAngle = 1.0f + zoomNorm * (19.0f - 1.0f);
                 float tanHalfAngle  = (float) Math.tan(Math.toRadians(coneHalfAngle));
 
-                // 🛡️ Obtención segura de textura
+                // Escudo protector de textura
                 ResourceLocation goboTex = GoboLibrary.VL2C.getTexture(blockEntity.getGobo());
                 if (goboTex == null) goboTex = new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
 
-                // NUEVO: Instancia corregida con baseRadius
                 BeamRenderData renderData = new BeamRenderData(
                         blockEntity.getBlockPos(),
                         origin,

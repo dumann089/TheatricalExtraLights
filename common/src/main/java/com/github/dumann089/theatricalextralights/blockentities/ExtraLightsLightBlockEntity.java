@@ -27,14 +27,17 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
      * Sync client si valeurs changées OU si prev* serveur ont rattrapé (pattern Theatrical).
      * {@code setChanged()} seulement quand les valeurs DMX ont changé.
      */
+    /**
+     * Sync client SOLAMENTE si los valores cambiaron.
+     * Enviar paquetes por 'prevAdvanced' causa un spam de red masivo.
+     */
     protected void finishDmxUpdate(boolean valuesChanged, boolean prevAdvanced) {
         if (level == null || level.isClientSide) {
             return;
         }
-        if (valuesChanged || prevAdvanced) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-        }
+        // Solo saturamos la red si el DMX realmente introdujo un cambio
         if (valuesChanged) {
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
             setChanged();
         }
     }
