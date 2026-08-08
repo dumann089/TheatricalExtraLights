@@ -14,6 +14,12 @@ public final class ExtraLightsNet {
                     OpenExtraLightsScreenPacket::new
             );
 
+    public static final MessageType LED_FACADE_FRAMES =
+            MAIN.registerS2C(
+                    "led_facade_frames",
+                    LedFacadeFramesPacket::new
+            );
+
     public static void init() {
         // Intentionally empty
         // Calling this forces class loading

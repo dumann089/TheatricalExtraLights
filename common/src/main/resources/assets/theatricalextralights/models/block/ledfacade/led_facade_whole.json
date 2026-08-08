@@ -1,0 +1,29 @@
+{
+  "credit": "Theatrical Extra Lights",
+  "textures": {
+    "frame": "theatricalextralights:block/led_panel_template",
+    "particle": "theatricalextralights:block/led_panel_template"
+  },
+  "elements": [
+    {
+      "name": "facade",
+      "from": [0, 0, 0],
+      "to": [16, 16, 3],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": "#frame"},
+        "south": {"uv": [0, 0, 16, 16], "texture": "#frame"},
+        "east":  {"uv": [0, 0, 3, 16], "texture": "#frame"},
+        "west":  {"uv": [0, 0, 3, 16], "texture": "#frame"},
+        "up":    {"uv": [0, 0, 16, 3], "texture": "#frame"},
+        "down":  {"uv": [0, 0, 16, 3], "texture": "#frame"}
+      }
+    }
+  ],
+  "display": {
+    "gui": {"rotation": [30, 45, 0], "scale": [0.625, 0.625, 0.625]},
+    "ground": {"scale": [0.5, 0.5, 0.5]},
+    "fixed": {"rotation": [0, 0, 0], "scale": [1, 1, 1]},
+    "thirdperson_righthand": {"scale": [0.4, 0.4, 0.4]},
+    "firstperson_righthand": {"scale": [0.5, 0.5, 0.5]}
+  }
+}

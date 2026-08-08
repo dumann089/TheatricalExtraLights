@@ -227,6 +227,9 @@ public class BlockEntities {
     public static final RegistrySupplier<BlockEntityType<FollowspotConsoleBlockEntity>> FOLLOWSPOT_CONSOLE =
             BLOCK_ENTITIES.register("followspot_console",
                     () -> BlockEntityType.Builder.of(FollowspotConsoleBlockEntity::new, Blocks.FOLLOWSPOT_CONSOLE_BLOCK.get()).build(null));
+    public static final RegistrySupplier<BlockEntityType<LedFacadeBlockEntity>> LED_FACADE =
+            BLOCK_ENTITIES.register("led_facade",
+                    () -> BlockEntityType.Builder.of(LedFacadeBlockEntity::new, Blocks.LED_FACADE.get()).build(null));
     public static void init(){
         BLOCK_ENTITIES.register();
     }

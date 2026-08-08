@@ -68,6 +68,8 @@ public class TheatricalExtraLightsConfig {
     @ConfigOption(name = "Smoke Spawn Interval", min = 1.0, max = 20.0)
     public Integer fireworkSmokeSpawnInterval = 3;
 
+    private Integer ledFacadeMaxUniverses = 64;
+
     private transient Set<String> laserPassThroughSet;
 
     // Inicialización
@@ -98,6 +100,7 @@ public class TheatricalExtraLightsConfig {
     public static boolean isFireworkSmokeEnabled() { return get().fireworkSmokeEnabled == null || get().fireworkSmokeEnabled; }
     public static int getFireworkSmokeBudgetPerTick() { return get().fireworkSmokeBudgetPerTick != null ? get().fireworkSmokeBudgetPerTick : 24; }
     public static int getFireworkSmokeSpawnInterval() { return Math.max(1, get().fireworkSmokeSpawnInterval != null ? get().fireworkSmokeSpawnInterval : 3); }
+    public static int getLedFacadeMaxUniverses() { return INSTANCE.ledFacadeMaxUniverses != null ? INSTANCE.ledFacadeMaxUniverses : 64; }
 
     /* ================= SETTERS ================= */
     public static void setVolumetricBeamEnabled(boolean value) { get().volumetricBeamEnabled = value; ConfigManager.save(); }

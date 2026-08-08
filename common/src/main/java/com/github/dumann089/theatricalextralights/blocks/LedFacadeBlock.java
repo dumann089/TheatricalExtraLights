@@ -1,0 +1,90 @@
+package com.github.dumann089.theatricalextralights.blocks;
+
+import com.github.dumann089.theatricalextralights.TheatricalExtraLightsScreens;
+import com.github.dumann089.theatricalextralights.blockentities.BlockEntities;
+import com.github.dumann089.theatricalextralights.blockentities.LedFacadeBlockEntity;
+import com.github.dumann089.theatricalextralights.net.OpenExtraLightsScreenPacket;
+import dev.imabad.theatrical.blocks.Blocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.Nullable;
+
+public class LedFacadeBlock extends ExtraLightsLightBlock {
+
+    public LedFacadeBlock() {
+        super(Properties.of()
+                .requiresCorrectToolForDrops()
+                .strength(3, 3)
+                .noOcclusion()
+                .isValidSpawn(Blocks::neverAllowSpawn)
+                .mapColor(MapColor.COLOR_BLACK)
+                .sound(SoundType.METAL)
+                .pushReaction(PushReaction.DESTROY));
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
+        return new LedFacadeBlockEntity(blockPos, blockState);
+    }
+
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext blockPlaceContext) {
+        return super.getStateForPlacement(blockPlaceContext).setValue(HANGING,
+                blockPlaceContext.getClickedFace() == Direction.DOWN ||
+                        isHanging(blockPlaceContext.getLevel(), blockPlaceContext.getClickedPos()));
+    }
+
+    @Override
+    public boolean canSurvive(BlockState blockState, LevelReader levelReader, BlockPos blockPos) {
+        if (blockState.getValue(HANGING)) {
+            return isHanging(levelReader, blockPos);
+        }
+        return !levelReader.getBlockState(blockPos.below()).isAir();
+    }
+
+    @Override
+    public Direction getLightFacing(Direction hangDirection, Player placingPlayer) {
+        if (hangDirection == Direction.UP) {
+            return placingPlayer.getDirection();
+        }
+        return placingPlayer.getDirection().getOpposite();
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        if (blockEntityType != BlockEntities.LED_FACADE.get()) {
+            return null;
+        }
+        // Les deux côtés : serveur diffuse les trames, client pilote la lumière dynamique (Shimmer).
+        return (lvl, blockPos, blockState, be) -> LedFacadeBlockEntity.tick(lvl, blockPos, blockState, (LedFacadeBlockEntity) be);
+    }
+
+    @Override
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (super.use(state, level, pos, player, hand, hit) == InteractionResult.PASS) {
+            if (!level.isClientSide) {
+                new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.LED_FACADE)
+                        .sendTo((ServerPlayer) player);
+            }
+        }
+        return InteractionResult.SUCCESS;
+    }
+}
