@@ -2,7 +2,6 @@ package com.github.dumann089.theatricalextralights.fabric;
 
 import com.github.dumann089.theatricalextralights.TheatricalExtraLightsClient;
 import com.github.dumann089.theatricalextralights.client.ModShaders;
-import com.github.dumann089.theatricalextralights.client.ConfettiCannonClientSetup;
 import com.github.dumann089.theatricalextralights.client.ConfettiCannonItemRenderer;
 import com.github.dumann089.theatricalextralights.client.model.ConfettiCannonModel;
 import com.github.dumann089.theatricalextralights.items.Items;
@@ -11,20 +10,19 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
 public class TheatricalExtraLightsClientFabric implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        // Inicialización original
         EntityModelLayerRegistry.registerModelLayer(
                 ConfettiCannonModel.LAYER_LOCATION,
                 ConfettiCannonModel::createBodyLayer
         );
         TheatricalExtraLightsClient.init();
         registerConfettiCannonItemRenderer();
-
         com.github.dumann089.theatricalextralights.fabric.FollowspotCameraFabric.init();
 
         // Registro de los Core Shaders para la GPU

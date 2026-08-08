@@ -160,6 +160,11 @@ public abstract class BurstPattern {
         return false;
     }
 
+    public boolean isTriggerShot() {
+        return false;
+    }
+
+
     /**
      * Controlled vertical drop during comet fade, measured from the apex position.
      * {@code <= 0} keeps legacy gravity-based fade motion.

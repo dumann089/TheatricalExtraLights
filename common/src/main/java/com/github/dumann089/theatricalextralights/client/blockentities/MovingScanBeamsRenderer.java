@@ -2,12 +2,15 @@ package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.MovingScanBeamsBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.MovingScanBeamsBlockEntity;
+import com.github.dumann089.theatricalextralights.blockentities.MovingVL2CBeamsBlockEntity;
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
+import com.github.dumann089.theatricalextralights.client.CustomGoboLoader;
 import com.github.dumann089.theatricalextralights.client.gobo.FakeVolumetricBeamPattern;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData;
 import com.github.dumann089.theatricalextralights.client.render.beam.VolumetricBeamRenderer;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
+import com.github.dumann089.theatricalextralights.util.GlobalGoboManager;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -19,11 +22,14 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.util.Map;
 import java.util.Optional;
@@ -175,10 +181,19 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
             int packedLight,
             int packedOverlay
     ) {
-        if (blockEntity.getIntensity() <= 0) return;
+        float rawIntensity = blockEntity.getIntensity() / 255.0f;
+        if (rawIntensity <= 0) {
+            ExtraLightsFixtureRenderer.removeSpotlight(blockEntity.getBlockPos());
+            return;
+        }
+        float spotlightIntensityAlpha = 1.0f;
+
+        float lensX = 0.5f;
+        float lensY = 1.25f;
+        float lensZ = 0.418f;
 
         if (blockEntity.getGobo() >= 0) {
-            Vec3 localLensOffset = new Vec3(0.5f, 1.25f, 0.418f);
+            Vec3 localLensOffset = new Vec3(lensX, lensY, lensZ);
             float[] panPivot = blockEntity.getFixture().getPanRotationPosition();
             float[] tiltPivot = blockEntity.getFixture().getTiltRotationPosition();
             float[] structuralTransform = getThrottledStructuralTransforms(blockEntity, blockstate);
@@ -186,69 +201,77 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
             MovingScanBeamsRenderer.SmoothingState state = smoothingStates.computeIfAbsent(blockEntity, k -> new MovingScanBeamsRenderer.SmoothingState());
 
             goboProjectors.computeIfAbsent(blockEntity, k -> new GoboGPUProjector()).render(
-                    blockEntity,
-                    multiBufferSource,
-                    facing,
-                    partialTicks,
-                    isFlipped,
-                    blockstate,
-                    isHanging,
-                    localLensOffset,
-                    panPivot,
-                    tiltPivot,
-                    structuralTransform,
-                    1.0f,   // minAngle: zoom gobo
-                    19.0f,   // maxAngle: zoom gobo
-                    state.smoothPan,
-                    state.smoothTilt
+                    blockEntity, multiBufferSource, facing, partialTicks, isFlipped, blockstate, isHanging,
+                    localLensOffset, panPivot, tiltPivot, structuralTransform, 1.0f, 19.0f, state.smoothPan, state.smoothTilt
+            );
+        }
+
+        PoseStack commonStack = new PoseStack();
+
+        preparePoseStack(
+                blockEntity,
+                commonStack,
+                facing,
+                partialTicks,
+                isFlipped,
+                blockstate,
+                isHanging
+        );
+        commonStack.translate(
+                lensX,
+                lensY,
+                lensZ
+        );
+
+        if (TheatricalExtraLightsConfig.isVolumetricBeamEnabled()) {
+            PoseStack localStack = new PoseStack();
+            preparePoseStack(blockEntity, localStack, facing, partialTicks, isFlipped, blockstate, isHanging);
+            localStack.translate(lensX, lensY, lensZ);
+
+            Matrix4f headMatrix = localStack.last().pose();
+
+            Vec3 origin  = new Vec3(headMatrix.m30(), headMatrix.m31(), headMatrix.m32());
+            Vec3 axisU   = new Vec3(headMatrix.m00(), headMatrix.m01(), headMatrix.m02()).normalize();
+            Vec3 axisV   = new Vec3(headMatrix.m10(), headMatrix.m11(), headMatrix.m12()).normalize();
+            Vec3 beamDir = new Vec3(-headMatrix.m20(), -headMatrix.m21(), -headMatrix.m22()).normalize();
+
+            ResourceLocation goboTex = null;
+            String customFileName = GlobalGoboManager.getCustomGobo(blockEntity.getGoboLibrary(), blockEntity.getGobo());
+
+            if (customFileName != null) {
+                goboTex = CustomGoboLoader.getOrCreateCustomGobo(customFileName);
+            }
+            if (goboTex == null) {
+                goboTex = blockEntity.getGoboLibrary().getTexture(blockEntity.getGobo());
+            }
+            if (goboTex == null) {
+                goboTex = new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
+            }
+
+            BeamRenderData renderData = new BeamRenderData(
+                    blockEntity.getBlockPos(),
+                    origin,
+                    beamDir,
+                    axisU,
+                    axisV,
+                    focusNorm,
+                    (float) blockEntity.getDistance(),
+                    tan,
+                    blockEntity.getColour(),
+                    rawIntensity,
+                    goboTex,
+                    (float) blockEntity.getGoboRotation(),
+                    blockEntity.getLevel(),
+                    1.0f,
+                    1.0f,
+                    0.18f
             );
 
-            // =========================================================================
-            if (TheatricalExtraLightsConfig.isVolumetricBeamEnabled()) {
-                PoseStack localStack = new PoseStack();
-                preparePoseStack(blockEntity, localStack, facing, partialTicks, isFlipped, blockstate, isHanging);
-                localStack.translate(localLensOffset.x, localLensOffset.y, localLensOffset.z);
-
-                Matrix4f headMatrix = localStack.last().pose();
-
-                Vec3 origin  = new Vec3(headMatrix.m30(), headMatrix.m31(), headMatrix.m32());
-                Vec3 axisU   = new Vec3(headMatrix.m00(), headMatrix.m01(), headMatrix.m02()).normalize();
-                Vec3 axisV   = new Vec3(headMatrix.m10(), headMatrix.m11(), headMatrix.m12()).normalize();
-                Vec3 beamDir = new Vec3(-headMatrix.m20(), -headMatrix.m21(), -headMatrix.m22()).normalize();
-
-                float zoomNorm      = blockEntity.getPartialZoom(partialTicks) / 255.0f;
-                float coneHalfAngle = 1.0f + zoomNorm * (19.0f - 1.0f);
-                float tanHalfAngle  = (float) Math.tan(Math.toRadians(coneHalfAngle));
-
-                ResourceLocation goboTex = GoboLibrary.SCAN.getTexture(blockEntity.getGobo());
-                if (goboTex == null) goboTex = new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
-
-                BeamRenderData renderData = new BeamRenderData(
-                        blockEntity.getBlockPos(),
-                        origin,
-                        beamDir,
-                        axisU,
-                        axisV,
-                        zoomNorm,
-                        (float) blockEntity.getDistance(),
-                        tanHalfAngle,
-                        blockEntity.getColour(),
-                        blockEntity.getIntensity() / 255.0f,
-                        goboTex,
-                        (float) blockEntity.getGoboRotation(),
-                        blockEntity.getLevel(),
-                        1.0f, // widthScale
-                        1.0f,
-                        0.18f
-                );
-
-                volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())
-                        .render(renderData, poseStack);
-            }
+            volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())
+                    .render(renderData, poseStack);
         }
+
         // ==========================================================================================
-
-
 
         LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
 
@@ -289,14 +312,11 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
                 renderFakeVolumetricBeams(builder, poseStack, blockEntity, camera,
                         partialTick, alpha, color, goboSlot);
 
-                // ── Lens glow & lens cap ─────────────────────────────────────────
+                // ── Lens glow ─────────────────────────────────────────
                 poseStack.pushPose();
                 poseStack.translate(0.5f, 1.25f, 0.418f);
                 renderLensGlow(builder, poseStack, color, 0.18f);
                 poseStack.popPose();
-
-                renderLens(bufferSource, poseStack, alpha, color,
-                        0.35f, 0.5f, 1.25f, 0.418f);
 
                 poseStack.popPose();
             }

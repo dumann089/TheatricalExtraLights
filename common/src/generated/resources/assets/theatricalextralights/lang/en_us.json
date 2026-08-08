@@ -70,6 +70,7 @@
   "block.theatricalextralights.a2x2par64_yellow": "2x2 Par64 Yellow",
   "block.theatricalextralights.a2x2par64_warm": "2x2 Par64 Warm",
   "block.theatricalextralights.a2x2par64_white": "2x2 Par64 White",
+  "block.theatricalextralights.dwt_panel": "Moving Panel Par64 (DWT)",
 
   "block.theatricalextralights.bigscroller": "Big Scroller",
   "block.theatricalextralights.horizontalscroller": "Horizontal Scroller",
@@ -151,6 +152,7 @@
   "block.theatricalextralights.firework_mine_red": "Firework Launcher - Red Mine",
   "block.theatricalextralights.firework_mine_green": "Firework Launcher - Green Mine",
   "block.theatricalextralights.firework_mine_gold": "Firework Launcher - Gold Mine",
+  "block.theatricalextralights.firework_silver_jet": "Firework Launcher - Silver Jet",
   "block.theatricalextralights.firework_mine_white": "Firework Launcher - White Mine",
   "block.theatricalextralights.firework_mine_amber": "Firework Launcher - Amber Mine",
   "block.theatricalextralights.firework_mine_violet": "Firework Launcher - Violet Mine",
@@ -175,7 +177,8 @@
   "block.theatricalextralights.firework_daytime_powder_blue": "Firework Launcher — Blue Daytime Powder",
   "block.theatricalextralights.firework_daytime_powder_rainbow": "Firework Launcher — Rainbow Daytime Powder Fan",
   "block.theatricalextralights.gerb_gold": "Gold Gerb (Ground Fountain)",
-  "block.theatricalextralights.flame_projector": "Flame Projector",
+  "block.theatricalextralights.firework_mortar_hit": "Mortar Hit",
+  "block.theatricalextralights.firework_flame_projector": "Flame Projector",
   "block.theatricalextralights.confetti_cannon": "Confetti Cannon",
   "block.theatricalextralights.laser_mirror": "Laser Mirror",
   "block.theatricalextralights.parscroller": "Par64 (Scroller)",
@@ -229,7 +232,12 @@
 
 
   "itemGroup.theatricalextralights": "Theatrical: Extra Lights",
-  "itemGroup.theatricalextralights.pyro": "Theatrical Pyro",
+  "itemGroup.theatricalextralights.pyro": "Theatrical: Pyro",
+  "itemGroup.theatricalextralights.misc": "Theatrical: Misc",
+  "screen.extralightsconfig.custom_gobos": "Custom Gobos",
+  "screen.extralightsconfig.custom_gobos_title": "Gobo Configuration",
+
+
   "fixture.position": "Position",
   "fixture.personality": "Mode",
   "screen.artnetconfig.network.unknown": "Unknown network",
@@ -269,5 +277,8 @@
   "screen.followspot_console.actionbar_exit": "Press Escape to exit followspot control",
   "screen.followspot_console.section_patch": "DMX patch",
   "screen.followspot_console.section_view": "Beam view",
-  "screen.followspot_console.section_control": "Controls"
+  "screen.followspot_console.section_control": "Controls",
+
+  "category.theatricalextralights": "Theatrical Extra Lights",
+  "key.theatricalextralights.config": "Open Configuration Menu"
 }

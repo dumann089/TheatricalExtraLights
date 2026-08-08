@@ -2,6 +2,7 @@ package com.github.dumann089.theatricalextralights;
 
 import com.github.dumann089.theatricalextralights.blockentities.BlockEntities;
 import com.github.dumann089.theatricalextralights.client.ConfettiBurstClient;
+import com.github.dumann089.theatricalextralights.client.ModKeybinds;
 import com.github.dumann089.theatricalextralights.client.firework.FireworkSmokeEffects;
 import com.github.dumann089.theatricalextralights.client.ExtraLightsClientScreens;
 import com.github.dumann089.theatricalextralights.client.ModParticleClient;
@@ -9,6 +10,7 @@ import com.github.dumann089.theatricalextralights.client.blockentities.*;
 import com.github.dumann089.theatricalextralights.client.entities.FireworkRocketRenderer;
 import com.github.dumann089.theatricalextralights.compat.FireworkLightCompat;
 import com.github.dumann089.theatricalextralights.entities.ModEntities;
+import com.github.dumann089.theatricalextralights.net.ModNetworking;
 import com.github.dumann089.theatricalextralights.net.OpenExtraLightsScreenPacket;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
@@ -20,6 +22,8 @@ public class TheatricalExtraLightsClient {
 
     public static void init() {
         ModParticleClient.registerProviders();
+        ModKeybinds.register();
+        ModNetworking.register();
 
         BlockEntityRendererRegistry.register(BlockEntities.MOVING_SCAN.get(), MovingScanRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MOVING_VL2C.get(), MovingVL2CRenderer::new);
@@ -139,6 +143,7 @@ public class TheatricalExtraLightsClient {
         BlockEntityRendererRegistry.register(BlockEntities.PRO_SPOT_GOBO.get(), ProSpotGoboRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MINI_SCAN_GOBO.get(), MiniScanGobosRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MINI_SPOT_GOBO.get(), MiniSpotGobosRenderer::new);
+        BlockEntityRendererRegistry.register(BlockEntities.DWT_PANEL.get(), DWTPanelRenderer::new);
 
 
         BlockEntityRendererRegistry.register(BlockEntities.CONFETTI_CANNON.get(), ConfettiCannonRenderer::new);

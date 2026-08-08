@@ -8,11 +8,15 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
 import org.joml.Vector3f;
 
 public final class FireworkSmokeEffects {
     private static int budgetThisTick;
     private static long budgetTick = Long.MIN_VALUE;
+    private static int mortarSmokeBudget = 0;
+
+    private static final int MAX_MORTAR_SMOKE_PARTICLES = 1500;
 
     private FireworkSmokeEffects() {
     }
@@ -21,6 +25,8 @@ public final class FireworkSmokeEffects {
         if (gameTime != budgetTick) {
             budgetTick = gameTime;
             budgetThisTick = TheatricalExtraLightsConfig.getFireworkSmokeBudgetPerTick();
+
+            mortarSmokeBudget = 0;
         }
     }
 
@@ -304,5 +310,211 @@ public final class FireworkSmokeEffects {
         float b = (color & 0xFF) / 255.0f;
         DustParticleOptions dust = new DustParticleOptions(new Vector3f(r, g, b), size);
         level.addParticle(dust, x, y, z, vx, vy, vz);
+    }
+
+
+
+    //MORTAR HIT SMOKE
+    public static void spawnMortarHit(
+            FireworkRocketEntity rocket,
+            RandomSource random
+    ) {
+        if (!(rocket.level() instanceof ClientLevel level)) {
+            return;
+        }
+
+        if (!canSpawnNearPlayer(
+                rocket.getX(),
+                rocket.getY(),
+                rocket.getZ(),
+                160.0
+        )) {
+            return;
+        }
+
+        final double x = rocket.getX();
+        final double y = rocket.getY();
+        final double z = rocket.getZ();
+
+        final double columnHeight = 7.5;
+        final double columnRadius = 0.68;
+
+        final double mushroomRadius = 1.6;
+        final double mushroomHeight = 1.5;
+
+        final double spreadRandomness = 3.65;
+         //
+        // COLUMN
+       //
+        for (int i = 0; i < 40; i++) {
+
+            if (mortarSmokeBudget >= MAX_MORTAR_SMOKE_PARTICLES) {
+                break;
+            }
+
+            mortarSmokeBudget++;
+
+            double h = random.nextDouble();
+
+            double theta = random.nextDouble() * Math.PI * 2.0;
+            double r = Math.sqrt(random.nextDouble()) *
+                    columnRadius *
+                    (1.0 + (random.nextDouble() - 0.5) * spreadRandomness);
+
+            level.addParticle(
+                    ParticleTypes.CAMPFIRE_SIGNAL_SMOKE,
+
+                    x + Math.cos(theta) * r,
+                    y + h * columnHeight,
+                    z + Math.sin(theta) * r,
+
+                    random.nextGaussian() * 0.023,
+                    0.025 + random.nextDouble() * 0.020,
+                    random.nextGaussian() * 0.023
+            );
+        }
+        //
+        // MUSHROOM
+        //
+        double topY = y + columnHeight;
+
+        for (int i = 0; i < 60; i++) {
+
+            if (mortarSmokeBudget >= MAX_MORTAR_SMOKE_PARTICLES) {
+                break;
+            }
+
+            mortarSmokeBudget++;
+            double yy = (random.nextDouble() * 2.0 - 1.0) * mushroomHeight;
+            double profile = 1.0 - Math.abs(yy) / mushroomHeight;
+            profile = Math.max(profile, 0.0);
+            profile = Math.pow(profile, 0.45);
+
+            double radius =
+                    profile *
+                            mushroomRadius *
+                            (0.75 + random.nextDouble() * 0.35) *
+                            (1.0 + (random.nextDouble() - 0.5) * spreadRandomness);
+
+            double theta = random.nextDouble() * Math.PI * 2.0;
+
+            level.addParticle(
+                    ParticleTypes.CAMPFIRE_SIGNAL_SMOKE,
+
+                    x + Math.cos(theta) * radius,
+                    topY + yy,
+                    z + Math.sin(theta) * radius,
+
+                    random.nextGaussian() * 0.023,
+                    0.025 + random.nextDouble() * 0.020,
+                    random.nextGaussian() * 0.023
+            );
+        }
+    }
+
+
+
+
+
+
+
+
+
+    // MINE SMOKE
+    public static void spawnMineSmoke(
+            FireworkRocketEntity rocket,
+            RandomSource random
+    ) {
+        if (!(rocket.level() instanceof ClientLevel level)) {
+            return;
+        }
+
+        if (!canSpawnNearPlayer(
+                rocket.getX(),
+                rocket.getY(),
+                rocket.getZ(),
+                160.0
+        )) {
+            return;
+        }
+
+        final double x = rocket.getX();
+        final double y = rocket.getY();
+        final double z = rocket.getZ();
+
+        final double columnHeight = 8.5;
+        final double columnRadius = 0.68;
+
+        final double mushroomRadius = 1.1;
+        final double mushroomHeight = 1.1;
+
+        final double spreadRandomness = 7.65;
+        //
+        // COLUMN
+        //
+        for (int i = 0; i < 20; i++) {
+
+            if (mortarSmokeBudget >= MAX_MORTAR_SMOKE_PARTICLES) {
+                break;
+            }
+
+            mortarSmokeBudget++;
+
+            double h = random.nextDouble();
+
+            double theta = random.nextDouble() * Math.PI * 2.0;
+            double r = Math.sqrt(random.nextDouble()) *
+                    columnRadius *
+                    (1.0 + (random.nextDouble() - 0.5) * spreadRandomness);
+
+            level.addParticle(
+                    ParticleTypes.CAMPFIRE_SIGNAL_SMOKE,
+
+                    x + Math.cos(theta) * r,
+                    y + h * columnHeight,
+                    z + Math.sin(theta) * r,
+
+                    random.nextGaussian() * 0.023,
+                    0.025 + random.nextDouble() * 0.020,
+                    random.nextGaussian() * 0.023
+            );
+        }
+        //
+        // MUSHROOM
+        //
+        double topY = y + columnHeight;
+
+        for (int i = 0; i < 20; i++) {
+
+            if (mortarSmokeBudget >= MAX_MORTAR_SMOKE_PARTICLES) {
+                break;
+            }
+
+            mortarSmokeBudget++;
+            double yy = (random.nextDouble() * 2.0 - 1.0) * mushroomHeight;
+            double profile = 1.0 - Math.abs(yy) / mushroomHeight;
+            profile = Math.max(profile, 0.0);
+            profile = Math.pow(profile, 0.45);
+
+            double radius =
+                    profile *
+                            mushroomRadius *
+                            (0.75 + random.nextDouble() * 0.35) *
+                            (1.0 + (random.nextDouble() - 0.5) * spreadRandomness);
+
+            double theta = random.nextDouble() * Math.PI * 2.0;
+
+            level.addParticle(
+                    ParticleTypes.CAMPFIRE_SIGNAL_SMOKE,
+
+                    x + Math.cos(theta) * radius,
+                    topY + yy,
+                    z + Math.sin(theta) * radius,
+
+                    random.nextGaussian() * 0.023,
+                    0.025 + random.nextDouble() * 0.020,
+                    random.nextGaussian() * 0.023
+            );
+        }
     }
 }

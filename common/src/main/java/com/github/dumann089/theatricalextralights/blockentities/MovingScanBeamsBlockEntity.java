@@ -2,6 +2,7 @@ package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.blocks.MovingScanBeamsBlock;
 import com.github.dumann089.theatricalextralights.blocks.MovingVL2CBlock;
+import com.github.dumann089.theatricalextralights.client.blockentities.ExtraLightsFixtureRenderer;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;

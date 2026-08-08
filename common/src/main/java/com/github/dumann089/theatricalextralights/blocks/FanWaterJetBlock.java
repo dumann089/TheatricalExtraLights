@@ -94,6 +94,7 @@ public class FanWaterJetBlock extends ExtraLightsLightBlock {
         }
         return !levelReader.getBlockState(blockPos.below()).isAir();
     }
+    
 
     @Override
     public Direction getLightFacing(Direction hangDirection, Player placingPlayer) {

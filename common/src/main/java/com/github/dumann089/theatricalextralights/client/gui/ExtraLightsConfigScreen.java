@@ -22,6 +22,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGobo;
+import net.minecraft.client.Minecraft;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -158,9 +160,22 @@ public class ExtraLightsConfigScreen extends Screen {
 
     /** Insère des widgets supplémentaires avant le réseau ; retourne le prochain Y. */
     protected int buildExtraWidgets(int y) {
-        return y;
-    }
+        // Verificamos si este bloque soporta Gobos
+        if (this.blockEntity instanceof HasGobo hasGobo) {
 
+            addRenderableWidget(Button.builder(
+                    Component.translatable("screen.extralightsconfig.custom_gobos"),
+                    button -> {
+                        // Abrimos la pantalla de gobos y le pasamos el menú actual y la interfaz HasGobo
+                        Minecraft.getInstance().setScreen(new CustomGoboScreen(this, hasGobo));
+                    }
+            ).bounds(contentLeft, y, contentWidth, WIDGET_HEIGHT).build());
+
+            return y + WIDGET_HEIGHT + ROW_GAP; // Movemos los demás elementos hacia abajo
+        }
+
+        return y; // Si no tiene gobos, no añadimos nada y devolvemos el 'y' original
+    }
     protected void renderExtraLabels(GuiGraphics guiGraphics) {
     }
 

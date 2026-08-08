@@ -35,7 +35,20 @@ public final class FireworkRocketTracker {
     }
 
     private static void onServerLevelTick(ServerLevel level) {
-        if (level.getGameTime() % 20L != 0L) {
+        long time = level.getGameTime();
+        if (time % 20L != 0L) {
+            return;
+        }
+        // ── Fast path: sin cohetes activos, no hay nada que reconciliar ──────
+        // reconcile()/cleanupOrphans() escanean entidades en un AABB de ±192
+        // bloques por jugador (o el mundo entero sin jugadores) — un escaneo
+        // de centenares de chunks. Si el contador propio ya está en 0, ese
+        // escaneo no puede encontrar nada nuevo en el caso normal. Igual
+        // hacemos una reconciliación de baja frecuencia (cada 600 ticks ≈ 30s)
+        // como red de seguridad por si el contador se desincronizó (ej. un
+        // cohete creado por otra vía que no pasó por registerLaunch).
+        boolean periodicSafetyCheck = time % 600L == 0L;
+        if (getActiveCount(level) == 0 && !periodicSafetyCheck) {
             return;
         }
         reconcile(level);

@@ -109,7 +109,10 @@ public class MiniScanGobosBlock extends ExtraLightsLightBlock {
                     return InteractionResult.SUCCESS;
                 }
             } else {
-                new OpenScreen(pos, TheatricalScreen.GENERIC_DMX).sendTo((ServerPlayer) player);
+                new com.github.dumann089.theatricalextralights.net.OpenExtraLightsScreenPacket(
+                        pos,
+                        com.github.dumann089.theatricalextralights.TheatricalExtraLightsScreens.CHANNEL_MENU
+                ).sendTo((ServerPlayer) player);
             }
         }
         return InteractionResult.SUCCESS;

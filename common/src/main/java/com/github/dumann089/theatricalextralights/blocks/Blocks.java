@@ -5,6 +5,7 @@ import com.github.dumann089.theatricalextralights.blocks.rig.TrussBlock;
 import com.github.dumann089.theatricalextralights.blocks.rig.TrussJointBlock;
 import com.github.dumann089.theatricalextralights.blocks.rig.TrussCornerBlock;
 import com.github.dumann089.theatricalextralights.blocks.rig.TrussCornerTBlock;
+import com.github.dumann089.theatricalextralights.firework.FireworkPreset;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import dev.imabad.theatrical.blocks.interfaces.ArtNetInterfaceBlock;
@@ -87,6 +88,9 @@ public class Blocks {
     public static final RegistrySupplier<Block> A2X2PAR64_YELLOW_BLOCK = BLOCKS.register("a2x2par64_yellow", a2x2par64_yellowBlock::new);
     public static final RegistrySupplier<Block> A2X2PAR64_WARM_BLOCK = BLOCKS.register("a2x2par64_warm", a2x2par64_warmBlock::new);
     public static final RegistrySupplier<Block> A2X2PAR64_WHITE_BLOCK = BLOCKS.register("a2x2par64_white", a2x2par64_whiteBlock::new);
+    public static final RegistrySupplier<Block> DWT_PANEL_BLOCK = BLOCKS.register("dwt_panel", DWTPanelBlock::new);
+
+
 
     public static final RegistrySupplier<Block> FOLLOWSPOT_BLOCK = BLOCKS.register("followspot", FollowspotBlock::new);
     public static final RegistrySupplier<Block> BIGSCROLLER_BLOCK = BLOCKS.register("bigscroller", bigscrollerBlock::new);
@@ -194,8 +198,16 @@ public class Blocks {
     public static final RegistrySupplier<Block> FIREWORK_DAYTIME_POWDER_ORANGE_BLOCK = BLOCKS.register("firework_daytime_powder_orange", () -> new FireworkLauncherBlock(com.github.dumann089.theatricalextralights.firework.FireworkPreset.ORANGE_DAYTIME_POWDER));
     public static final RegistrySupplier<Block> FIREWORK_DAYTIME_POWDER_RED_BLOCK = BLOCKS.register("firework_daytime_powder_red", () -> new FireworkLauncherBlock(com.github.dumann089.theatricalextralights.firework.FireworkPreset.RED_DAYTIME_POWDER));
     public static final RegistrySupplier<Block> FIREWORK_DAYTIME_POWDER_BLUE_BLOCK = BLOCKS.register("firework_daytime_powder_blue", () -> new FireworkLauncherBlock(com.github.dumann089.theatricalextralights.firework.FireworkPreset.BLUE_DAYTIME_POWDER));
+    public static final RegistrySupplier<Block> FIREWORK_MORTAR_HIT_BLOCK = BLOCKS.register("firework_mortar_hit", () -> new FireworkLauncherBlock(FireworkPreset.FIREWORK_MORTAR_HIT));
+    public static final RegistrySupplier<Block> FIREWORK_FLAME_PROJECTOR_BLOCK = BLOCKS.register("firework_flame_projector", () -> new FireworkLauncherBlock(FireworkPreset.FIREWORK_FLAME_PROJECTOR));
+
+
+
     public static final RegistrySupplier<Block> FIREWORK_DAYTIME_POWDER_RAINBOW_BLOCK = BLOCKS.register("firework_daytime_powder_rainbow", () -> new FireworkLauncherBlock(com.github.dumann089.theatricalextralights.firework.FireworkPreset.RAINBOW_DAYTIME_POWDER_FAN));
     public static final RegistrySupplier<Block> GERB_GOLD_BLOCK = BLOCKS.register("gerb_gold", GerbBlock::new);
+
+    public static final RegistrySupplier<Block> FIREWORK_SILVER_JET_BLOCK = BLOCKS.register("firework_silver_jet", () -> new FireworkLauncherBlock(com.github.dumann089.theatricalextralights.firework.FireworkPreset.SILVER_JET));
+
     public static final RegistrySupplier<Block> FLAME_PROJECTOR_BLOCK = BLOCKS.register("flame_projector", FlameProjectorBlock::new);
     public static final RegistrySupplier<Block> CONFETTI_CANNON_BLOCK = BLOCKS.register("confetti_cannon", ConfettiCannonBlock::new);
     public static final RegistrySupplier<Block> LASER_MIRROR_BLOCK = BLOCKS.register("laser_mirror", LaserMirrorBlock::new);

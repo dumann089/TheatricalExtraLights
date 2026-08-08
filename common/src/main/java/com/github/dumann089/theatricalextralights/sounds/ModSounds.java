@@ -15,6 +15,10 @@ public class ModSounds {
             SOUNDS.register("confetti_cannon.pop", () ->
                     SoundEvent.createVariableRangeEvent(new ResourceLocation(TheatricalExtraLights.MOD_ID, "confetti_cannon.pop")));
 
+    public static final RegistrySupplier<SoundEvent> MORTAR_HIT =
+            SOUNDS.register("mortar_hit_shot", () ->
+                    SoundEvent.createVariableRangeEvent(
+                            new ResourceLocation(TheatricalExtraLights.MOD_ID, "mortar_hit_shot")));
     public static void initialize() {
         SOUNDS.register();
     }

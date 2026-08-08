@@ -30,7 +30,7 @@ public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity
     protected int getPersonalityChannelCount() {
         List<DMXPersonality> personalities = getFixture().getDMXPersonalities();
         if (personalities == null || personalities.isEmpty()) {
-            return 5;
+            return 4;
         }
         return personalities.get(activePersonalityIndex).getChannelCount();
     }

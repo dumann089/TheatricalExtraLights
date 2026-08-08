@@ -51,13 +51,69 @@ public enum FireworkPreset {
     CROSSETTE_WHITE("firework_crossette_white", "White Crossette", BurstPatterns.Crossette::new, 0xFFFFFF, 0xFFF5C9),
     CROSSETTE_AMBER("firework_crossette_amber", "Amber Crossette", BurstPatterns.Crossette::new, 0xFFA040, 0xFFD9A0),
     CROSSETTE_VIOLET("firework_crossette_violet", "Violet Crossette", BurstPatterns.Crossette::new, 0xC77BFF, 0xE0BBFF),
-    MINE_BLUE("firework_mine_blue", "Blue Mine", BurstPatterns.Mine::new, 0x4D8DFF, 0xB8D3FF, 0xE0EEFF),
-    MINE_RED("firework_mine_red", "Red Mine", BurstPatterns.Mine::new, 0xFF5B5B, 0xFFD1D1, 0xFFE9E9),
-    MINE_GREEN("firework_mine_green", "Green Mine", BurstPatterns.Mine::new, 0x55FF7A, 0xC6FFD3, 0xE9FFEE),
-    MINE_GOLD("firework_mine_gold", "Gold Mine", BurstPatterns.Mine::new, 0xFFC451, 0xFFE9AE, 0xFFF6D9),
-    MINE_WHITE("firework_mine_white", "White Mine", BurstPatterns.Mine::new, 0xFFFFFF, 0xFFF5C9, 0xFFFFFF),
-    MINE_AMBER("firework_mine_amber", "Amber Mine", BurstPatterns.Mine::new, 0xFFA040, 0xFFD9A0, 0xFFEAC9),
-    MINE_VIOLET("firework_mine_violet", "Violet Mine", BurstPatterns.Mine::new, 0xC77BFF, 0xE0BBFF, 0xF1DCFF),
+    SILVER_JET(
+            "firework_silver_jet",
+            "Silver Jet",
+            BurstPatterns.SilverJet::new,
+            0xFFE39A,
+            0xFFF0C2
+    ),
+    MINE_BLUE(
+            "firework_mine_blue",
+            "Blue Mine",
+            BurstPatterns.Mine::new,
+            0x1E6BFF,
+            0x3E8CFF,
+            0x66A8FF
+    ),
+    MINE_RED(
+            "firework_mine_red",
+            "Red Mine",
+            BurstPatterns.Mine::new,
+            0xFF2A2A,
+            0xFF4A4A,
+            0xFF7070
+    ),
+    MINE_GREEN(
+            "firework_mine_green",
+            "Green Mine",
+            BurstPatterns.Mine::new,
+            0x00D84A,
+            0x33E66A,
+            0x66F08D
+    ),
+    MINE_GOLD(
+            "firework_mine_gold",
+            "Gold Mine",
+            BurstPatterns.Mine::new,
+            0xFFB000,
+            0xFFC533,
+            0xFFD866
+    ),
+    MINE_WHITE(
+            "firework_mine_white",
+            "White Mine",
+            BurstPatterns.Mine::new,
+            0xF8F8F8,
+            0xFFFFFF,
+            0xFFF2D0
+    ),
+    MINE_AMBER(
+            "firework_mine_amber",
+            "Amber Mine",
+            BurstPatterns.Mine::new,
+            0xFF7A00,
+            0xFF9A26,
+            0xFFB24A
+    ),
+    MINE_VIOLET(
+            "firework_mine_violet",
+            "Violet Mine",
+            BurstPatterns.Mine::new,
+            0x8A2EFF,
+            0xA54DFF,
+            0xC070FF
+    ),
     SPIDER_WHITE("firework_spider_white", "White Spider", BurstPatterns.Spider::new, 0xFFFFFF, 0xFFF5C9),
     DIADEM_BLUE("firework_diadem_blue", "Blue Diadem", BurstPatterns.Diadem::new, 0x4D8DFF, 0xB8D3FF),
     SALUTE_WHITE("firework_salute_white", "White Salute", BurstPatterns.Salute::new, 0xFFFFFF, 0xFFF5C9),
@@ -75,7 +131,27 @@ public enum FireworkPreset {
     ORANGE_DAYTIME_POWDER("firework_daytime_powder_orange", "Orange Daytime Powder", BurstPatterns.DaytimePowder::new, 0xFF6600, 0xFFAA44),
     RED_DAYTIME_POWDER("firework_daytime_powder_red", "Red Daytime Powder", BurstPatterns.DaytimePowder::new, 0xFF2244, 0xFF6688),
     BLUE_DAYTIME_POWDER("firework_daytime_powder_blue", "Blue Daytime Powder", BurstPatterns.DaytimePowder::new, 0x0066FF, 0x66AAFF),
-    RAINBOW_DAYTIME_POWDER_FAN("firework_daytime_powder_rainbow", "Rainbow Daytime Powder Fan", BurstPatterns.DaytimePowderFan::new, 0xB8FF00, 0xFFE600, 0xFF6600, 0xFF2244, 0xAA44FF, 0x0066FF, 0x00DDFF, 0x55FF7A);
+    RAINBOW_DAYTIME_POWDER_FAN("firework_daytime_powder_rainbow", "Rainbow Daytime Powder Fan", BurstPatterns.DaytimePowderFan::new, 0xB8FF00, 0xFFE600, 0xFF6600, 0xFF2244, 0xAA44FF, 0x0066FF, 0x00DDFF, 0x55FF7A),
+    FIREWORK_MORTAR_HIT(
+            "firework_mortar_hit",
+            "Mortar Hit Effect",
+            BurstPatterns.MortarHit::new,
+            0xFFFFFF,
+            0xFFF8D6,
+            0xFFE88A,
+            0xFFD04A,
+            0xFFB000,
+            0xFF9800,
+            0xFF6A00,
+            0xFF4500
+    ),
+    FIREWORK_FLAME_PROJECTOR(
+            "firework_flame_projector",
+            "Flame Projector",
+            BurstPatterns.FlameProjector::new,
+            0xFF8A00,
+            0xFF5A00
+    );
 
     private final String blockId;
     private final String displayName;

@@ -1,11 +1,13 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
+import com.github.dumann089.theatricalextralights.client.CustomGoboLoader;
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData;
 import com.github.dumann089.theatricalextralights.client.render.beam.VolumetricBeamRenderer;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
+import com.github.dumann089.theatricalextralights.util.GlobalGoboManager;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity;
@@ -16,10 +18,20 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import net.minecraft.core.BlockPos;
+import org.joml.Vector4f;
+import tizio.dev.lle.api.SpotlightAPI;
+import tizio.dev.lle.api.data.SpotlightInstance;
+import org.joml.Vector3f;
+import tizio.dev.lle.core.client.renderer.GoboTextureManager;
 
 import java.util.WeakHashMap;
 
@@ -29,6 +41,8 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
      * subclass gets cache isolation between multiple placed fixtures for free.
      */
     private final WeakHashMap<T, java.util.Map<Integer, VolumetricBeamRenderer>> volumetricRenderers = new WeakHashMap<>();
+
+    private final Double beamOpacity = dev.imabad.theatrical.config.TheatricalConfig.INSTANCE.CLIENT.beamOpacity;
 
     public ExtraLightsFixtureRenderer(BlockEntityRendererProvider.Context context) {
         super(context);

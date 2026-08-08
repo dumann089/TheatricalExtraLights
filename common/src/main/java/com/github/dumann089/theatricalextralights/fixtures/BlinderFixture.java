@@ -16,12 +16,11 @@ import java.util.List;
 public class BlinderFixture extends Fixture {
 
     private static final List<DMXPersonality> PERSONALITIES = Collections.singletonList(
-            new DMXPersonality(5, "5-Channel iRGB + Strobe")
+            new DMXPersonality(4, "4-Channel iRGB")
                     .addSlot(SharedSlots.INTENSITY)
                     .addSlot(SharedSlots.RED)
                     .addSlot(SharedSlots.GREEN)
                     .addSlot(SharedSlots.BLUE)
-                    .addSlot(SharedSlots.FOCUS)
     );
 
     private static final ResourceLocation TILT_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/4x2_blinder/4x2_blinder_tilt");

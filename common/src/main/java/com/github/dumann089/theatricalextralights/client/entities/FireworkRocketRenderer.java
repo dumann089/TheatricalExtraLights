@@ -17,7 +17,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public class FireworkRocketRenderer extends EntityRenderer<FireworkRocketEntity> {
-    private static final ResourceLocation LENS_TEXTURE = new ResourceLocation("theatricalextralights", "textures/misc/lens.png");
+    private static final ResourceLocation LENS_TEXTURE = new ResourceLocation("theatricalextralights", "textures/particle/firework_core.png");
 
     public FireworkRocketRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -25,7 +25,7 @@ public class FireworkRocketRenderer extends EntityRenderer<FireworkRocketEntity>
 
     @Override
     public void render(FireworkRocketEntity entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        VertexConsumer lensConsumer = buffer.getBuffer(LensRenderTypes.LENS);
+        VertexConsumer lensConsumer = buffer.getBuffer(LensRenderTypes.FLAME);
         BurstPattern pattern = entity.getPreset().getPattern();
         int color = entity.getLaunchColor();
         Vec3 entityPos = new Vec3(

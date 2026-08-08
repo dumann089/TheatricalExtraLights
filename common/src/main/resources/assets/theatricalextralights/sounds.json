@@ -6,5 +6,10 @@
       "theatricalextralights:confetti_cannon_pop_1",
       "theatricalextralights:confetti_cannon_pop_2"
     ]
+  },
+  "mortar_hit_shot": {
+    "sounds": [
+      "theatricalextralights:mortar_hit_shot"
+    ]
   }
 }

@@ -202,6 +202,9 @@ public class Fixtures {
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "par56_white"), par56_whiteFixture::new);
     public static final RegistrySupplier<Fixture> PAR56_WARM =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "par56_warm"), par56_warmFixture::new);
+    public static final RegistrySupplier<Fixture> DWT_PANEL =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "dwt_panel"), DWTPanelFixture::new);
+
 
     public static final RegistrySupplier<Fixture> A2X2PAR64_RED =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "a2x2par64_red"), a2x2par64_redFixture::new);
@@ -407,8 +410,15 @@ public class Fixtures {
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "firework_daytime_powder_blue"), () -> new FireworkLauncherFixture(FireworkPreset.BLUE_DAYTIME_POWDER));
     public static final RegistrySupplier<Fixture> FIREWORK_DAYTIME_POWDER_RAINBOW =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "firework_daytime_powder_rainbow"), () -> new FireworkLauncherFixture(FireworkPreset.RAINBOW_DAYTIME_POWDER_FAN));
+    public static final RegistrySupplier<Fixture> FIREWORK_SILVER_JET =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "firework_silver_jet"), () -> new FireworkLauncherFixture(FireworkPreset.SILVER_JET));
+    public static final RegistrySupplier<Fixture> FIREWORK_MORTAR_HIT =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "firework_mortar_hit"), () -> new FireworkLauncherFixture(FireworkPreset.FIREWORK_MORTAR_HIT));
+    public static final RegistrySupplier<Fixture> FIREWORK_FLAME_PROJECTOR =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "firework_flame_projector"), () -> new FireworkLauncherFixture(FireworkPreset.FIREWORK_FLAME_PROJECTOR));
     public static final RegistrySupplier<Fixture> GERB_GOLD =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "gerb_gold"), GerbFixture::new);
+
     public static final RegistrySupplier<Fixture> FLAME_PROJECTOR =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "flame_projector"), FlameProjectorFixture::new);
     public static final RegistrySupplier<Fixture> CONFETTI_CANNON =
@@ -517,6 +527,10 @@ public class Fixtures {
             case RED_DAYTIME_POWDER -> FIREWORK_DAYTIME_POWDER_RED.get();
             case BLUE_DAYTIME_POWDER -> FIREWORK_DAYTIME_POWDER_BLUE.get();
             case RAINBOW_DAYTIME_POWDER_FAN -> FIREWORK_DAYTIME_POWDER_RAINBOW.get();
+            case SILVER_JET -> FIREWORK_SILVER_JET.get();
+            case FIREWORK_MORTAR_HIT -> FIREWORK_MORTAR_HIT.get();
+            case FIREWORK_FLAME_PROJECTOR -> FIREWORK_FLAME_PROJECTOR.get();
+
         };
     }
 
@@ -594,6 +608,9 @@ public class Fixtures {
             case RED_DAYTIME_POWDER -> FIREWORK_DAYTIME_POWDER_RED.getId();
             case BLUE_DAYTIME_POWDER -> FIREWORK_DAYTIME_POWDER_BLUE.getId();
             case RAINBOW_DAYTIME_POWDER_FAN -> FIREWORK_DAYTIME_POWDER_RAINBOW.getId();
+            case SILVER_JET -> FIREWORK_SILVER_JET.getId();
+            case FIREWORK_MORTAR_HIT -> FIREWORK_MORTAR_HIT.getId();
+            case FIREWORK_FLAME_PROJECTOR -> FIREWORK_FLAME_PROJECTOR.getId();
         };
     }
 

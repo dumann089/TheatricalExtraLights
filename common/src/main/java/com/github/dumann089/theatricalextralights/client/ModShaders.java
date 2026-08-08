@@ -16,12 +16,9 @@ import java.util.Map;
 
 public class ModShaders {
 
+    // Las instancias de los nuevos shaders analíticos
     public static ShaderInstance goboProjectorShader;
     public static ShaderInstance volumetricBeamShader;
-
-    public static float configDensity = 0.15f;
-    public static float configMaxAlpha = 0.25f;
-    public static float currentFixtureIntensity = 1.0f;
 
     public static final RenderStateShard.ShaderStateShard GOBO_SHADER_STATE =
             new RenderStateShard.ShaderStateShard(() -> goboProjectorShader);
@@ -38,7 +35,7 @@ public class ModShaders {
                 RenderSystem.defaultBlendFunc();
             });
 
-    // Estado para evitar el tiling/repetición de la textura
+    // CRÍTICO para Projective Texturing: Evita que el gobo se repita en mosaico fuera del haz.
     public static final RenderStateShard.TexturingStateShard CLAMP_TEXTURING =
             new RenderStateShard.TexturingStateShard("clamp_texturing", () -> {
                 RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
@@ -65,13 +62,14 @@ public class ModShaders {
 
     public static RenderType getGoboRenderType(ResourceLocation texture) {
         if (isIrisShaderpackActive()) {
-            return getGoboFallbackRenderType(texture); // Usamos el fallback con CLAMP
+            return getGoboFallbackRenderType(texture);
         }
 
         return RENDER_TYPE_CACHE.computeIfAbsent(texture, tex -> {
             RenderType.CompositeState state = RenderType.CompositeState.builder()
                     .setShaderState(GOBO_SHADER_STATE)
                     .setTextureState(new RenderStateShard.TextureStateShard(tex, false, false))
+                    .setTexturingState(CLAMP_TEXTURING) // AGREGADO: Obligatorio para textura proyectiva
                     .setTransparencyState(ADDITIVE_TRANSPARENCY)
                     .setCullState(RenderStateShard.NO_CULL)
                     .setLightmapState(RenderStateShard.NO_LIGHTMAP)
@@ -84,13 +82,12 @@ public class ModShaders {
         });
     }
 
-    // Nuevo Fallback para Gobos con CLAMP_TEXTURING
     public static RenderType getGoboFallbackRenderType(ResourceLocation texture) {
         return GOBO_FALLBACK_CACHE.computeIfAbsent(texture, tex -> {
             RenderType.CompositeState state = RenderType.CompositeState.builder()
                     .setShaderState(RenderStateShard.RENDERTYPE_BEACON_BEAM_SHADER)
                     .setTextureState(new RenderStateShard.TextureStateShard(tex, false, false))
-                    .setTexturingState(CLAMP_TEXTURING) // Esto soluciona la repetición
+                    .setTexturingState(CLAMP_TEXTURING)
                     .setTransparencyState(ADDITIVE_TRANSPARENCY)
                     .setDepthTestState(new RenderStateShard.DepthTestStateShard("lequal_depth", 515))
                     .setCullState(new RenderStateShard.CullStateShard(false))
@@ -111,9 +108,10 @@ public class ModShaders {
             RenderType.CompositeState state = RenderType.CompositeState.builder()
                     .setShaderState(VOLUMETRIC_SHADER_STATE)
                     .setTextureState(new RenderStateShard.TextureStateShard(tex, false, false))
+                    .setTexturingState(CLAMP_TEXTURING) // AGREGADO: El cono no debe repetir la textura en los bordes
                     .setTransparencyState(ADDITIVE_TRANSPARENCY)
                     .setDepthTestState(new RenderStateShard.DepthTestStateShard("lequal_depth", 515))
-                    .setCullState(new RenderStateShard.CullStateShard(false))
+                    .setCullState(new RenderStateShard.CullStateShard(false)) // Vital para ver el haz desde adentro
                     .setWriteMaskState(RenderStateShard.COLOR_WRITE)
                     .createCompositeState(false);
 
@@ -127,6 +125,7 @@ public class ModShaders {
             RenderType.CompositeState state = RenderType.CompositeState.builder()
                     .setShaderState(RenderStateShard.RENDERTYPE_BEACON_BEAM_SHADER)
                     .setTextureState(new RenderStateShard.TextureStateShard(tex, false, false))
+                    .setTexturingState(CLAMP_TEXTURING) // AGREGADO al fallback también
                     .setTransparencyState(ADDITIVE_TRANSPARENCY)
                     .setDepthTestState(new RenderStateShard.DepthTestStateShard("lequal_depth", 515))
                     .setCullState(new RenderStateShard.CullStateShard(false))

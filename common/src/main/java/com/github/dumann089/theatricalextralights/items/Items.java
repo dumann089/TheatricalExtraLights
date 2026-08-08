@@ -415,10 +415,22 @@ public class Items {
             "gerb_gold",
             () -> new BlockItem(Blocks.GERB_GOLD_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.PYRO_TAB))
     );
-    public static final RegistrySupplier<Item> FLAME_PROJECTOR = ITEMS.register(
-            "flame_projector",
-            () -> new BlockItem(Blocks.FLAME_PROJECTOR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.PYRO_TAB))
+
+
+    public static final RegistrySupplier<Item> FIREWORK_MORTAR_HIT = ITEMS.register(
+            "firework_mortar_hit",
+            () -> new BlockItem(Blocks.FIREWORK_MORTAR_HIT_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.PYRO_TAB))
     );
+    public static final RegistrySupplier<Item> FIREWORK_SILVER_JET = ITEMS.register(
+            "firework_silver_jet",
+            () -> new BlockItem(Blocks.FIREWORK_SILVER_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.PYRO_TAB))
+    );
+    public static final RegistrySupplier<Item> FIREWORK_FLAME_PROJECTOR = ITEMS.register(
+            "firework_flame_projector",
+            () -> new BlockItem(Blocks.FIREWORK_FLAME_PROJECTOR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.PYRO_TAB))
+    );
+
+
     public static final RegistrySupplier<Item> CONFETTI_CANNON = ITEMS.register(
             "confetti_cannon",
             ConfettiCannonItemRegistration::create
@@ -722,70 +734,73 @@ public class Items {
     );
     public static final RegistrySupplier<Item> MOVING_JET = ITEMS.register(
             "moving_jet",
-            () -> new BlockItem(Blocks.MOVING_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.MOVING_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> WATER_JET_THIN = ITEMS.register(
             "water_jet_thin",
-            () -> new BlockItem(Blocks.WATER_JET_THIN_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.WATER_JET_THIN_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> WATER_JET_SPREAD = ITEMS.register(
             "water_jet_spread",
-            () -> new BlockItem(Blocks.WATER_JET_SPREAD_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.WATER_JET_SPREAD_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> WATER_JET_BIG = ITEMS.register(
             "water_jet_big",
-            () -> new BlockItem(Blocks.WATER_JET_BIG_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.WATER_JET_BIG_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> WATER_JET_CENTRAL = ITEMS.register(
             "water_jet_central",
-            () -> new BlockItem(Blocks.WATER_JET_CENTRAL_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.WATER_JET_CENTRAL_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> SPINNER = ITEMS.register(
             "spinner",
-            () -> new BlockItem(Blocks.SPINNER_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.SPINNER_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> ORGANPIPES = ITEMS.register(
             "organpipes",
-            () -> new BlockItem(Blocks.ORGANPIPES_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.ORGANPIPES_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> ORGANPIPES_INV = ITEMS.register(
             "organpipes_inv",
-            () -> new BlockItem(Blocks.ORGANPIPES_INV_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.ORGANPIPES_INV_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> WATER_JET_CONE = ITEMS.register(
             "water_jet_cone",
-            () -> new BlockItem(Blocks.WATER_JET_CONE_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.WATER_JET_CONE_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> WATER_JET_BLOOM = ITEMS.register(
             "water_jet_bloom",
-            () -> new BlockItem(Blocks.WATER_JET_BLOOM_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.WATER_JET_BLOOM_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> WATER_JET_FOG = ITEMS.register(
             "water_jet_fog",
-            () -> new BlockItem(Blocks.WATER_JET_FOG_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.WATER_JET_FOG_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> FAN_WATER_JET = ITEMS.register(
             "fan_water_jet",
-            () -> new BlockItem(Blocks.FAN_WATER_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.FAN_WATER_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> CAKE_WATER_JET = ITEMS.register(
             "cake_water_jet",
-            () -> new BlockItem(Blocks.CAKE_WATER_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.CAKE_WATER_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> VASE_WATER_JET = ITEMS.register(
             "vase_water_jet",
-            () -> new BlockItem(Blocks.VASE_WATER_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.VASE_WATER_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> WALTZES_WATER_JET = ITEMS.register(
             "waltzes_water_jet",
-            () -> new BlockItem(Blocks.WALTZES_WATER_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.WALTZES_WATER_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
     public static final RegistrySupplier<Item> WALTZ_CURTAIN = ITEMS.register(
             "waltz_curtain",
-            () -> new BlockItem(Blocks.WALTZ_CURTAIN_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+            () -> new BlockItem(Blocks.WALTZ_CURTAIN_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
 
-
+    public static final RegistrySupplier<Item> DWT_PANEL = ITEMS.register(
+            "dwt_panel",
+            () -> new BlockItem(Blocks.DWT_PANEL_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
+    );
     public static void init(){
         ITEMS.register();
     }

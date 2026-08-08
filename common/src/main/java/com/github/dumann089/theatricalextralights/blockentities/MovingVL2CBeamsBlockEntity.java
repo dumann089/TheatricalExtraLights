@@ -14,12 +14,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGobo;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Arrays;
 
-public class MovingVL2CBeamsBlockEntity extends ExtraLightsLightBlockEntity
-        implements HasGobo {
+public class MovingVL2CBeamsBlockEntity extends ExtraLightsLightBlockEntity implements HasGobo {
 
-
+    // --- Sistema de Caché de Gobos ---
+    private static final Map<Integer, Integer> GOBO_INDEX_CACHE = new HashMap<>();
     @Override
     public GoboLibrary getGoboLibrary() {
         return GoboLibrary.VL2C;
@@ -74,7 +76,7 @@ public class MovingVL2CBeamsBlockEntity extends ExtraLightsLightBlockEntity
 
         if (ourValues.length < 10) return;
 
-                        boolean prevAdvanced = beginDmxUpdate();
+        boolean prevAdvanced = beginDmxUpdate();
         int _pi = intensity, _pr = red, _pg = green, _pb = blue, _pf = focus, _pp = pan, _pt = tilt;
 
         intensity = convertByteToInt(ourValues[0]);
@@ -84,10 +86,9 @@ public class MovingVL2CBeamsBlockEntity extends ExtraLightsLightBlockEntity
         focus = convertByteToInt(ourValues[4]);
         pan       = (int) ((convertByteToInt(ourValues[5]) * 360) / 255f) - 180;
         tilt      = (int) ((convertByteToInt(ourValues[6]) * 270) / 255F) - 225;
-                int dmxGobo = convertByteToInt(ourValues[7]);
+        int dmxGobo = convertByteToInt(ourValues[7]);
 
-        int slotCount =
-                getGoboLibrary().getSlotCount();
+        int slotCount = getGoboLibrary().getSlotCount();
 
         int newGobo = Math.min(
                 slotCount - 1,
@@ -115,6 +116,7 @@ public class MovingVL2CBeamsBlockEntity extends ExtraLightsLightBlockEntity
         compoundTag.putInt("gobo", gobo);
         compoundTag.putInt("zoom", zoom);
         compoundTag.putInt("goboSpin", goboSpin);
+        CompoundTag gobosTag = new CompoundTag();
     }
 
     @Override
@@ -125,6 +127,7 @@ public class MovingVL2CBeamsBlockEntity extends ExtraLightsLightBlockEntity
         goboSpin = compoundTag.getInt("goboSpin");
         this.prevGobo = this.gobo;
         this.prevZoom = this.zoom;
+        super.read(compoundTag);
     }
 
     @Override

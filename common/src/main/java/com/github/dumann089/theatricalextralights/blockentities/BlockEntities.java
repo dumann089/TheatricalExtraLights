@@ -81,6 +81,8 @@ public class BlockEntities {
     public static final RegistrySupplier<BlockEntityType<a2x2par64_yellowBlockEntity>> A2X2PAR64_YELLOW = BLOCK_ENTITIES.register("a2x2par64_yellow", () -> BlockEntityType.Builder.of(a2x2par64_yellowBlockEntity::new, Blocks.A2X2PAR64_YELLOW_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<a2x2par64_warmBlockEntity>> A2X2PAR64_WARM = BLOCK_ENTITIES.register("a2x2par64_warm", () -> BlockEntityType.Builder.of(a2x2par64_warmBlockEntity::new, Blocks.A2X2PAR64_WARM_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<a2x2par64_whiteBlockEntity>> A2X2PAR64_WHITE = BLOCK_ENTITIES.register("a2x2par64_white", () -> BlockEntityType.Builder.of(a2x2par64_whiteBlockEntity::new, Blocks.A2X2PAR64_WHITE_BLOCK.get()).build(null));
+    public static final RegistrySupplier<BlockEntityType<DWTPanelBlockEntity>> DWT_PANEL = BLOCK_ENTITIES.register("dwt_panel", () -> BlockEntityType.Builder.of(DWTPanelBlockEntity::new, Blocks.DWT_PANEL_BLOCK.get()).build(null));
+
 
     public static final RegistrySupplier<BlockEntityType<FollowspotBlockEntity>> FOLLOWSPOT = BLOCK_ENTITIES.register("followspot", () -> BlockEntityType.Builder.of(FollowspotBlockEntity::new, Blocks.FOLLOWSPOT_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<bigscrollerBlockEntity>> BIGSCROLLER = BLOCK_ENTITIES.register("bigscroller", () -> BlockEntityType.Builder.of(bigscrollerBlockEntity::new, Blocks.BIGSCROLLER_BLOCK.get()).build(null));
@@ -184,14 +186,20 @@ public class BlockEntities {
                     Blocks.FIREWORK_DAYTIME_POWDER_ORANGE_BLOCK.get(),
                     Blocks.FIREWORK_DAYTIME_POWDER_RED_BLOCK.get(),
                     Blocks.FIREWORK_DAYTIME_POWDER_BLUE_BLOCK.get(),
-                    Blocks.FIREWORK_DAYTIME_POWDER_RAINBOW_BLOCK.get()
+                    Blocks.FIREWORK_DAYTIME_POWDER_RAINBOW_BLOCK.get(),
+                    Blocks.FIREWORK_SILVER_JET_BLOCK.get(),
+                    Blocks.FIREWORK_MORTAR_HIT_BLOCK.get(),
+                    Blocks.FIREWORK_FLAME_PROJECTOR_BLOCK.get()
+
             ).build(null));
     public static final RegistrySupplier<BlockEntityType<PyroFanBlockEntity>> PYRO_FAN = BLOCK_ENTITIES.register("pyro_fan", () ->
             BlockEntityType.Builder.of(PyroFanBlockEntity::new, Blocks.PYRO_FAN_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<RgbFireworkLauncherBlockEntity>> RGB_FIREWORK_LAUNCHER = BLOCK_ENTITIES.register("firework_rgb_launcher", () ->
             BlockEntityType.Builder.of(RgbFireworkLauncherBlockEntity::new, Blocks.FIREWORK_RGB_LAUNCHER_BLOCK.get()).build(null));
+
     public static final RegistrySupplier<BlockEntityType<GerbBlockEntity>> GERB_GOLD = BLOCK_ENTITIES.register("gerb_gold", () ->
             BlockEntityType.Builder.of(GerbBlockEntity::new, Blocks.GERB_GOLD_BLOCK.get()).build(null));
+
     public static final RegistrySupplier<BlockEntityType<FlameProjectorBlockEntity>> FLAME_PROJECTOR = BLOCK_ENTITIES.register("flame_projector", () ->
             BlockEntityType.Builder.of(FlameProjectorBlockEntity::new, Blocks.FLAME_PROJECTOR_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<ConfettiCannonBlockEntity>> CONFETTI_CANNON = BLOCK_ENTITIES.register("confetti_cannon", () ->

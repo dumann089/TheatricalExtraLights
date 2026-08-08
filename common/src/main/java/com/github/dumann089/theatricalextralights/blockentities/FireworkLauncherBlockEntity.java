@@ -95,13 +95,21 @@ public class FireworkLauncherBlockEntity extends ExtraLightsLightBlockEntity {
             pendingOneShot = false;
         }
 
+
+        if (getPreset().getPattern().isTriggerShot()) {
+            return;
+        }
+
+
         if (intensity < 2) {
             fireAccumulator = 0.0f;
             return;
         }
 
         fireAccumulator += getShotsPerSecond() / 20.0f;
+
         fireAccumulator = Math.min(fireAccumulator, MAX_ACCUMULATOR);
+
         while (fireAccumulator >= 1.0f && launchesThisTick < MAX_LAUNCHES_PER_TICK) {
             if (!launch(serverLevel)) {
                 break;

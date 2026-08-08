@@ -2,11 +2,13 @@ package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.MiniScanGobosBlockEntity;
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
+import com.github.dumann089.theatricalextralights.client.CustomGoboLoader;
 import com.github.dumann089.theatricalextralights.client.gobo.FakeVolumetricBeamPattern;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData;
 import com.github.dumann089.theatricalextralights.client.render.beam.VolumetricBeamRenderer;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
+import com.github.dumann089.theatricalextralights.util.GlobalGoboManager;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -220,8 +222,18 @@ public class MiniScanGobosRenderer extends ExtraLightsFixtureRenderer<MiniScanGo
                 float coneHalfAngle = 1.0f + zoomNorm * (12.0f - 1.0f);
                 float tanHalfAngle  = (float) Math.tan(Math.toRadians(coneHalfAngle));
 
-                ResourceLocation goboTex = GoboLibrary.MINISCAN.getTexture(blockEntity.getGobo());
-                if (goboTex == null) goboTex = new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
+                ResourceLocation goboTex = null;
+                String customFileName = GlobalGoboManager.getCustomGobo(blockEntity.getGoboLibrary(), blockEntity.getGobo());
+
+                if (customFileName != null) {
+                    goboTex = CustomGoboLoader.getOrCreateCustomGobo(customFileName);
+                }
+                if (goboTex == null) {
+                    goboTex = blockEntity.getGoboLibrary().getTexture(blockEntity.getGobo());
+                }
+                if (goboTex == null) {
+                    goboTex = new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
+                }
 
                 BeamRenderData renderData = new BeamRenderData(
                         blockEntity.getBlockPos(),

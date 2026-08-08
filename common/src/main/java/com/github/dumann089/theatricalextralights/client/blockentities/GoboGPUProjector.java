@@ -457,7 +457,7 @@ public class GoboGPUProjector {
         }
 
         // Build VBO data from accepted blocks
-        final float zBias = 0.02f;
+        final float zBias = 0.0002f;
 
         LongIterator iter = uniqueBlocks.iterator();
         while (iter.hasNext()) {
