@@ -1,9 +1,11 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.Blinder2x2warmBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.blockentities.StrobeBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.WhiteStrobeBlockEntity;
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
+import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -151,8 +153,7 @@ public class WhiteStrobeRenderer extends ExtraLightsRenderer<WhiteStrobeBlockEnt
                     VertexConsumer beamConsumer =
                             multiBufferSource.getBuffer(TheatricalRenderTypes.BEAM);
 
-                    float intensity = blockEntity.getPrevIntensity()
-                            + (blockEntity.getIntensity() - blockEntity.getPrevIntensity()) * partialTicks;
+                    float intensity = StrobeRenderHelper.renderedIntensity(blockEntity, partialTicks);
 
                     int color = blockEntity.getColour();
                     int r = (color >> 16) & 0xFF;
@@ -169,34 +170,6 @@ public class WhiteStrobeRenderer extends ExtraLightsRenderer<WhiteStrobeBlockEnt
                     addVertex(beamConsumer, m, normal, r, g, b, a,-0.4375f, -0.21875f, 0f);
                     poseStack.popPose();
 
-                    //LENS
-                    if (TheatricalExtraLightsConfig.shouldRenderLens()) {
-                        VertexConsumer lensConsumer =
-                                multiBufferSource.getBuffer(LensRenderTypes.LENS);
-
-                    poseStack.pushPose();
-
-                    poseStack.translate(0.5f, 0.65f, 0.343f);
-
-                    Matrix4f m1 = poseStack.last().pose();
-
-                    float lensAlphaMul = 0.25f;
-                    float lensColorMul = 0.95f;
-
-                    int la = (int)(a * lensAlphaMul);
-                    int lr = (int)(r * lensColorMul);
-                    int lg = (int)(g * lensColorMul);
-                    int lb = (int)(b * lensColorMul);
-
-                    float size = 2.80f;
-
-                    addLensVertex(lensConsumer, m1, lr, lg, lb, la, -size,  size, 0f, 0f, 0f);
-                    addLensVertex(lensConsumer, m1, lr, lg, lb, la,  size,  size, 0f, 1f, 0f);
-                    addLensVertex(lensConsumer, m1, lr, lg, lb, la,  size, -size, 0f, 1f, 1f);
-                    addLensVertex(lensConsumer, m1, lr, lg, lb, la, -size, -size, 0f, 0f, 1f);
-
-                    poseStack.popPose();
-                    }
                     poseStack.popPose();
                 }
                 @Override
@@ -206,22 +179,10 @@ public class WhiteStrobeRenderer extends ExtraLightsRenderer<WhiteStrobeBlockEnt
             });
         }
     }
-    private static void addLensVertex(
-            VertexConsumer vc,
-            Matrix4f m,
-            int r, int g, int b, int a,
-            float x, float y, float z,
-            float u, float v
-    ) {
-        vc.vertex(m, x, y, z)
-                .color(r, g, b, a)
-                .uv(u, v)
-                .uv2(LightTexture.FULL_BRIGHT)
-                .endVertex();
-    }
 
         @Override
         public void preparePoseStack(WhiteStrobeBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
             poseStack.translate(0.5F, 0, .5F);
             if(isHanging){
                 Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);

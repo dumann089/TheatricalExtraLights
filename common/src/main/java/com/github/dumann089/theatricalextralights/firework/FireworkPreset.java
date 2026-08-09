@@ -8,6 +8,7 @@ public enum FireworkPreset {
     BLUE_COMET("firework_blue_comet", "Blue Comet", BurstPatterns.Comet::new, 0x4D8DFF, 0xB8D3FF),
     GREEN_COMET("firework_green_comet", "Green Comet", BurstPatterns.Comet::new, 0x55FF7A, 0xC6FFD3),
     GOLD_COMET("firework_gold_comet", "Gold Comet", BurstPatterns.Comet::new, 0xFFC451, 0xFFE9AE),
+    PYRO_FAN_COMET("pyro_fan_comet", "Pyro Fan Comet", BurstPatterns.PyroFanComet::new, 0xFFC451, 0xFFE9AE),
     GOLD_BELL_COMET("firework_gold_bell_comet", "Gold Bell Comet", BurstPatterns.BellComet::new, 0xFFD36E, 0xFFF3C2),
     RED_PEONY("firework_red_peony", "Red Peony", BurstPatterns.Peony::new, 0xFF5B5B, 0xFFD1D1),
     BLUE_PEONY("firework_blue_peony", "Blue Peony", BurstPatterns.Peony::new, 0x4D8DFF, 0xB8D3FF),

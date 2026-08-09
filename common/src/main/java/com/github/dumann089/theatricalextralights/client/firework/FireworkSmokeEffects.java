@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.firework;
 
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
+import com.github.dumann089.theatricalextralights.firework.FireworkRenderDistances;
 import com.github.dumann089.theatricalextralights.entities.FireworkRocketEntity;
 import com.github.dumann089.theatricalextralights.firework.Spark;
 import net.minecraft.client.Minecraft;
@@ -64,7 +65,7 @@ public final class FireworkSmokeEffects {
         if (!(rocket.level() instanceof ClientLevel level)) {
             return;
         }
-        if (!canSpawnNearPlayer(rocket.getX(), rocket.getY(), rocket.getZ(), 96.0)) {
+        if (!canSpawnNearPlayer(rocket.getX(), rocket.getY(), rocket.getZ(), FireworkRenderDistances.clientSmokeRange(0.6))) {
             return;
         }
 
@@ -96,7 +97,7 @@ public final class FireworkSmokeEffects {
         if (!(rocket.level() instanceof ClientLevel level)) {
             return;
         }
-        if (!canSpawnNearPlayer(rocket.getX(), rocket.getY(), rocket.getZ(), 96.0)) {
+        if (!canSpawnNearPlayer(rocket.getX(), rocket.getY(), rocket.getZ(), FireworkRenderDistances.clientSmokeRange(0.6))) {
             return;
         }
 
@@ -116,7 +117,7 @@ public final class FireworkSmokeEffects {
         if (!(rocket.level() instanceof ClientLevel level)) {
             return;
         }
-        if (!canSpawnNearPlayer(rocket.getX(), rocket.getY(), rocket.getZ(), 128.0)) {
+        if (!canSpawnNearPlayer(rocket.getX(), rocket.getY(), rocket.getZ(), FireworkRenderDistances.clientSmokeRange(0.75))) {
             return;
         }
         for (int i = 0; i < 3; i++) {
@@ -158,7 +159,7 @@ public final class FireworkSmokeEffects {
         if (!(rocket.level() instanceof ClientLevel level)) {
             return;
         }
-        if (!canSpawnNearPlayer(rocket.getX(), rocket.getY(), rocket.getZ(), 128.0)) {
+        if (!canSpawnNearPlayer(rocket.getX(), rocket.getY(), rocket.getZ(), FireworkRenderDistances.clientSmokeRange(0.75))) {
             return;
         }
 
@@ -197,7 +198,7 @@ public final class FireworkSmokeEffects {
         if (!(rocket.level() instanceof ClientLevel level)) {
             return;
         }
-        if (!canSpawnNearPlayer(originX, originY, originZ, 160.0)) {
+        if (!canSpawnNearPlayer(originX, originY, originZ, FireworkRenderDistances.effectiveClientRenderBlocks())) {
             return;
         }
 
@@ -242,7 +243,7 @@ public final class FireworkSmokeEffects {
         if (!(rocket.level() instanceof ClientLevel level)) {
             return;
         }
-        if (!canSpawnNearPlayer(originX, originY, originZ, 160.0)) {
+        if (!canSpawnNearPlayer(originX, originY, originZ, FireworkRenderDistances.effectiveClientRenderBlocks())) {
             return;
         }
 

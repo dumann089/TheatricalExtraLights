@@ -1,6 +1,9 @@
 package com.github.dumann089.theatricalextralights.forge;
 
 import com.github.dumann089.theatricalextralights.TheatricalExtraLights;
+import dev.architectury.platform.forge.EventBuses;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import com.github.dumann089.theatricalextralights.client.forge.TheatricalExtraLightsForgeClient;
 import dev.architectury.platform.forge.EventBuses;
 import net.minecraftforge.api.distmarker.Dist;

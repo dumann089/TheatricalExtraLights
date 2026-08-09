@@ -61,7 +61,7 @@ Hundreds of placeable fixtures across creative tabs **Theatrical: Extra Lights**
 - **Blinders & strobes** — 4×2 blinder, atomic strobe (34ch), atomic tilt, white strobe
 - **Effects** — laser, laser mirror, LED fountain, RGB / vertical bars, scrollers, invisible light
 - **Water jets** — jets, cones, bloom, fog, organ pipes, moving fan, and more
-- **Pyro** — 50+ firework launchers, Pyro Fan, RGB launcher, confetti, gerbs, flame projector, daytime powder *(see [Pyro](#pyro-theatrical-pyro-tab) below)*
+- **Pyro** — 50+ firework launchers, Pyro Fan, RGB launcher, confetti, gerbs, flame projector, **flame thrower**, daytime powder *(see [Pyro](#pyro-theatrical-pyro-tab) below)*
 - **Rig** — mini truss, corner, T-corner, cross joint
 - **Followspot console** — operator desk to remotely aim and dim a patched 7ch followspot
 
@@ -132,6 +132,7 @@ Effects use a custom spark renderer (not vanilla particles), optional **dynamic 
 | **Confetti cannon** | 1ch | High-altitude confetti burst on DMX trigger. |
 | **Gold gerb** | DMX | Stage gerb fountain. |
 | **Flame projector** | DMX | Continuous flame effect. |
+| **Flame thrower** | 2ch | Directed flame jet with pan control (intensity + pan). |
 
 #### Tips
 

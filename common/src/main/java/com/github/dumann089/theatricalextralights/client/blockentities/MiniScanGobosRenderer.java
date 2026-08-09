@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.MiniScanGobosBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
 import com.github.dumann089.theatricalextralights.client.CustomGoboLoader;
 import com.github.dumann089.theatricalextralights.client.gobo.FakeVolumetricBeamPattern;
@@ -369,6 +370,7 @@ public class MiniScanGobosRenderer extends ExtraLightsFixtureRenderer<MiniScanGo
 
     @Override
     public void preparePoseStack(MiniScanGobosBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);

@@ -8,6 +8,7 @@ import dev.imabad.theatrical.util.UUIDUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -102,6 +103,14 @@ public class FollowspotConsoleBlockEntity extends ClientSyncBlockEntity {
         this.pan = FollowspotDmxHelper.quantizePan(pan);
         this.tilt = FollowspotDmxHelper.quantizeTilt(tilt);
         setChanged();
+    }
+
+    /** Persist + push BE to tracking clients (setChanged alone does not sync). */
+    public void syncToClients() {
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
     }
 
     private static int clamp(int value) {

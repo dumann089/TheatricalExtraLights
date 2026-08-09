@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.RobitspotBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
@@ -189,6 +190,7 @@ public class RobitspotRenderer extends ExtraLightsFixtureRenderer<RobitspotBlock
 
     @Override
     public void preparePoseStack(RobitspotBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if (isHanging) {
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);

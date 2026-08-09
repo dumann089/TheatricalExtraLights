@@ -6,10 +6,8 @@ import com.github.dumann089.theatricalextralights.blockentities.a1x1par64BlockEn
 import com.github.dumann089.theatricalextralights.blockentities.a2x2par64_warmBlockEntity;
 import com.github.dumann089.theatricalextralights.net.OpenExtraLightsScreenPacket;
 import dev.imabad.theatrical.TheatricalClient;
-import dev.imabad.theatrical.TheatricalScreen;
 import dev.imabad.theatrical.blocks.Blocks;
 import com.github.dumann089.theatricalextralights.blocks.ExtraLightsLightBlock;
-import dev.imabad.theatrical.net.OpenScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;

@@ -18,21 +18,26 @@ public final class DmxShutterStrobeHelper {
     }
 
     public static float computeEffectiveIntensity(int dimmer, int strobe, long gameTime) {
+        return computeEffectiveIntensity(dimmer, strobe, gameTime, 0.0f);
+    }
+
+    public static float computeEffectiveIntensity(int dimmer, int strobe, long gameTime, float partialTick) {
         if (strobe <= 0) {
             return 0f;
         }
         if (strobe >= OPEN) {
             return dimmer;
         }
-        return isStrobePhaseOn(strobe, gameTime) ? dimmer : 0f;
+        return isStrobePhaseOn(strobe, gameTime, partialTick) ? dimmer : 0f;
     }
 
-    private static boolean isStrobePhaseOn(int strobe, long gameTime) {
+    private static boolean isStrobePhaseOn(int strobe, long gameTime, float partialTick) {
         float speed = strobe / (OPEN - 1f);
         int halfPeriod = Math.max(
                 FASTEST_HALF_PERIOD,
                 Math.round(SLOWEST_HALF_PERIOD - speed * (SLOWEST_HALF_PERIOD - FASTEST_HALF_PERIOD))
         );
-        return (gameTime / halfPeriod) % 2 == 0;
+        long phase = (long) Math.floor((gameTime + partialTick) / halfPeriod);
+        return phase % 2 == 0;
     }
 }

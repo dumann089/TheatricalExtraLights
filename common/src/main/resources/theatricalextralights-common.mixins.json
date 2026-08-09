@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.github.dumann089.theatricalextralights.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "plugin": "com.github.dumann089.theatricalextralights.mixin.ExtraLightsMixinPlugin",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "client.shimmer.ReloadShaderManagerMixin"
+  ],
+  "mixins": [
+    "compat.BlockEntityTheatricalDmxExtendedMixin"
+  ]
+}

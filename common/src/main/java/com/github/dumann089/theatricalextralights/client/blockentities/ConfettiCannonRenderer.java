@@ -2,8 +2,8 @@ package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.TheatricalExtraLights;
 import com.github.dumann089.theatricalextralights.blockentities.ConfettiCannonBlockEntity;
+import com.github.dumann089.theatricalextralights.client.ConfettiCannonRenderTransforms;
 import com.github.dumann089.theatricalextralights.client.model.ConfettiCannonModel;
-import com.github.dumann089.theatricalextralights.pyro.ConfettiCannonOrientation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.imabad.theatrical.blocks.HangableBlock;
@@ -43,7 +43,7 @@ public class ConfettiCannonRenderer extends ExtraLightsRenderer<ConfettiCannonBl
     public void renderModel(ConfettiCannonBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer,
                             Direction facing, float partialTicks, boolean isFlipped, BlockState blockState,
                             boolean isHanging, int packedLight, int packedOverlay) {
-        ConfettiCannonOrientation.applyRenderingTransforms(poseStack, blockState, blockEntity);
+        ConfettiCannonRenderTransforms.applyRenderingTransforms(poseStack, blockState, blockEntity);
         model.renderToBuffer(poseStack, vertexConsumer, packedLight, packedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
     }
 

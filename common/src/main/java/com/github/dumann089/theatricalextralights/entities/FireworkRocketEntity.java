@@ -1,11 +1,14 @@
 package com.github.dumann089.theatricalextralights.entities;
 
+import com.github.dumann089.theatricalextralights.client.firework.DetachedPyroSparks;
 import com.github.dumann089.theatricalextralights.client.firework.FireworkSmokeEffects;
 import com.github.dumann089.theatricalextralights.compat.FireworkLightCompat;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.github.dumann089.theatricalextralights.firework.BurstPattern;
 import com.github.dumann089.theatricalextralights.firework.FireworkColorUtil;
 import com.github.dumann089.theatricalextralights.firework.FireworkPreset;
+import com.github.dumann089.theatricalextralights.firework.BurstPattern;
+import com.github.dumann089.theatricalextralights.firework.FireworkRenderDistances;
 import com.github.dumann089.theatricalextralights.firework.FireworkRocketTracker;
 import com.github.dumann089.theatricalextralights.firework.Spark;
 import dev.architectury.extensions.network.EntitySpawnExtension;
@@ -22,10 +25,12 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
@@ -55,6 +60,8 @@ public class FireworkRocketEntity extends Entity implements EntitySpawnExtension
     private boolean daytimeBurstFired;
     private int[] customColors;
     private double fadeStartY = Double.NaN;
+    /** Client-only path samples for pyro fan chase afterglow. */
+    private final List<Vec3> cometPathHistory = new ArrayList<>();
 
     public FireworkRocketEntity(EntityType<? extends FireworkRocketEntity> entityType, Level level) {
         super(entityType, level);
@@ -103,6 +110,31 @@ public class FireworkRocketEntity extends Entity implements EntitySpawnExtension
         return fadeTicks;
     }
 
+    /**
+     * 1.0 en vol, puis extinction progressive (descente + braises) pour les comètes.
+     */
+    public float getCometVisualStrength(float partialTick) {
+        if (!fading) {
+            return 1.0f;
+        }
+        BurstPattern pattern = preset.getPattern();
+        int fadeMax = Math.max(1, pattern.getCometFadeTicks());
+        int emberMax = Math.max(0, pattern.getCometEmberTicks());
+        float ticks = fadeTicks - partialTick;
+
+        if (ticks > 0.0f) {
+            float phase = ticks / fadeMax;
+            float smooth = phase * phase * (3.0f - 2.0f * phase);
+            return 0.15f + 0.85f * smooth;
+        }
+        if (emberMax <= 0) {
+            return 0.0f;
+        }
+        float ember = Mth.clamp((ticks + emberMax) / emberMax, 0.0f, 1.0f);
+        float smooth = ember * ember * (3.0f - 2.0f * ember);
+        return smooth * 0.22f;
+    }
+
     public int getFlightLife() {
         return life;
     }
@@ -116,18 +148,24 @@ public class FireworkRocketEntity extends Entity implements EntitySpawnExtension
      * True when this rocket should be removed to avoid stacking in unloaded sky chunks.
      */
     public boolean shouldForceCleanup(ServerLevel level) {
-        if (tickCount > getServerHoldTicks() || tickCount > MAX_TOTAL_TICKS) {
+        BurstPattern pattern = getPreset().getPattern();
+        int hold = pattern.getServerHoldTicks();
+        if (tickCount > hold || tickCount > MAX_TOTAL_TICKS) {
             return true;
         }
         double dx = getX() - (launcherPos.getX() + 0.5);
         double dz = getZ() - (launcherPos.getZ() + 0.5);
-        if (dx * dx + dz * dz > 72.0 * 72.0) {
+        double maxDrift = 192.0;
+        if (level instanceof ServerLevel) {
+            maxDrift = FireworkRenderDistances.maxHorizontalDriftBlocks((ServerLevel) level);
+        }
+        if (dx * dx + dz * dz > maxDrift * maxDrift) {
             return true;
         }
-        if (getY() > launcherPos.getY() + 64.0 || getY() > 260.0) {
+        if (getY() > 316.0) {
             return true;
         }
-        return tickCount > 24 && !FireworkRocketTracker.hasNearbyPlayer(level, this);
+        return tickCount > hold - 24 && !FireworkRocketTracker.hasNearbyPlayer(level, this);
     }
 
     public BlockPos getLauncherPos() {
@@ -240,6 +278,9 @@ public class FireworkRocketEntity extends Entity implements EntitySpawnExtension
             syncVisualPhaseFromNetwork(pattern);
             tickClientLight();
             tickSparks();
+            if (preset == FireworkPreset.PYRO_FAN_COMET && !exploded) {
+                recordCometPath();
+            }
 
             if (!exploded && !fading) {
                 pattern.onFlightTick(this, random);
@@ -275,10 +316,11 @@ public class FireworkRocketEntity extends Entity implements EntitySpawnExtension
 
         if (fading) {
             tickFadeMotion(pattern);
-            if (clientSide && --fadeTicks <= 0) {
+            if (clientSide) {
+                fadeTicks--;
                 sparks.removeIf(Spark::isDead);
-                if (sparks.isEmpty() || fadeTicks <= -20) {
-                    sparks.clear();
+                int emberEnd = -pattern.getCometEmberTicks();
+                if (fadeTicks <= emberEnd && sparks.isEmpty()) {
                     releaseLight();
                 }
             }
@@ -414,6 +456,14 @@ public class FireworkRocketEntity extends Entity implements EntitySpawnExtension
         entityData.set(DATA_EXPLODED, false);
     }
 
+    private void recordCometPath() {
+        cometPathHistory.add(new Vec3(getX(), getY(), getZ()));
+        int maxSamples = 48;
+        if (cometPathHistory.size() > maxSamples) {
+            cometPathHistory.subList(0, cometPathHistory.size() - maxSamples).clear();
+        }
+    }
+
     private void tickSparks() {
         for (Spark spark : sparks) {
             spark.tick(level());
@@ -473,8 +523,29 @@ public class FireworkRocketEntity extends Entity implements EntitySpawnExtension
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        double max = TheatricalExtraLightsConfig.getFireworkRenderDistance();
+        double max = FireworkRenderDistances.effectiveClientRenderBlocks();
         return distance < max * max;
+    }
+
+    /** Inclut la traînée d'étincelles — évite le culling quand seule la tête sort du frustum. */
+    @Override
+    public AABB getBoundingBoxForCulling() {
+        AABB bounds = getBoundingBox().inflate(4.0);
+        if (preset == FireworkPreset.PYRO_FAN_COMET) {
+            bounds = bounds.minmax(new AABB(
+                    launcherPos.getX() + 0.5, launcherPos.getY(), launcherPos.getZ() + 0.5,
+                    getX(), getY(), getZ()
+            )).inflate(6.0);
+        }
+        if (level().isClientSide && !sparks.isEmpty()) {
+            for (Spark spark : sparks) {
+                bounds = bounds.minmax(new AABB(
+                        spark.x - 2.5, spark.y - 2.5, spark.z - 2.5,
+                        spark.x + 2.5, spark.y + 2.5, spark.z + 2.5));
+            }
+            bounds = bounds.inflate(12.0);
+        }
+        return bounds;
     }
 
     @Override
@@ -516,6 +587,16 @@ public class FireworkRocketEntity extends Entity implements EntitySpawnExtension
 
     @Override
     public void remove(RemovalReason reason) {
+        if (level().isClientSide && preset == FireworkPreset.PYRO_FAN_COMET) {
+            DetachedPyroSparks.adoptComet(
+                    new ArrayList<>(sparks),
+                    new ArrayList<>(cometPathHistory),
+                    getX(), getY(), getZ(),
+                    getLaunchColor(),
+                    getCometVisualStrength(0.0f)
+            );
+            cometPathHistory.clear();
+        }
         if (!level().isClientSide && level() instanceof ServerLevel serverLevel) {
             FireworkRocketTracker.onRemoved(serverLevel);
         }

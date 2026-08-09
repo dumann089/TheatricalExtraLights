@@ -3,10 +3,15 @@ package com.github.dumann089.theatricalextralights.blockentities.interfaces;
 
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 
-public interface HasGobo {
+public interface HasGobo extends HasExtendedBeamChannels {
 
     /** Slot del gobo (0 = abierto/blanco). */
+    @Override
     int getGobo();
+
+    /** Vitesse de rotation du gobo 0–255. */
+    @Override
+    int getGoboSpin();
 
     /** Librería de gobos del fixture. */
     GoboLibrary getGoboLibrary();

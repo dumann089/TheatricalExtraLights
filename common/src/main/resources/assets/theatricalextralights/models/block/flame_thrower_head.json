@@ -1,0 +1,64 @@
+{
+	"texture_size": [32, 32],
+	"textures": {
+		"0": "theatricalextralights:block/flame_thrower",
+		"particle": "theatricalextralights:block/flame_thrower"
+	},
+	"elements": [
+		{
+			"from": [4.6, 0.9, 7.6],
+			"to": [5.4, 3.3, 8.4],
+			"rotation": {"angle": 0, "axis": "y", "origin": [5, 2.1, 8]},
+			"faces": {
+				"north": {"uv": [8, 0.5, 8.40625, 1.70313], "texture": "#0"},
+				"east": {"uv": [2, 8, 2.40625, 9.20313], "texture": "#0"},
+				"south": {"uv": [8, 2, 8.40625, 3.20313], "texture": "#0"},
+				"west": {"uv": [2.5, 8, 2.90625, 9.20313], "texture": "#0"},
+				"up": {"uv": [9.40625, 2.40625, 9, 2], "texture": "#0"},
+				"down": {"uv": [5.90625, 9, 5.5, 9.40625], "texture": "#0"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [77, 0, 0],
+			"translation": [-1.75, -5.25, 7],
+			"scale": [1.5, 1.5, 1.5]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [69, 0, 0],
+			"translation": [0, 1.75, 2],
+			"scale": [0.34, 0.34, 0.34]
+		},
+		"firstperson_righthand": {
+			"translation": [0, 2.75, 0],
+			"scale": [0.7, 0.7, 0.7]
+		},
+		"firstperson_lefthand": {
+			"translation": [0, 2.75, 0],
+			"scale": [0.7, 0.7, 0.7]
+		},
+		"ground": {
+			"translation": [0, 2.75, 0],
+			"scale": [0.56, 0.56, 0.56]
+		},
+		"gui": {
+			"rotation": [24, -46, 0],
+			"translation": [0, 2.75, 0],
+			"scale": [0.84, 0.84, 0.84]
+		},
+		"fixed": {
+			"rotation": [-90, 0, 0],
+			"translation": [0, 0, -7.25]
+		}
+	},
+	"groups": [
+		{
+			"name": "group",
+			"origin": [5, 2.1, 8],
+			"scope": 0,
+			"color": 0,
+			"children": [0]
+		}
+	]
+}

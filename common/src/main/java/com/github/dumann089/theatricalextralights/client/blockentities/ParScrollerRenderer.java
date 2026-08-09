@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.BlinderBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.blockentities.ParScrollerBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.Source4warmBlockEntity;
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
@@ -181,6 +182,7 @@ public class ParScrollerRenderer extends ExtraLightsFixtureRenderer<ParScrollerB
 
     @Override
     public void preparePoseStack(ParScrollerBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);

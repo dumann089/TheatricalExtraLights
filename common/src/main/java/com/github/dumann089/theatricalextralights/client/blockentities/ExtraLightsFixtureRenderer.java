@@ -11,10 +11,13 @@ import com.github.dumann089.theatricalextralights.util.GlobalGoboManager;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity;
+import dev.imabad.theatrical.blocks.HangableBlock;
+import dev.imabad.theatrical.blocks.light.MovingLightBlock;
 import dev.imabad.theatrical.client.blockentities.FixtureRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -52,6 +55,21 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
     @Override
     public boolean shouldRenderBeam(T blockEntity) {
         return false;
+    }
+
+    /** Pas de faisceau volumétrique parent (disques devant le bloc). */
+    @Override
+    public void render(T blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource multiBufferSource,
+                       int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        VertexConsumer vertexConsumer = multiBufferSource.getBuffer(RenderType.cutout());
+        BlockState blockState = blockEntity.getBlockState();
+        boolean isFlipped = blockEntity.isUpsideDown();
+        boolean isHanging = ((HangableBlock) blockState.getBlock()).isHanging(blockEntity.getLevel(), blockEntity.getBlockPos());
+        Direction facing = blockState.getValue(MovingLightBlock.FACING);
+        renderModel(blockEntity, poseStack, vertexConsumer, facing, partialTick, isFlipped, blockState, isHanging, packedLight, packedOverlay);
+        beforeRenderBeam(blockEntity, poseStack, vertexConsumer, multiBufferSource, facing, partialTick, isFlipped, blockState, isHanging, packedLight, packedOverlay);
+        poseStack.popPose();
     }
 
     // ── Central volumetric beam helper ──────────────────────────────────────

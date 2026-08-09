@@ -1,12 +1,11 @@
 package com.github.dumann089.theatricalextralights.blocks;
 
+import com.github.dumann089.theatricalextralights.TheatricalExtraLightsScreens;
 import com.github.dumann089.theatricalextralights.blockentities.BigPanel2BlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.BlockEntities;
 import dev.imabad.theatrical.TheatricalClient;
-import dev.imabad.theatrical.TheatricalScreen;
 import dev.imabad.theatrical.blocks.Blocks;
 import com.github.dumann089.theatricalextralights.blocks.ExtraLightsLightBlock;
-import dev.imabad.theatrical.net.OpenScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -33,6 +32,7 @@ import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+import com.github.dumann089.theatricalextralights.net.OpenExtraLightsScreenPacket;
 
 public class BigPanel2Block extends ExtraLightsLightBlock {
 
@@ -120,7 +120,8 @@ public class BigPanel2Block extends ExtraLightsLightBlock {
                     }
                     return InteractionResult.SUCCESS;
                 }
-                new OpenScreen(pos, TheatricalScreen.GENERIC_PAN_TILT).sendTo((ServerPlayer) player);
+                new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.CHANNEL_PANTILT)
+                        .sendTo((ServerPlayer) player);
             }
         }
         return InteractionResult.SUCCESS;

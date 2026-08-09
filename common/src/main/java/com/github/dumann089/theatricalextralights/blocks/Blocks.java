@@ -209,11 +209,14 @@ public class Blocks {
     public static final RegistrySupplier<Block> FIREWORK_SILVER_JET_BLOCK = BLOCKS.register("firework_silver_jet", () -> new FireworkLauncherBlock(com.github.dumann089.theatricalextralights.firework.FireworkPreset.SILVER_JET));
 
     public static final RegistrySupplier<Block> FLAME_PROJECTOR_BLOCK = BLOCKS.register("flame_projector", FlameProjectorBlock::new);
+    public static final RegistrySupplier<Block> FLAME_THROWER_BLOCK = BLOCKS.register("flame_thrower", FlameThrowerBlock::new);
+    public static final RegistrySupplier<Block> FLOW2JET_BLOCK = BLOCKS.register("flow2jet", Flow2JetBlock::new);
     public static final RegistrySupplier<Block> CONFETTI_CANNON_BLOCK = BLOCKS.register("confetti_cannon", ConfettiCannonBlock::new);
     public static final RegistrySupplier<Block> LASER_MIRROR_BLOCK = BLOCKS.register("laser_mirror", LaserMirrorBlock::new);
     public static final RegistrySupplier<Block> PARSCROLLER_BLOCK = BLOCKS.register("parscroller", ParScrollerBlock::new);
     public static final RegistrySupplier<Block> BLINDER2X2_BLOCK = BLOCKS.register("blinder2x2", Blinder2x2Block::new);
     public static final RegistrySupplier<Block> BLINDER2X2WARM_BLOCK = BLOCKS.register("blinder2x2warm", Blinder2x2warmBlock::new);
+    public static final RegistrySupplier<Block> BLINDER1X1_BLOCK = BLOCKS.register("blinder1x1", Blinder1x1Block::new);
     public static final RegistrySupplier<Block> MINI_BAR_BLOCK = BLOCKS.register("mini_bar", MiniBarBlock::new);
     public static final RegistrySupplier<Block> MOVING_VL2C_BEAMS_BLOCK = BLOCKS.register("moving_vl2c_beams", MovingVL2CBeamsBlock::new);
     public static final RegistrySupplier<Block> MOVING_SCAN_BEAMS_BLOCK = BLOCKS.register("moving_scan_beams", MovingScanBeamsBlock::new);

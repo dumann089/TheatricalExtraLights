@@ -55,6 +55,8 @@ public class ExtraLightsConfigScreen extends Screen {
     private EditBox dmxUniverseField;
     private PanTiltSlider tiltSlider;
     private PanTiltSlider panSlider;
+    private Button copyPositionButton;
+    private Button pastePositionButton;
     private Button personalityButton;
     private Button networkButton;
 
@@ -142,7 +144,7 @@ public class ExtraLightsConfigScreen extends Screen {
     private void layoutPanel() {
         int rows = 4; // dmx + universe + footprint + conflict warning
         if (showPositionControls) {
-            rows += 3; // section + tilt + pan
+            rows += 4; // section + tilt + pan + copy/paste
         }
         rows += extraLayoutRows();
         if (hasPersonalityOptions()) {
@@ -233,9 +235,23 @@ public class ExtraLightsConfigScreen extends Screen {
                     this::applyPan
             ));
             y += WIDGET_HEIGHT + ROW_GAP;
+
+            int halfWidth = (contentWidth - 8) / 2;
+            copyPositionButton = addRenderableWidget(Button.builder(
+                    Component.translatable("screen.extralightsconfig.copy_position"),
+                    button -> copyPosition()
+            ).bounds(contentLeft, y, halfWidth, WIDGET_HEIGHT).build());
+            pastePositionButton = addRenderableWidget(Button.builder(
+                    Component.translatable("screen.extralightsconfig.paste_position"),
+                    button -> pastePosition()
+            ).bounds(contentLeft + halfWidth + 8, y, halfWidth, WIDGET_HEIGHT).build());
+            pastePositionButton.active = FixturePositionClipboard.hasValue();
+            y += WIDGET_HEIGHT + ROW_GAP;
         } else {
             tiltSlider = null;
             panSlider = null;
+            copyPositionButton = null;
+            pastePositionButton = null;
         }
 
         y = buildExtraWidgets(y);
@@ -425,6 +441,46 @@ public class ExtraLightsConfigScreen extends Screen {
         sendPositionUpdate();
     }
 
+    private void copyPosition() {
+        int pan = panSlider != null ? panSlider.getIntValue() : blockEntity.getPan();
+        int tilt = tiltSlider != null ? tiltSlider.getIntValue() : blockEntity.getTilt();
+        FixturePositionClipboard.copy(pan, tilt);
+        if (pastePositionButton != null) {
+            pastePositionButton.active = true;
+        }
+        if (minecraft != null && minecraft.player != null) {
+            minecraft.player.displayClientMessage(
+                    Component.translatable("screen.extralightsconfig.position_copied",
+                            Integer.toString(pan), Integer.toString(tilt)),
+                    true
+            );
+        }
+    }
+
+    private void pastePosition() {
+        if (!FixturePositionClipboard.hasValue()) {
+            return;
+        }
+        int pan = FixturePositionClipboard.getPan();
+        int tilt = FixturePositionClipboard.getTilt();
+        blockEntity.setPan(pan);
+        blockEntity.setTilt(tilt);
+        if (panSlider != null) {
+            panSlider.setIntValue(pan);
+        }
+        if (tiltSlider != null) {
+            tiltSlider.setIntValue(tilt);
+        }
+        sendPositionUpdate();
+        if (minecraft != null && minecraft.player != null) {
+            minecraft.player.displayClientMessage(
+                    Component.translatable("screen.extralightsconfig.position_pasted",
+                            Integer.toString(pan), Integer.toString(tilt)),
+                    true
+            );
+        }
+    }
+
     private void sendPositionUpdate() {
         ModNetworkHandler.CHANNEL.sendToServer(
                 new SetFixturePositionPacket(pos, blockEntity.getTilt(), blockEntity.getPan())
@@ -522,6 +578,12 @@ public class ExtraLightsConfigScreen extends Screen {
 
         private int getIntValue() {
             return Mth.clamp((int) Math.round(minValue + (value * (maxValue - minValue))), minValue, maxValue);
+        }
+
+        private void setIntValue(int newValue) {
+            int clamped = Mth.clamp(newValue, minValue, maxValue);
+            this.value = Mth.clamp((clamped - minValue) / (double) (maxValue - minValue), 0.0D, 1.0D);
+            updateMessage();
         }
 
         @Override

@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.MovingMiniBarBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -121,6 +122,7 @@ public class MovingMiniBarRenderer extends ExtraLightsRenderer<MovingMiniBarBloc
 
     @Override
     public void preparePoseStack(MovingMiniBarBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         applyBaseTransforms(blockEntity, poseStack, facing, isFlipped, blockState, isHanging);
         poseStack.translate(EMITTER_X_OFFSETS[MovingMiniBarBlockEntity.BEAM_COUNT / 2], 0, 0);
         applyModuleTilt(blockEntity, poseStack, partialTicks, isFlipped, MovingMiniBarBlockEntity.BEAM_COUNT / 2);

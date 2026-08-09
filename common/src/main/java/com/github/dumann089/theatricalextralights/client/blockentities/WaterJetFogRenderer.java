@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.WaterJetFogBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.client.particle.JetVariant;
 import com.github.dumann089.theatricalextralights.client.particle.WaterJetParticleOptions;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -102,6 +103,7 @@ public class WaterJetFogRenderer extends ExtraLightsRenderer<WaterJetFogBlockEnt
     }
         @Override
     public void preparePoseStack(WaterJetFogBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         //#region Fixture Hanging
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){

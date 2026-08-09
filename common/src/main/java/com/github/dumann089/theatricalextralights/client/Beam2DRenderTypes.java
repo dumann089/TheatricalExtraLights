@@ -27,6 +27,41 @@ public class Beam2DRenderTypes {
                     .createCompositeState(false)
     );
 
+    public static final RenderType FLOOR_PATCH = RenderType.create(
+            "extra_lights_floor_patch",
+            DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.TRIANGLES,
+            512,
+            false,
+            true,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new ShaderStateShard(GameRenderer::getPositionColorShader))
+                    .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                    .setWriteMaskState(COLOR_WRITE)
+                    .setCullState(NO_CULL)
+                    .setDepthTestState(LEQUAL_DEPTH_TEST)
+                    .createCompositeState(false)
+    );
+
+    // SHADERS
+    public static final RenderType BEAM_SHADERS = RenderType.create(
+            "beam_shaders",
+            DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS,
+            256,
+            false,
+            false,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(
+                            GameRenderer::getPositionColorShader
+                    ))
+                    .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
+                    .createCompositeState(false)
+    );
+
     // VANILLA
     public static final RenderType BEAM_VANILLA = RenderType.create(
             "beam_vanilla",
@@ -47,7 +82,7 @@ public class Beam2DRenderTypes {
     private static Boolean shadersActiveCache = null;
 
     public static RenderType getBeam() {
-        return isShadersActive() ? BEAM_VANILLA : BEAM_VANILLA;
+        return isShadersActive() ? BEAM_SHADERS : BEAM_VANILLA;
     }
 
     public static boolean isShadersActive() {

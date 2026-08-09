@@ -10,6 +10,9 @@ architectury {
 }
 
 loom {
+    forge {
+        mixinConfig "theatricalextralights-common.mixins.json"
+    }
 
     runs {
         data {

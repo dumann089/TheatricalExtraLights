@@ -21,6 +21,14 @@ public abstract class BurstPattern {
         return 0;
     }
 
+    /**
+     * After the fade counter reaches zero, the head keeps glowing like cooling embers
+     * for this many ticks while the trail finishes naturally.
+     */
+    public int getCometEmberTicks() {
+        return 0;
+    }
+
     /** Called client-side every tick during flight. Spawn trail sparks here. */
     public void onFlightTick(FireworkRocketEntity rocket, RandomSource random) {
     }
@@ -121,8 +129,8 @@ public abstract class BurstPattern {
     }
 
     /**
-     * Server-side entity lifetime. Kept short for comets so concurrent slots recycle
-     * during pyro fan shows (full arc is simulated client-side).
+     * Server-side entity lifetime. Comets override with a longer hold; default stays
+     * short for burst effects so concurrent slots recycle during big shows.
      */
     public int getServerHoldTicks() {
         if (isDaytimePowder()) {

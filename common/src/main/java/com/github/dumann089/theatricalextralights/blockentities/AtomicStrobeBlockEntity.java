@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.blocks.AtomicStrobeBlock;
+import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
@@ -33,10 +34,10 @@ public class AtomicStrobeBlockEntity extends ExtraLightsLightBlockEntity {
 
     // Mirror Strobe's focus → spread/distance mapping so both fixtures behave
     // consistently for the same focus value.
-    private static final float MIN_LIGHT_SPREAD = 1.0f;
-    private static final float FOCUS_SPREAD_MULTIPLIER = 30.0f;
-    private static final float CLOSE_EMISSION_DISTANCE = 3.0f;
-    private static final float FAR_EMISSION_DISTANCE = 10.0f;
+    private static final float MIN_LIGHT_SPREAD = 0.35f;
+    private static final float CLOSE_EMISSION_DISTANCE = 0.75f;
+    private static final float FAR_EMISSION_DISTANCE = 7.5f;
+    private static final float MIN_LUMINANCE_SCALE = 0.22f;
 
     // Each bar segment contributes this multiple of an RGB zone's weight to
     // the emission mix — makes the bar visibly dominate over the colour cells.
@@ -70,6 +71,8 @@ public class AtomicStrobeBlockEntity extends ExtraLightsLightBlockEntity {
         }
                 boolean prevAdvanced = beginDmxUpdate();
         int _pi = intensity, _pr = red, _pg = green, _pb = blue, _pf = focus, _pp = pan, _pt = tilt;
+        int[] prevZones = rgbZones.clone();
+        int[] prevSegments = whiteSegments.clone();
         // 1-24 → 8 RGB zones
         for (int i = 0; i < RGB_ZONE_COUNT * 3; i++) {
             rgbZones[i] = u(v[i]);
@@ -119,10 +122,28 @@ public class AtomicStrobeBlockEntity extends ExtraLightsLightBlockEntity {
         } else {
             red = green = blue = 0;
         }
-        if (level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        boolean zonesChanged = !Arrays.equals(rgbZones, prevZones) || !Arrays.equals(whiteSegments, prevSegments);
+        boolean changed = intensity != _pi || red != _pr || green != _pg || blue != _pb || focus != _pf
+                || pan != _pp || tilt != _pt || zonesChanged;
+        finishDmxUpdate(changed, prevAdvanced);
+    }
+
+    @Override
+    protected boolean needsContinuousClientRender() {
+        if (super.needsContinuousClientRender()) {
+            return true;
         }
-        setChanged();
+        for (int zone : rgbZones) {
+            if (zone > 0) {
+                return true;
+            }
+        }
+        for (int segment : whiteSegments) {
+            if (segment > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** @return packed 0xRRGGBB for the zone (0–{@link #RGB_ZONE_COUNT}-1). */
@@ -174,10 +195,16 @@ public class AtomicStrobeBlockEntity extends ExtraLightsLightBlockEntity {
     }
 
     @Override
+    public int getLightLuminance() {
+        float scale = Mth.lerp(getNormalizedFocus(), MIN_LUMINANCE_SCALE, 1.0f);
+        float effective = getIntensity();
+        return (int) ((effective / 255f) * scale * 15f);
+    }
+
+    @Override
     public float getLightSpread() {
-        float normalizedFocus = getNormalizedFocus();
-        float maxLightSpread = (float) (getFixture().getLightRadius() * FOCUS_SPREAD_MULTIPLIER);
-        return Mth.lerp(normalizedFocus, MIN_LIGHT_SPREAD, maxLightSpread);
+        float maxLightSpread = (float) getFixture().getLightRadius();
+        return Mth.lerp(getNormalizedFocus(), MIN_LIGHT_SPREAD, maxLightSpread);
     }
 
     @Override
@@ -291,6 +318,9 @@ public class AtomicStrobeBlockEntity extends ExtraLightsLightBlockEntity {
         int[] segs = tag.getIntArray("WhiteSegments");
         if (segs.length == whiteSegments.length) {
             System.arraycopy(segs, 0, whiteSegments, 0, whiteSegments.length);
+        }
+        if (level != null && level.isClientSide) {
+            StrobeRenderHelper.markSectionDirty(getBlockPos());
         }
     }
 

@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.a2x2par64_purpleBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -153,6 +154,7 @@ public void beforeRenderBeam(a2x2par64_purpleBlockEntity blockEntity, PoseStack 
 
     @Override
     public void preparePoseStack(a2x2par64_purpleBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         //#region Fixture Hanging
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){

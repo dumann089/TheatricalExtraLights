@@ -1,7 +1,10 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasPersonality;
+import com.github.dumann089.theatricalextralights.util.DmxFrameStrobeSync;
 import com.github.dumann089.theatricalextralights.util.DmxShutterStrobeHelper;
+import com.github.dumann089.theatricalextralights.util.DmxStrobeFixture;
+import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import dev.imabad.theatrical.api.dmx.DMXPersonality;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -15,12 +18,13 @@ import org.joml.Vector3f;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity implements HasPersonality {
+public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity implements HasPersonality, DmxStrobeFixture, DmxFrameStrobeSync {
 
     private int activePersonalityIndex = 0;
 
     /** Valeur DMX du canal strobe (canal 5). */
     protected int strobe = 255;
+    protected int prevStrobe = 255;
 
     protected BlinderBaseBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -51,6 +55,11 @@ public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity
     }
 
     @Override
+    public boolean shouldTrace() {
+        return emitsLight() && intensity > 0;
+    }
+
+    @Override
     public Vector3f getLightPos() {
         BlockPos emission = getEmissionBlock();
         if (emission != null) {
@@ -60,10 +69,30 @@ public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity
     }
 
     @Override
+    public int getRawDimmer() {
+        return intensity;
+    }
+
+    @Override
+    public int getStrobeChannelValue() {
+        return strobe;
+    }
+
+    @Override
+    public long getStrobeGameTime() {
+        return getGameTimeForStrobe();
+    }
+
+    @Override
+    public float getRenderedIntensity(float partialTick) {
+        return DmxStrobeFixture.super.getRenderedIntensity(partialTick);
+    }
+
+    @Override
     public int getPrevIntensity() {
         return (int) DmxShutterStrobeHelper.computeEffectiveIntensity(
                 prevIntensity,
-                prevFocus,
+                prevStrobe,
                 Math.max(0L, getGameTimeForStrobe() - 1)
         );
     }
@@ -95,6 +124,51 @@ public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity
         if (level != null) {
             level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
+    }
+
+    @Override
+    public int getSyncStrobe() {
+        return strobe;
+    }
+
+    @Override
+    public int getSyncPrevStrobe() {
+        return prevStrobe;
+    }
+
+    @Override
+    public void setSyncStrobe(int value) {
+        strobe = value;
+        focus = value;
+    }
+
+    @Override
+    public void setSyncPrevStrobe(int value) {
+        prevStrobe = value;
+    }
+
+    @Override
+    public BlockPos getSyncBlockPos() {
+        return getBlockPos();
+    }
+
+    @Override
+    public Level getSyncLevel() {
+        return level;
+    }
+
+    @Override
+    public void applyDmxFrameBase(int intensity, int red, int green, int blue,
+                                  int prevIntensity, int prevRed, int prevGreen, int prevBlue) {
+        super.applyDmxFrameBase(intensity, red, green, blue, prevIntensity, prevRed, prevGreen, prevBlue);
+        markStrobeFrameApplied();
+    }
+
+    @Override
+    public void applyDmxFramePanTiltFocus(int pan, int tilt, int focusValue,
+                                          int prevPan, int prevTilt, int prevFocusValue) {
+        super.applyDmxFramePanTiltFocus(pan, tilt, focusValue, prevPan, prevTilt, prevFocusValue);
+        markStrobeFrameApplied();
     }
 
     @Override
@@ -155,8 +229,12 @@ public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity
     @Override
     public void lightTick() {
         super.lightTick();
-        if (level != null && level.isClientSide && DmxShutterStrobeHelper.isStrobing(strobe)) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        if (level != null && level.isClientSide) {
+            prevStrobe = strobe;
+            if (shouldForceStrobeRepaint()) {
+                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+                StrobeRenderHelper.markSectionDirty(getBlockPos());
+            }
         }
     }
 

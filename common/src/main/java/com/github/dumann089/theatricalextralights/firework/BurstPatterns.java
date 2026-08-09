@@ -44,6 +44,24 @@ public final class BurstPatterns {
                 color, scale, lifetime, 0.0f, 0.95f, trail, false));
     }
 
+    /**
+     * Perles de chase pyro — restent quasi fixes dans le monde pendant que la tête avance.
+     */
+    private static void emitChaseBead(FireworkRocketEntity rocket, RandomSource random, int color,
+                                      float scale, int lifetime, double lagBlocks) {
+        Vec3 motion = rocket.getDeltaMovement();
+        Vec3 back = motion.lengthSqr() > 1.0E-6 ? motion.normalize() : new Vec3(0.0, -1.0, 0.0);
+        double jitter = 0.04;
+        double lag = lagBlocks + random.nextDouble() * 0.35;
+        double px = rocket.getX() - back.x * lag + (random.nextDouble() - 0.5) * jitter;
+        double py = rocket.getY() - back.y * lag + (random.nextDouble() - 0.5) * jitter * 0.45;
+        double pz = rocket.getZ() - back.z * lag + (random.nextDouble() - 0.5) * jitter;
+        rocket.addSpark(new Spark(
+                px, py, pz,
+                -back.x * 0.006, -back.y * 0.004, -back.z * 0.006,
+                color, scale, lifetime, 0.0012f, 0.993f, true, false));
+    }
+
     /** Thick colored smoke puff left in the flight trail — turbulence + slow fall. */
     private static void emitDaytimeTrailPuff(FireworkRocketEntity rocket, RandomSource random, int color) {
         Vec3 motion = rocket.getDeltaMovement();
@@ -1488,8 +1506,11 @@ public final class BurstPatterns {
     public static class Comet extends BurstPattern {
         @Override public boolean isBurst() { return false; }
         @Override public int getBurstDuration() { return 0; }
-        @Override public int getCometFadeTicks() { return 7; }
+        @Override public int getCometFadeTicks() { return 12; }
         @Override public int getFlightLifetime() { return FLIGHT_LIFETIME; }
+        @Override public int getServerHoldTicks() {
+            return 88 + getCometFadeTicks() + 16;
+        }
         @Override public float getFlightLightSpread() { return 32.0f; }
         @Override public float getFlightHaloInnerSize() { return 1.7f; }
         @Override public float getFlightHaloOuterSize() { return 2.55f; }
@@ -1498,7 +1519,7 @@ public final class BurstPatterns {
         @Override
         public void onFlightTick(FireworkRocketEntity rocket, RandomSource random) {
             int color = rocket.getLaunchColor();
-            emitFlightTrail(rocket, random, color, 0.50f, 12, true);
+            emitFlightTrail(rocket, random, color, 0.50f, 16, true);
         }
 
         @Override
@@ -1516,6 +1537,69 @@ public final class BurstPatterns {
             double vz = motion.z + (random.nextDouble() - 0.5) * scatter;
             rocket.addSpark(new Spark(rocket.getX(), rocket.getY(), rocket.getZ(),
                     vx, vy, vz, color, 0.30f + random.nextFloat() * 0.12f, 14, 0.006f, 0.97f, true, false));
+        }
+    }
+
+    /**
+     * Comet for the 10-tube pyro fan — longer server life and denser trail so outer
+     * tubes stay visible as high as the center ones.
+     */
+    public static class PyroFanComet extends Comet {
+        private static final int FAN_FLIGHT_LIFETIME = 200;
+        private static final double FADE_DESCENT_BLOCKS = 6.0;
+
+        @Override public int getCometFadeTicks() { return 64; }
+        @Override public int getCometEmberTicks() { return 88; }
+        @Override public int getFlightLifetime() { return FAN_FLIGHT_LIFETIME; }
+        /** Tubes latéraux ont une composante horizontale — ne pas couper au premier vy <= 0. */
+        @Override public boolean continuesAfterApex() { return true; }
+        @Override public double getFadeDescentBlocks() { return FADE_DESCENT_BLOCKS; }
+        @Override public int getServerHoldTicks() {
+            return getFlightLifetime() + getCometFadeTicks() + getCometEmberTicks() + 32;
+        }
+        @Override public float getLaunchSpeedMultiplier() { return 1.12f; }
+        @Override public float getFlightLightSpread() { return 42.0f; }
+        @Override public float getFlightHaloInnerSize() { return 2.4f; }
+        @Override public float getFlightHaloOuterSize() { return 3.6f; }
+        @Override public double getGravity() { return 0.022; }
+
+        @Override
+        public void onFlightTick(FireworkRocketEntity rocket, RandomSource random) {
+            int color = rocket.getLaunchColor();
+            emitFlightTrail(rocket, random, color, 0.58f, 28, true);
+            emitFlightTrail(rocket, random, color, 0.48f, 22, true);
+            emitChaseBead(rocket, random, color, 0.36f, 52, 0.45);
+            emitChaseBead(rocket, random, color, 0.30f, 46, 0.95);
+            if (random.nextFloat() < 0.6f) {
+                emitChaseBead(rocket, random, color, 0.24f, 40, 1.55);
+            }
+        }
+
+        @Override
+        public void onFadeTick(FireworkRocketEntity rocket, RandomSource random, int remainingTicks) {
+            int color = rocket.getLaunchColor();
+            int fadeTicks = getCometFadeTicks();
+            int emberTicks = getCometEmberTicks();
+
+            if (remainingTicks > 0) {
+                float fade = remainingTicks / (float) Math.max(1, fadeTicks);
+                emitFlightTrail(rocket, random, color, 0.36f * fade, 24, true);
+                emitChaseBead(rocket, random, color, 0.28f * fade, 50, 0.35 + (1.0f - fade) * 0.8);
+                emitChaseBead(rocket, random, color, 0.22f * fade, 44, 0.85 + (1.0f - fade) * 1.2);
+                if (random.nextFloat() < fade * 0.5f) {
+                    emitChaseBead(rocket, random, color, 0.18f * fade, 38, 1.45 + (1.0f - fade) * 1.6);
+                }
+                return;
+            }
+
+            if (emberTicks <= 0 || remainingTicks <= -emberTicks) {
+                return;
+            }
+            float ember = (remainingTicks + emberTicks) / (float) emberTicks;
+            emitChaseBead(rocket, random, color, 0.16f * ember, 36, 0.25);
+            if (random.nextFloat() < ember * 0.35f) {
+                emitChaseBead(rocket, random, color, 0.12f * ember, 32, 0.65);
+            }
         }
     }
 

@@ -3,6 +3,7 @@ package com.github.dumann089.theatricalextralights.client.entities;
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
 import com.github.dumann089.theatricalextralights.entities.FireworkRocketEntity;
 import com.github.dumann089.theatricalextralights.firework.BurstPattern;
+import com.github.dumann089.theatricalextralights.firework.FireworkRenderDistances;
 import com.github.dumann089.theatricalextralights.firework.Spark;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -13,6 +14,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
@@ -56,18 +58,20 @@ public class FireworkRocketRenderer extends EntityRenderer<FireworkRocketEntity>
         float alpha;
 
         if (entity.isFading()) {
-            int fadeMax = pattern.getCometFadeTicks();
-            float fade = fadeMax > 0 ? Mth.clamp((entity.getFadeTicks() - partialTick) / fadeMax, 0.0f, 1.0f) : 0.0f;
-            innerSize = pattern.getFlightHaloInnerSize() * (0.55f + 0.45f * fade);
-            outerSize = pattern.getFlightHaloOuterSize() * (0.45f + 0.55f * fade);
-            alpha = 0.95f * fade * fade;
-            if (alpha <= 0.001f) {
+            float strength = entity.getCometVisualStrength(partialTick);
+            if (strength <= 0.001f) {
                 return;
             }
+            innerSize = pattern.getFlightHaloInnerSize() * (0.35f + 0.65f * strength);
+            outerSize = pattern.getFlightHaloOuterSize() * (0.30f + 0.70f * strength);
+            alpha = 0.95f * strength;
             poseStack.pushPose();
             faceCamera(poseStack);
-            renderHaloQuad(poseStack, consumer, color, alpha * 0.55f, outerSize);
-            renderHaloQuad(poseStack, consumer, color, alpha, innerSize);
+            renderHaloQuad(poseStack, consumer, color, alpha * 0.45f, outerSize);
+            renderHaloQuad(poseStack, consumer, color, alpha * 0.75f, innerSize);
+            if (strength > 0.08f) {
+                renderHaloQuad(poseStack, consumer, 0xFFFFFF, alpha * 0.35f, innerSize * 0.45f);
+            }
             poseStack.popPose();
             return;
         }
@@ -135,17 +139,19 @@ public class FireworkRocketRenderer extends EntityRenderer<FireworkRocketEntity>
     }
 
     private void renderSparks(FireworkRocketEntity entity, BurstPattern pattern, Vec3 entityPos, float partialTick, PoseStack poseStack, VertexConsumer consumer) {
-        double maxRenderDistSq = 160.0 * 160.0;
+        Vec3 cameraPos = this.entityRenderDispatcher.camera.getPosition();
+        double maxRenderDistSq = FireworkRenderDistances.clientSparkRangeSq();
+        float trailDim = entity.isFading() ? entity.getCometVisualStrength(partialTick) : 1.0f;
         for (Spark spark : entity.getSparks()) {
-            float alpha = spark.getAlpha(partialTick);
+            float alpha = spark.getAlpha(partialTick) * trailDim;
             if (alpha <= 0.0f) {
                 continue;
             }
             Vec3 worldPos = spark.getPosition(partialTick);
-            Vec3 offset = worldPos.subtract(entityPos);
-            if (offset.lengthSqr() > maxRenderDistSq) {
+            if (worldPos.distanceToSqr(cameraPos) > maxRenderDistSq) {
                 continue;
             }
+            Vec3 offset = worldPos.subtract(entityPos);
             float scale = spark.getScale(partialTick);
 
             poseStack.pushPose();
@@ -170,6 +176,14 @@ public class FireworkRocketRenderer extends EntityRenderer<FireworkRocketEntity>
     @Override
     public ResourceLocation getTextureLocation(FireworkRocketEntity entity) {
         return LENS_TEXTURE;
+    }
+
+    @Override
+    public boolean shouldRender(FireworkRocketEntity entity, Frustum frustum, double camX, double camY, double camZ) {
+        if (super.shouldRender(entity, frustum, camX, camY, camZ)) {
+            return true;
+        }
+        return frustum.isVisible(entity.getBoundingBoxForCulling());
     }
 
     private static void renderPowderCloud(PoseStack poseStack, VertexConsumer consumer, int color, float alpha, float scale) {

@@ -7,6 +7,24 @@
       "theatricalextralights:confetti_cannon_pop_2"
     ]
   },
+  "block.flame_thrower.loop": {
+    "sounds": [
+      {
+        "name": "theatricalextralights:flame_thrower.loop",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "block.flow2jet.loop": {
+    "subtitle": "subtitles.theatricalextralights.block.flow2jet.loop",
+    "sounds": [
+      {
+        "name": "theatricalextralights:block/co2",
+        "volume": 0.12,
+        "attenuation_distance": 12
+      }
+    ]
+  },
   "mortar_hit_shot": {
     "sounds": [
       "theatricalextralights:mortar_hit_shot"

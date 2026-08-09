@@ -79,6 +79,7 @@ public class FollowspotConsoleControlPacket {
             }
             console.setControlState(intensity, red, green, blue, focus, pan, tilt);
             console.applyToLinkedFixture(player.level());
+            console.syncToClients();
         });
     }
 }

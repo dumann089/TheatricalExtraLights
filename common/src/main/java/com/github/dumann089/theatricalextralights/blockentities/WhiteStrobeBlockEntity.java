@@ -2,6 +2,9 @@ package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.blocks.WhiteStrobeBlock;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
+import com.github.dumann089.theatricalextralights.util.DmxShutterStrobeHelper;
+import com.github.dumann089.theatricalextralights.util.DmxStrobeFixture;
+import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import dev.imabad.theatrical.api.Fixture;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -12,15 +15,51 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
 
-public class WhiteStrobeBlockEntity extends ExtraLightsLightBlockEntity {
+public class WhiteStrobeBlockEntity extends ExtraLightsLightBlockEntity implements DmxStrobeFixture {
 
     public WhiteStrobeBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.WHITE_STROBE.get(), pos, state);
         setChannelCount(1);
     }
 
-    private int strobeTick = 0;
-    private boolean strobeOn = false;
+    private long getStrobeGameTimeInternal() {
+        return level != null ? level.getGameTime() : 0L;
+    }
+
+    @Override
+    public int getRawDimmer() {
+        return 255;
+    }
+
+    @Override
+    public int getStrobeChannelValue() {
+        return intensity;
+    }
+
+    @Override
+    public long getStrobeGameTime() {
+        return getStrobeGameTimeInternal();
+    }
+
+    @Override
+    public float getIntensity() {
+        return DmxShutterStrobeHelper.computeEffectiveIntensity(255, intensity, getStrobeGameTimeInternal());
+    }
+
+    @Override
+    public int getPrevIntensity() {
+        return (int) DmxShutterStrobeHelper.computeEffectiveIntensity(
+                255, prevIntensity, Math.max(0L, getStrobeGameTimeInternal() - 1));
+    }
+
+    @Override
+    public void lightTick() {
+        super.lightTick();
+        if (level != null && level.isClientSide && shouldForceStrobeRepaint()) {
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            StrobeRenderHelper.markSectionDirty(getBlockPos());
+        }
+    }
 
     @Override
     public Fixture getFixture() {

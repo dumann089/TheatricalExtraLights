@@ -1,5 +1,6 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasExtendedBeamChannels;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasPersonality;
 import com.github.dumann089.theatricalextralights.blocks.MovingVL2CBlock;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
@@ -17,7 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.Arrays;
 import java.util.List;
 
-public class MovingVL2CBlockEntity extends ExtraLightsLightBlockEntity implements HasPersonality {
+public class MovingVL2CBlockEntity extends ExtraLightsLightBlockEntity implements HasPersonality, HasExtendedBeamChannels {
 
     private int activePersonalityIndex = 0;
 

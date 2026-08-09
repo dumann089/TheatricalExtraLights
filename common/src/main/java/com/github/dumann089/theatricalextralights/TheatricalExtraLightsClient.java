@@ -3,6 +3,7 @@ package com.github.dumann089.theatricalextralights;
 import com.github.dumann089.theatricalextralights.blockentities.BlockEntities;
 import com.github.dumann089.theatricalextralights.client.ConfettiBurstClient;
 import com.github.dumann089.theatricalextralights.client.ModKeybinds;
+import com.github.dumann089.theatricalextralights.client.firework.DetachedPyroSparks;
 import com.github.dumann089.theatricalextralights.client.firework.FireworkSmokeEffects;
 import com.github.dumann089.theatricalextralights.client.ExtraLightsClientScreens;
 import com.github.dumann089.theatricalextralights.client.ModParticleClient;
@@ -130,6 +131,7 @@ public class TheatricalExtraLightsClient {
         BlockEntityRendererRegistry.register(BlockEntities.PARSCROLLER.get(), ParScrollerRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.BLINDER2X2.get(), Blinder2x2Renderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.BLINDER2X2WARM.get(), Blinder2x2warmRenderer::new);
+        BlockEntityRendererRegistry.register(BlockEntities.BLINDER1X1.get(), Blinder1x1Renderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MINI_BAR.get(), MiniBarRenderer::new);
 
         BlockEntityRendererRegistry.register(BlockEntities.MOVING_VL2C_BEAMS.get(), MovingVL2CBeamsRenderer::new);
@@ -149,6 +151,8 @@ public class TheatricalExtraLightsClient {
 
         BlockEntityRendererRegistry.register(BlockEntities.CONFETTI_CANNON.get(), ConfettiCannonRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.FLAME_PROJECTOR.get(), ctx -> new StaticFixtureRenderer<>(ctx));
+        BlockEntityRendererRegistry.register(BlockEntities.FLAME_THROWER.get(), FlameThrowerRenderer::new);
+        BlockEntityRendererRegistry.register(BlockEntities.FLOW2JET.get(), Flow2JetRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.GERB_GOLD.get(), ctx -> new StaticFixtureRenderer<>(ctx));
         BlockEntityRendererRegistry.register(BlockEntities.PYRO_FAN.get(), ctx -> new StaticFixtureRenderer<>(ctx));
 
@@ -158,6 +162,7 @@ public class TheatricalExtraLightsClient {
 
         ClientTickEvent.CLIENT_POST.register(client -> {
             ConfettiBurstClient.tick();
+            DetachedPyroSparks.tick();
             if (client.level != null) {
                 FireworkSmokeEffects.beginClientTick(client.level.getGameTime());
             }

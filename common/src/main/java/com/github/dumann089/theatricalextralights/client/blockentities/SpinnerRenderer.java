@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.SpinnerBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.blockentities.SpinnerBlockEntity;
 import com.github.dumann089.theatricalextralights.client.particle.JetVariant;
 import com.github.dumann089.theatricalextralights.client.particle.WaterJetParticleOptions;
@@ -138,6 +139,7 @@ public class SpinnerRenderer extends ExtraLightsRenderer<SpinnerBlockEntity> {
         @Override
     public void preparePoseStack(SpinnerBlockEntity blockEntity, PoseStack poseStack, Direction facing,
                                  float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);

@@ -1,0 +1,8 @@
+{
+  "parent": "theatricalextralights:block/flame_thrower_body",
+  "textures": {
+    "0": "theatricalextralights:block/flame_thrower",
+    "particle": "theatricalextralights:block/flame_thrower"
+  },
+  "render_type": "cutout"
+}

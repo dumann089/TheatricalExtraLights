@@ -2,13 +2,15 @@ package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.TheatricalExtraLights;
 import com.github.dumann089.theatricalextralights.blocks.LaserBlock;
+import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import com.github.dumann089.theatricalextralights.laser.LaserPattern;
 import dev.imabad.theatrical.api.Fixture;
-import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
+import com.github.dumann089.theatricalextralights.compat.dmx.DmxFrameExtendedFixture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -18,7 +20,7 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
 
-public class LaserBlockEntity extends ExtraLightsLightBlockEntity {
+public class LaserBlockEntity extends ExtraLightsLightBlockEntity implements DmxFrameExtendedFixture {
     public static final int CHANNEL_COUNT = 19;
 
     // Secondary/tertiary RGB
@@ -69,27 +71,28 @@ public class LaserBlockEntity extends ExtraLightsLightBlockEntity {
         }
         boolean prevAdvanced = beginDmxUpdate();
         int _pi = intensity, _pr = red, _pg = green, _pb = blue, _pf = focus, _pp = pan, _pt = tilt;
+        int _pr2 = red2, _pg2 = green2, _pb2 = blue2, _pr3 = red3, _pg3 = green3, _pb3 = blue3;
+        int _pattern = pattern, _size = size, _amp = amplitude, _speed = speed, _rot = rotation, _persist = persistence;
 
-                intensity = u(v[0]);
-        red       = u(v[1]);
-        green     = u(v[2]);
-        blue      = u(v[3]);
-        red2      = u(v[4]);
-        green2    = u(v[5]);
-        blue2     = u(v[6]);
-        red3      = u(v[7]);
-        green3    = u(v[8]);
-        blue3     = u(v[9]);
-        pattern   = u(v[10]);
-        size      = u(v[11]);
+        intensity = u(v[0]);
+        red = u(v[1]);
+        green = u(v[2]);
+        blue = u(v[3]);
+        red2 = u(v[4]);
+        green2 = u(v[5]);
+        blue2 = u(v[6]);
+        red3 = u(v[7]);
+        green3 = u(v[8]);
+        blue3 = u(v[9]);
+        pattern = u(v[10]);
+        size = u(v[11]);
         amplitude = u(v[12]);
-        speed     = u(v[13]);
-        rotation  = u(v[14]);
-        pan       = (int) ((u(v[15]) * 160) / 255f) - 80;
-        tilt      = -(int) ((u(v[16]) - 127) * 45) / 127;
-        focus     = u(v[17]);
+        speed = u(v[13]);
+        rotation = u(v[14]);
+        pan = (int) ((u(v[15]) * 160) / 255f) - 80;
+        tilt = -(int) ((u(v[16]) - 127) * 45) / 127;
+        focus = u(v[17]);
         persistence = u(v[18]);
-        // DEBUG: log first 5 consume() calls regardless of values, so we can see if it's being invoked
         if (consumeLogCounter < 5) {
             consumeLogCounter++;
             TheatricalExtraLights.LOGGER.info(
@@ -97,10 +100,73 @@ public class LaserBlockEntity extends ExtraLightsLightBlockEntity {
                     getBlockPos(), consumeLogCounter, intensity, pattern, size, amplitude, pan, tilt,
                     getChannelCount(), getChannelStart(), v.length);
         }
-        if (level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        boolean changed = intensity != _pi || red != _pr || green != _pg || blue != _pb || focus != _pf
+                || pan != _pp || tilt != _pt
+                || red2 != _pr2 || green2 != _pg2 || blue2 != _pb2
+                || red3 != _pr3 || green3 != _pg3 || blue3 != _pb3
+                || pattern != _pattern || size != _size || amplitude != _amp || speed != _speed
+                || rotation != _rot || persistence != _persist;
+        finishDmxUpdate(changed, prevAdvanced);
+    }
+
+    @Override
+    public byte dmxFrameExtraType() {
+        return EXTRA_TYPE_LASER;
+    }
+
+    /** 12 bytes: pattern params (6) + secondary/tertiary RGB (6). */
+    @Override
+    public void writeDmxFrameExtras(FriendlyByteBuf buf) {
+        buf.writeByte(pattern);
+        buf.writeByte(size);
+        buf.writeByte(amplitude);
+        buf.writeByte(speed);
+        buf.writeByte(rotation);
+        buf.writeByte(persistence);
+        buf.writeByte(red2);
+        buf.writeByte(green2);
+        buf.writeByte(blue2);
+        buf.writeByte(red3);
+        buf.writeByte(green3);
+        buf.writeByte(blue3);
+    }
+
+    @Override
+    public void applyDmxFrameExtras(FriendlyByteBuf buf) {
+        pattern = buf.readUnsignedByte();
+        size = buf.readUnsignedByte();
+        amplitude = buf.readUnsignedByte();
+        speed = buf.readUnsignedByte();
+        rotation = buf.readUnsignedByte();
+        persistence = buf.readUnsignedByte();
+        red2 = buf.readUnsignedByte();
+        green2 = buf.readUnsignedByte();
+        blue2 = buf.readUnsignedByte();
+        red3 = buf.readUnsignedByte();
+        green3 = buf.readUnsignedByte();
+        blue3 = buf.readUnsignedByte();
+        markClientBeamDirty();
+    }
+
+    @Override
+    public void applyDmxFrameBase(int intensity, int red, int green, int blue,
+                                  int prevIntensity, int prevRed, int prevGreen, int prevBlue) {
+        super.applyDmxFrameBase(intensity, red, green, blue, prevIntensity, prevRed, prevGreen, prevBlue);
+        markClientBeamDirty();
+    }
+
+    @Override
+    public void applyDmxFramePanTiltFocus(int pan, int tilt, int focus,
+                                          int prevPan, int prevTilt, int prevFocus) {
+        super.applyDmxFramePanTiltFocus(pan, tilt, focus, prevPan, prevTilt, prevFocus);
+        markClientBeamDirty();
+    }
+
+    /** Batch DMX does not trigger block entity packets — force Sodium to re-run lazy beam render. */
+    private void markClientBeamDirty() {
+        if (level != null && level.isClientSide) {
+            StrobeRenderHelper.markSectionDirty(getBlockPos());
         }
-        setChanged();
     }
 
     @Override
@@ -192,6 +258,11 @@ public class LaserBlockEntity extends ExtraLightsLightBlockEntity {
 
     private static int u(byte b) {
         return Byte.toUnsignedInt(b);
+    }
+
+    @Override
+    protected boolean needsContinuousClientRender() {
+        return intensity > 0 || speed > 0;
     }
 
     // ----- Getters used by the renderer -----

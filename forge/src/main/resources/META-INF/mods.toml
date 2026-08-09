@@ -40,3 +40,6 @@ mandatory = true
 versionRange = "[1.0.0-alpha.23,)"
 ordering = "AFTER"
 side = "BOTH"
+
+[[mixins]]
+config = "theatricalextralights-common.mixins.json"

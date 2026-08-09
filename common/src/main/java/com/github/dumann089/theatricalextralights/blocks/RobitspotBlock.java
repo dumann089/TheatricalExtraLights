@@ -5,10 +5,8 @@ import com.github.dumann089.theatricalextralights.blockentities.BlockEntities;
 import com.github.dumann089.theatricalextralights.blockentities.RobitspotBlockEntity;
 import com.github.dumann089.theatricalextralights.net.OpenExtraLightsScreenPacket;
 import dev.imabad.theatrical.TheatricalClient;
-import dev.imabad.theatrical.TheatricalScreen;
 import dev.imabad.theatrical.blocks.Blocks;
 import com.github.dumann089.theatricalextralights.blocks.ExtraLightsLightBlock;
-import dev.imabad.theatrical.net.OpenScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -105,7 +103,7 @@ public class RobitspotBlock extends ExtraLightsLightBlock {
                 return InteractionResult.SUCCESS;
             }
             if (!level.isClientSide) {
-                new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.CHANNEL_MENU)
+                new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.CHANNEL_PANTILT)
                         .sendTo((ServerPlayer) player);
             }
         }

@@ -33,13 +33,13 @@ public class PyroFanBlockEntity extends ExtraLightsLightBlockEntity implements H
     /** Demi-largeur physique des tubes sur l'axe latéral (blocs). */
     private static final double FAN_LINE_HALF_WIDTH = 0.85;
     /** Largeur du fan dans le plan vertical (haut + gauche/droite, sans avancer). */
-    private static final float FAN_LATERAL_SPREAD = 1.35f;
+    private static final float FAN_LATERAL_SPREAD = 1.12f;
     /** Composante verticale commune — même inclinaison de base pour tous. */
-    private static final float FAN_UP_STRENGTH = 1.0f;
+    private static final float FAN_UP_STRENGTH = 1.32f;
     private static final float BASE_LAUNCH_SPEED = 1.68f;
     private static final float MIN_SHOTS_PER_SECOND = 0.5f;
     private static final float MAX_SHOTS_PER_SECOND = 6.0f;
-    private static final int MAX_LAUNCHES_PER_TICK = 6;
+    private static final int MAX_LAUNCHES_PER_TICK = TUBE_COUNT;
     private static final float MAX_ACCUMULATOR = 8.0f;
     private static final double TUBE_BASE_HEIGHT = 4.0 / 16.0;
 
@@ -145,7 +145,7 @@ public class PyroFanBlockEntity extends ExtraLightsLightBlockEntity implements H
 
         Vec3 spawn = getTubeLaunchPosition(tubeIndex);
         Vec3 velocity = getTubeLaunchVelocity(tubeIndex, serverLevel.random);
-        FireworkRocketEntity rocket = new FireworkRocketEntity(serverLevel, FireworkPreset.GOLD_COMET, worldPosition);
+        FireworkRocketEntity rocket = new FireworkRocketEntity(serverLevel, FireworkPreset.PYRO_FAN_COMET, worldPosition);
         rocket.moveTo(spawn.x, spawn.y, spawn.z, 0.0f, 0.0f);
         rocket.setDeltaMovement(velocity);
         if (!serverLevel.addFreshEntity(rocket)) {
@@ -225,7 +225,7 @@ public class PyroFanBlockEntity extends ExtraLightsLightBlockEntity implements H
     private float launchSpeed() {
         return BASE_LAUNCH_SPEED
                 * getLaunchPowerMultiplier()
-                * FireworkPreset.GOLD_COMET.getPattern().getLaunchSpeedMultiplier();
+                * FireworkPreset.PYRO_FAN_COMET.getPattern().getLaunchSpeedMultiplier();
     }
 
     private Vec3 getTubeLaunchPosition(int tubeIndex) {
@@ -304,9 +304,9 @@ public class PyroFanBlockEntity extends ExtraLightsLightBlockEntity implements H
             tilt = 0;
             focus = 255;
         }
-        red = (FireworkPreset.GOLD_COMET.getLaunchColor() >> 16) & 0xFF;
-        green = (FireworkPreset.GOLD_COMET.getLaunchColor() >> 8) & 0xFF;
-        blue = FireworkPreset.GOLD_COMET.getLaunchColor() & 0xFF;
+        red = (FireworkPreset.PYRO_FAN_COMET.getLaunchColor() >> 16) & 0xFF;
+        green = (FireworkPreset.PYRO_FAN_COMET.getLaunchColor() >> 8) & 0xFF;
+        blue = FireworkPreset.PYRO_FAN_COMET.getLaunchColor() & 0xFF;
 
         if (level instanceof ServerLevel serverLevel) {
             processLaunches(serverLevel);

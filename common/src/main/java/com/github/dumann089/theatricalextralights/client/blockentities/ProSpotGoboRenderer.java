@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.ProSpotGoboBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.blockentities.ProSpotGoboBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.ProSpotGoboBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.ProSpotGoboBlockEntity;
@@ -365,6 +366,7 @@ public class ProSpotGoboRenderer extends ExtraLightsFixtureRenderer<ProSpotGoboB
 
     @Override
     public void preparePoseStack(ProSpotGoboBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);

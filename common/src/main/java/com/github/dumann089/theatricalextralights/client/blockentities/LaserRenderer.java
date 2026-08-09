@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.TheatricalExtraLights;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.blockentities.LaserBlockEntity;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.github.dumann089.theatricalextralights.laser.LaserBeam;
@@ -567,6 +568,7 @@ public class LaserRenderer extends ExtraLightsRenderer<LaserBlockEntity> {
 
     @Override
     public void preparePoseStack(LaserBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if (isHanging) {
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);

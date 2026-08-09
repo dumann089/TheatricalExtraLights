@@ -24,7 +24,9 @@
       "com.github.dumann089.theatricalextralights.fabric.TheatricalExtraLightsClientFabric"
     ]
   },
-  "mixins": [],
+  "mixins": [
+    "theatricalextralights-common.mixins.json"
+  ],
   "depends": {
     "fabric": "*",
     "minecraft": ">=1.20.1",

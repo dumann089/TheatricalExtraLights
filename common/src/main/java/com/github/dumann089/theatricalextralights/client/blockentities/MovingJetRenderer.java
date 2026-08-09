@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.MovingJetBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.blockentities.MovingJetBlockEntity;
 import com.github.dumann089.theatricalextralights.client.particle.JetVariant;
 import com.github.dumann089.theatricalextralights.client.particle.WaterJetParticleOptions;
@@ -104,6 +105,7 @@ public class MovingJetRenderer extends ExtraLightsRenderer<MovingJetBlockEntity>
     }
         @Override
     public void preparePoseStack(MovingJetBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         //#region Fixture Hanging
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){

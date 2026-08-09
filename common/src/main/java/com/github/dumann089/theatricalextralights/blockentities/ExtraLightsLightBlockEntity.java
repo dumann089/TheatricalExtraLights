@@ -1,9 +1,16 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasExtendedBeamChannels;
+import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.util.FollowspotDmxHelper;
+import com.github.dumann089.theatricalextralights.util.TheatricalDmxFrameBridge;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -14,8 +21,96 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBlockEntity {
 
+    private float mountOffsetX;
+    private float mountOffsetY;
+    private float mountOffsetZ;
+    private float mountYaw;
+    private float mountPitch;
+    private float mountRoll;
+
     protected ExtraLightsLightBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+    }
+
+    public float getMountOffsetX() {
+        return mountOffsetX;
+    }
+
+    public float getMountOffsetY() {
+        return mountOffsetY;
+    }
+
+    public float getMountOffsetZ() {
+        return mountOffsetZ;
+    }
+
+    public float getMountYaw() {
+        return mountYaw;
+    }
+
+    public float getMountPitch() {
+        return mountPitch;
+    }
+
+    public float getMountRoll() {
+        return mountRoll;
+    }
+
+    public boolean hasMountTransform() {
+        return mountOffsetX != 0.0F
+                || mountOffsetY != 0.0F
+                || mountOffsetZ != 0.0F
+                || mountYaw != 0.0F
+                || mountPitch != 0.0F
+                || mountRoll != 0.0F;
+    }
+
+    public void setMountTransform(float offsetX, float offsetY, float offsetZ,
+                                  float yaw, float pitch, float roll) {
+        mountOffsetX = FixtureMountTransform.clampOffset(offsetX);
+        mountOffsetY = FixtureMountTransform.clampOffset(offsetY);
+        mountOffsetZ = FixtureMountTransform.clampOffset(offsetZ);
+        mountYaw = FixtureMountTransform.clampAngle(yaw);
+        mountPitch = FixtureMountTransform.clampAngle(pitch);
+        mountRoll = FixtureMountTransform.clampAngle(roll);
+    }
+
+    public void resetMountTransform() {
+        setMountTransform(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+    }
+
+    public void syncMountTransformToClients() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        setChanged();
+        level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
+
+    private void writeMountTransform(CompoundTag tag) {
+        if (hasMountTransform()) {
+            tag.putFloat("MountOffsetX", mountOffsetX);
+            tag.putFloat("MountOffsetY", mountOffsetY);
+            tag.putFloat("MountOffsetZ", mountOffsetZ);
+            tag.putFloat("MountYaw", mountYaw);
+            tag.putFloat("MountPitch", mountPitch);
+            tag.putFloat("MountRoll", mountRoll);
+        }
+    }
+
+    private void readMountTransform(CompoundTag tag) {
+        mountOffsetX = tag.contains("MountOffsetX") ? tag.getFloat("MountOffsetX")
+                : tag.contains("mountOffsetX") ? tag.getFloat("mountOffsetX") : 0.0F;
+        mountOffsetY = tag.contains("MountOffsetY") ? tag.getFloat("MountOffsetY")
+                : tag.contains("mountOffsetY") ? tag.getFloat("mountOffsetY") : 0.0F;
+        mountOffsetZ = tag.contains("MountOffsetZ") ? tag.getFloat("MountOffsetZ")
+                : tag.contains("mountOffsetZ") ? tag.getFloat("mountOffsetZ") : 0.0F;
+        mountYaw = tag.contains("MountYaw") ? tag.getFloat("MountYaw")
+                : tag.contains("mountYaw") ? tag.getFloat("mountYaw") : 0.0F;
+        mountPitch = tag.contains("MountPitch") ? tag.getFloat("MountPitch")
+                : tag.contains("mountPitch") ? tag.getFloat("mountPitch") : 0.0F;
+        mountRoll = tag.contains("MountRoll") ? tag.getFloat("MountRoll")
+                : tag.contains("mountRoll") ? tag.getFloat("mountRoll") : 0.0F;
     }
 
     /** Capture les prev* serveur avant lecture DMX. Retourne true si prev* étaient en retard. */
@@ -24,15 +119,28 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
     }
 
     /**
+     * DMX channels beyond the standard 7 (e.g. prism / gobo on 10ch personalities) are not
+     * included in Theatrical's batched DmxFrame payload — force a block-entity sync so the
+     * client renderer sees prism beam count, zoom, and rotation.
+     */
+    protected boolean hasExtraDmxChannelsBeyondBatch() {
+        return getChannelCount() > 7;
+    }
+
+    /**
      * Sync client si valeurs changées OU si prev* serveur ont rattrapé (pattern Theatrical).
-     * {@code setChanged()} seulement quand les valeurs DMX ont changé.
+     * Utilise le batch DMXFrame si Theatrical récent est présent, sinon vanilla.
      */
     protected void finishDmxUpdate(boolean valuesChanged, boolean prevAdvanced) {
         if (level == null || level.isClientSide) {
             return;
         }
         if (valuesChanged || prevAdvanced) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            boolean batchQueued = !hasExtraDmxChannelsBeyondBatch()
+                    && TheatricalDmxFrameBridge.markDirtyIfBatchEnabled(getBlockPos());
+            if (!batchQueued) {
+                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            }
         }
         if (valuesChanged) {
             setChanged();
@@ -99,7 +207,55 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
             prevRed = red;
             prevGreen = green;
             prevBlue = blue;
+            if (needsContinuousClientRender()) {
+                StrobeRenderHelper.markSectionDirty(getBlockPos());
+            }
         }
+    }
+
+    /**
+     * Sodium met en cache le rendu des block entities — les faisceaux/lentilles passent
+     * par LazyRenderers depuis {@code beforeRenderBeam}, donc il faut invalider le chunk
+     * tant que la fixture est visuellement active.
+     */
+    protected boolean needsContinuousClientRender() {
+        if (intensity > 0) {
+            return true;
+        }
+        if (getChannelCount() > 7 && this instanceof HasExtendedBeamChannels ext) {
+            return ext.getGobo() > 0 || ext.getGoboSpin() > 0;
+        }
+        return false;
+    }
+
+    @Override
+    public void applyDmxFrameBase(int intensity, int red, int green, int blue,
+                                  int prevIntensity, int prevRed, int prevGreen, int prevBlue) {
+        super.applyDmxFrameBase(intensity, red, green, blue, prevIntensity, prevRed, prevGreen, prevBlue);
+        if (level != null && level.isClientSide) {
+            StrobeRenderHelper.markSectionDirty(getBlockPos());
+        }
+    }
+
+    @Override
+    public void applyDmxFramePanTiltFocus(int pan, int tilt, int focus,
+                                          int prevPan, int prevTilt, int prevFocus) {
+        super.applyDmxFramePanTiltFocus(pan, tilt, focus, prevPan, prevTilt, prevFocus);
+        if (level != null && level.isClientSide) {
+            StrobeRenderHelper.markSectionDirty(getBlockPos());
+        }
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = super.getUpdateTag();
+        writeMountTransform(tag);
+        return tag;
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
@@ -108,6 +264,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         tag.putInt("prevPan", prevPan);
         tag.putInt("prevTilt", prevTilt);
         tag.putInt("prevFocus", prevFocus);
+        writeMountTransform(tag);
     }
 
     @Override
@@ -157,5 +314,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         prevRed = savedPrevRed;
         prevGreen = savedPrevGreen;
         prevBlue = savedPrevBlue;
+
+        readMountTransform(tag);
     }
 }

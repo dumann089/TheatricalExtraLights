@@ -1,6 +1,8 @@
 package com.github.dumann089.theatricalextralights.firework;
 
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
+import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
+import com.github.dumann089.theatricalextralights.firework.FireworkRenderDistances;
 import com.github.dumann089.theatricalextralights.entities.FireworkRocketEntity;
 import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.resources.ResourceKey;
@@ -22,8 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class FireworkRocketTracker {
     private static final AABB WORLD_BOUNDS = new AABB(-3.0E7, -64, -3.0E7, 3.0E7, 320, 3.0E7);
     private static final int ABSOLUTE_MAX_TICKS = 420;
-    private static final double PLAYER_KEEP_RANGE = 160.0;
-    private static final double RECONCILE_RANGE = 192.0;
 
     private static final Map<ResourceKey<Level>, AtomicInteger> ACTIVE_COUNTS = new ConcurrentHashMap<>();
 
@@ -133,13 +133,7 @@ public final class FireworkRocketTracker {
     }
 
     public static boolean hasNearbyPlayer(ServerLevel level, FireworkRocketEntity rocket) {
-        AABB box = rocket.getBoundingBox().inflate(PLAYER_KEEP_RANGE);
-        for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, box)) {
-            if (!player.isSpectator() && !player.isDeadOrDying()) {
-                return true;
-            }
-        }
-        return false;
+        return FireworkRenderDistances.isPlayerNearFirework(level, rocket);
     }
 
     private static int getActiveCount(ServerLevel level) {
@@ -160,7 +154,8 @@ public final class FireworkRocketTracker {
         }
         AABB combined = null;
         for (ServerPlayer player : level.players()) {
-            AABB box = player.getBoundingBox().inflate(RECONCILE_RANGE);
+            double reconcile = FireworkRenderDistances.serverReconcileBlocks(level);
+            AABB box = player.getBoundingBox().inflate(reconcile);
             combined = combined == null ? box : combined.minmax(box);
         }
         return combined == null ? WORLD_BOUNDS : combined;

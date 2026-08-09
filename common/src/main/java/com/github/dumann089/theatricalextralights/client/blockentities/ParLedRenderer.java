@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.Blinder2x2BlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.blockentities.ParLedBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.RGBBarBlockEntity;
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
@@ -225,6 +226,7 @@ public class ParLedRenderer extends ExtraLightsRenderer<ParLedBlockEntity> {
 
     @Override
     public void preparePoseStack(ParLedBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);

@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.MovingScanBeamsBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.blockentities.MovingVL2CBeamsBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.VL6CGoboBlockEntity;
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
@@ -364,6 +365,7 @@ public class VL6CGoboRenderer extends ExtraLightsFixtureRenderer<VL6CGoboBlockEn
 
     @Override
     public void preparePoseStack(VL6CGoboBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);

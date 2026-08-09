@@ -473,6 +473,26 @@ public class FollowspotConsoleScreen extends Screen {
     }
 
     @Override
+    public void onClose() {
+        // Persist patch + last control values even if the player hits Cancel / Esc
+        if (minecraft != null && minecraft.level != null
+                && universeField != null && addressField != null) {
+            UUID networkId = networkIds.get(currentNetworkIndex);
+            int universe = parseOrDefault(universeField, console.getUniverse());
+            int address = parseOrDefault(addressField, console.getDmxAddress());
+            boolean patchChanged = !networkId.equals(console.getNetworkId())
+                    || universe != console.getUniverse()
+                    || address != console.getDmxAddress();
+            if (patchChanged && FollowspotDmxHelper.isValidDmxAddress(address)
+                    && FollowspotTargetHelper.isValidNetwork(networkId)) {
+                sendPatch();
+            }
+            sendControl();
+        }
+        super.onClose();
+    }
+
+    @Override
     public boolean isPauseScreen() {
         return false;
     }

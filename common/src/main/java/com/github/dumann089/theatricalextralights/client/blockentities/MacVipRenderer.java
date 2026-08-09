@@ -1,7 +1,9 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.MacVipBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
+import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -124,7 +126,7 @@ public class MacVipRenderer extends ExtraLightsFixtureRenderer<MacVipBlockEntity
 
         int goboValue = blockEntity.getGobo();
         int color = blockEntity.getColour();
-        float intensityNorm = blockEntity.getIntensity() / 255f;
+        float intensityNorm = StrobeRenderHelper.renderedIntensity(blockEntity, partialTicks) / 255f;
 
         float zoomT = (blockEntity.getPrevZoom() + (blockEntity.getZoom() - blockEntity.getPrevZoom()) * partialTicks) / 255f;
         float spreadAngleDeg = 1.0f + (45.0f - 1.0f) * zoomT;
@@ -169,7 +171,7 @@ public class MacVipRenderer extends ExtraLightsFixtureRenderer<MacVipBlockEntity
                 poseStack.translate(offset.x, offset.y, offset.z);
                 preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
 
-                float intensity = blockEntity.getPrevIntensity() + (blockEntity.getIntensity() - blockEntity.getPrevIntensity()) * partialTick;
+                float intensity = StrobeRenderHelper.renderedIntensity(blockEntity, partialTick);
                 int color = blockEntity.getColour();
                 float alpha = (intensity / 255f) * beamOpacity.floatValue();
 
@@ -189,6 +191,7 @@ public class MacVipRenderer extends ExtraLightsFixtureRenderer<MacVipBlockEntity
 
     @Override
     public void preparePoseStack(MacVipBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if (isHanging) {
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);

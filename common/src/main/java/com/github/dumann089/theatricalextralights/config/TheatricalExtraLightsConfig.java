@@ -1,10 +1,18 @@
 package com.github.dumann089.theatricalextralights.config;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class TheatricalExtraLightsConfig {
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final File FILE = new File("config/theatricalextralights.json");
+    private static TheatricalExtraLightsConfig INSTANCE = new TheatricalExtraLightsConfig();
 
     /* ================= CAMPOS DE CONFIGURACIÓN ================= */
     // Ahora tienen anotaciones para generar la UI automáticamente.

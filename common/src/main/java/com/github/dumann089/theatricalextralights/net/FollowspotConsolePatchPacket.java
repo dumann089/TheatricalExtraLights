@@ -62,6 +62,7 @@ public class FollowspotConsolePatchPacket {
             console.setDmxAddress(dmxAddress);
             console.syncFromLinkedFixture(player.level());
             console.applyToLinkedFixture(player.level());
+            console.syncToClients();
         });
     }
 }

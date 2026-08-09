@@ -109,7 +109,7 @@ public class Beam7RBlock extends ExtraLightsLightBlock {
                     }
                     return InteractionResult.SUCCESS;
                 }
-                new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.CHANNEL_MENU)
+                new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.CHANNEL_PANTILT)
                         .sendTo((ServerPlayer) player);
             }
         }
