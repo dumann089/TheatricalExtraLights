@@ -11,7 +11,10 @@ out vec4 vertexColor;
 out vec2 texCoord0;
 
 void main() {
-    gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
+    vec4 viewPos = ModelViewMat * vec4(Position, 1.0);
+
+    gl_Position = ProjMat * viewPos;
+
     vertexColor = Color;
     texCoord0 = UV0;
 }

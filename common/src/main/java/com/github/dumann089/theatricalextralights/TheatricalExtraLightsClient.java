@@ -9,6 +9,7 @@ import com.github.dumann089.theatricalextralights.client.ExtraLightsClientScreen
 import com.github.dumann089.theatricalextralights.client.ModParticleClient;
 import com.github.dumann089.theatricalextralights.client.blockentities.*;
 import com.github.dumann089.theatricalextralights.client.entities.FireworkRocketRenderer;
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelManager;
 import com.github.dumann089.theatricalextralights.compat.FireworkLightCompat;
 import com.github.dumann089.theatricalextralights.entities.ModEntities;
 import com.github.dumann089.theatricalextralights.net.ModNetworking;
@@ -133,7 +134,7 @@ public class TheatricalExtraLightsClient {
         BlockEntityRendererRegistry.register(BlockEntities.BLINDER2X2WARM.get(), Blinder2x2warmRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.BLINDER1X1.get(), Blinder1x1Renderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MINI_BAR.get(), MiniBarRenderer::new);
-
+        
         BlockEntityRendererRegistry.register(BlockEntities.MOVING_VL2C_BEAMS.get(), MovingVL2CBeamsRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MOVING_SCAN_BEAMS.get(), MovingScanBeamsRenderer::new);
 

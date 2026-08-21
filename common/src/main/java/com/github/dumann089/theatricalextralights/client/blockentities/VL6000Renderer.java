@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -73,6 +74,9 @@ public class VL6000Renderer extends ExtraLightsFixtureRenderer<VL6000BlockEntity
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
@@ -130,21 +134,27 @@ public class VL6000Renderer extends ExtraLightsFixtureRenderer<VL6000BlockEntity
         beamPose.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
 
         // Usamos el método avanzado que acepta el beamPose y el focusNorm
+        // 1. Resolvemos la textura del MACVIP (usando el slot 0)
+        ResourceLocation tex = (GoboLibrary.MACVIP != null)
+                ? GoboLibrary.MACVIP.getTexture(0)
+                : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
+
         submitVolumetricBeam(
                 blockEntity,
                 beamPose,
                 partialTicks,
                 MIN_ANGLE_DEG,
                 MAX_ANGLE_DEG,
-                GoboLibrary.MACVIP,
-                0,
+                tex,                                 // <- tex0
+                tex,                                 // <- tex1
+                0.0f,                                // <- wheelProgress (fijo en 0.0f)
                 focusNorm,
                 1.0f,
                 1.0f,
-                0,
+                0,                                   // beamIndex
                 blockEntity.getColour(),
                 blockEntity.getIntensity() / 255.0f,
-                0.4f
+                0.25f                                // baseRadius
         );
 
         // ── 4. GLOW DE LA LENTE (Efecto físico en el faro) ──
@@ -181,7 +191,6 @@ public class VL6000Renderer extends ExtraLightsFixtureRenderer<VL6000BlockEntity
 
     @Override
     public void preparePoseStack(VL6000BlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -207,6 +216,9 @@ public class VL6000Renderer extends ExtraLightsFixtureRenderer<VL6000BlockEntity
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);

@@ -1,9 +1,9 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.MovingScanBeamsBlockEntity;
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.blockentities.MovingScanBeamsBlockEntity;
-import com.github.dumann089.theatricalextralights.blockentities.MovingVL2CBeamsBlockEntity;
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
 import com.github.dumann089.theatricalextralights.client.CustomGoboLoader;
 import com.github.dumann089.theatricalextralights.client.gobo.FakeVolumetricBeamPattern;
@@ -47,6 +47,9 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
         float smoothTilt = 0f;
         long lastUpdateTime = -1;
     }
+
+    private final java.util.Map<MovingScanBeamsBlockEntity, GoboWheelAnimator> goboAnimators = new java.util.WeakHashMap<>();
+
     private final Map<MovingScanBeamsBlockEntity, MovingScanBeamsRenderer.SmoothingState> smoothingStates = new WeakHashMap<>();
     private static final float SMOOTH_SPEED = 25f;
     
@@ -115,8 +118,12 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -182,94 +189,103 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
             int packedLight,
             int packedOverlay
     ) {
-        float rawIntensity = blockEntity.getIntensity() / 255.0f;
-        if (rawIntensity <= 0) {
-            ExtraLightsFixtureRenderer.removeSpotlight(blockEntity.getBlockPos());
-            return;
-        }
-        float spotlightIntensityAlpha = 1.0f;
-
-        float lensX = 0.5f;
-        float lensY = 1.25f;
-        float lensZ = 0.418f;
+        if (blockEntity.getIntensity() <= 0) return;
 
         if (blockEntity.getGobo() >= 0) {
-            Vec3 localLensOffset = new Vec3(lensX, lensY, lensZ);
+            GoboWheelAnimator animator = goboAnimators.computeIfAbsent(blockEntity, k -> new GoboWheelAnimator());
+            Vec3 localLensOffset = new Vec3(0.5f, 1.25f, 0.418f);
             float[] panPivot = blockEntity.getFixture().getPanRotationPosition();
             float[] tiltPivot = blockEntity.getFixture().getTiltRotationPosition();
             float[] structuralTransform = getThrottledStructuralTransforms(blockEntity, blockstate);
 
             MovingScanBeamsRenderer.SmoothingState state = smoothingStates.computeIfAbsent(blockEntity, k -> new MovingScanBeamsRenderer.SmoothingState());
 
+            animator.updateTarget(blockEntity.getGoboLibrary(), blockEntity.getGobo());
+
+            // 2. Extraemos los datos para el Shader Dual
+            int slot0 = animator.getOutgoingSlot(blockEntity.getGoboLibrary());
+            int slot1 = animator.getIncomingSlot(blockEntity.getGoboLibrary());
+            float wheelProgress = animator.getShaderProgress(blockEntity.getGoboLibrary());
+
+            // 3. Resolvemos las dos texturas
+            ResourceLocation tex0 = resolveGoboTexture(blockEntity, slot0);
+            ResourceLocation tex1 = resolveGoboTexture(blockEntity, slot1);
+
             goboProjectors.computeIfAbsent(blockEntity, k -> new GoboGPUProjector()).render(
-                    blockEntity, multiBufferSource, facing, partialTicks, isFlipped, blockstate, isHanging,
-                    localLensOffset, panPivot, tiltPivot, structuralTransform, 1.0f, 19.0f, state.smoothPan, state.smoothTilt
-            );
-        }
-
-        PoseStack commonStack = new PoseStack();
-
-        preparePoseStack(
-                blockEntity,
-                commonStack,
-                facing,
-                partialTicks,
-                isFlipped,
-                blockstate,
-                isHanging
-        );
-        commonStack.translate(
-                lensX,
-                lensY,
-                lensZ
-        );
-
-        if (TheatricalExtraLightsConfig.isVolumetricBeamEnabled()) {
-            PoseStack localStack = new PoseStack();
-            preparePoseStack(blockEntity, localStack, facing, partialTicks, isFlipped, blockstate, isHanging);
-            localStack.translate(lensX, lensY, lensZ);
-
-            Matrix4f headMatrix = localStack.last().pose();
-
-            Vec3 origin  = new Vec3(headMatrix.m30(), headMatrix.m31(), headMatrix.m32());
-            Vec3 axisU   = new Vec3(headMatrix.m00(), headMatrix.m01(), headMatrix.m02()).normalize();
-            Vec3 axisV   = new Vec3(headMatrix.m10(), headMatrix.m11(), headMatrix.m12()).normalize();
-            Vec3 beamDir = new Vec3(-headMatrix.m20(), -headMatrix.m21(), -headMatrix.m22()).normalize();
-
-            ResourceLocation goboTex = null;
-            String customFileName = GlobalGoboManager.getCustomGobo(blockEntity.getGoboLibrary(), blockEntity.getGobo());
-
-            if (customFileName != null) {
-                goboTex = CustomGoboLoader.getOrCreateCustomGobo(customFileName);
-            }
-            if (goboTex == null) {
-                goboTex = blockEntity.getGoboLibrary().getTexture(blockEntity.getGobo());
-            }
-            if (goboTex == null) {
-                goboTex = new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
-            }
-
-            BeamRenderData renderData = new BeamRenderData(
-                    blockEntity.getBlockPos(),
-                    origin,
-                    beamDir,
-                    axisU,
-                    axisV,
-                    focusNorm,
-                    (float) blockEntity.getDistance(),
-                    tan,
-                    blockEntity.getColour(),
-                    rawIntensity,
-                    goboTex,
-                    (float) blockEntity.getGoboRotation(),
-                    blockEntity.getLevel(),
+                    blockEntity,
+                    multiBufferSource,
+                    tex0,               // <- CORREGIDO: tex0 va aquí
+                    tex1,               // <- CORREGIDO: tex1 va aquí
+                    wheelProgress,      // <- CORREGIDO: wheelProgress va aquí
+                    facing,
+                    partialTicks,
+                    isFlipped,
+                    blockstate,
+                    isHanging,
+                    localLensOffset,
+                    panPivot,
+                    tiltPivot,
+                    structuralTransform,
                     1.0f,
-                    1.0f,
-                    0.18f
+                    19.0f,
+                    state.smoothPan,
+                    state.smoothTilt    // <- CORREGIDO: smoothTilt vuelve al final
             );
 
-            volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())
-                    .render(renderData, poseStack);
+            if (TheatricalExtraLightsConfig.isVolumetricBeamEnabled()) {
+                PoseStack localStack = new PoseStack();
+                preparePoseStack(blockEntity, localStack, facing, partialTicks, isFlipped, blockstate, isHanging);
+                localStack.translate(localLensOffset.x, localLensOffset.y, localLensOffset.z);
+
+                Matrix4f headMatrix = localStack.last().pose();
+
+                Vec3 origin  = new Vec3(headMatrix.m30(), headMatrix.m31(), headMatrix.m32());
+                Vec3 axisU   = new Vec3(headMatrix.m00(), headMatrix.m01(), headMatrix.m02()).normalize();
+                Vec3 axisV   = new Vec3(headMatrix.m10(), headMatrix.m11(), headMatrix.m12()).normalize();
+                Vec3 beamDir = new Vec3(-headMatrix.m20(), -headMatrix.m21(), -headMatrix.m22()).normalize();
+
+                float zoomNorm      = blockEntity.getPartialZoom(partialTicks) / 255.0f;
+                float coneHalfAngle = 1.0f + zoomNorm * (19.0f - 1.0f);
+                float tanHalfAngle  = (float) Math.tan(Math.toRadians(coneHalfAngle));
+
+                ResourceLocation goboTex = null;
+                String customFileName = GlobalGoboManager.getCustomGobo(blockEntity.getGoboLibrary(), blockEntity.getGobo());
+
+                if (customFileName != null) {
+                    goboTex = CustomGoboLoader.getOrCreateCustomGobo(customFileName);
+                }
+                if (goboTex == null) {
+                    goboTex = blockEntity.getGoboLibrary().getTexture(blockEntity.getGobo());
+                }
+                if (goboTex == null) {
+                    goboTex = new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
+                }
+
+                // Reemplaza tu vieja creación de BeamRenderData por esto:
+                BeamRenderData renderData = new BeamRenderData(
+                        blockEntity.getBlockPos(),
+                        origin,
+                        beamDir,
+                        axisU,
+                        axisV,
+                        zoomNorm,
+                        (float) blockEntity.getDistance(),
+                        tanHalfAngle,
+                        blockEntity.getColour(),
+                        blockEntity.getIntensity() / 255.0f,
+                        tex0,
+                        tex1,
+                        wheelProgress,
+                        (float) blockEntity.getGoboRotation(),
+                        blockEntity.getLevel(),
+                        1f,
+                        1f,
+                        0.2f
+                );
+
+                volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())
+                        .render(renderData, poseStack);
+            }
         }
 
         // ==========================================================================================
@@ -329,6 +345,24 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
         });
     }
 
+    private ResourceLocation resolveGoboTexture(MovingScanBeamsBlockEntity blockEntity, int slot) {
+        if (slot < 0) {
+            return new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
+        }
+
+        String customFileName = GlobalGoboManager.getCustomGobo(blockEntity.getGoboLibrary(), slot);
+        if (customFileName != null) {
+            return CustomGoboLoader.getOrCreateCustomGobo(customFileName);
+        }
+
+        ResourceLocation tex = blockEntity.getGoboLibrary().getTexture(slot);
+        if (tex != null) {
+            return tex;
+        }
+
+        return new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
+    }
+
     private void renderFakeVolumetricBeams(
             VertexConsumer builder,
             PoseStack poseStack,
@@ -378,7 +412,6 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
 
     @Override
     public void preparePoseStack(MovingScanBeamsBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -404,8 +437,12 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

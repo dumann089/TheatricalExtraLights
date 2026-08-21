@@ -70,6 +70,9 @@ public class CakeWaterJetRenderer extends ExtraLightsRenderer<CakeWaterJetBlockE
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -135,6 +138,9 @@ public class CakeWaterJetRenderer extends ExtraLightsRenderer<CakeWaterJetBlockE
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

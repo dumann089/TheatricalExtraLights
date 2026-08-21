@@ -11,5 +11,5 @@ public @interface ConfigOption {
     String name();
     String tooltip() default "";
     double min() default 0.0;
-    double max() default 100.0;
+    double max() default 500.0;
 }

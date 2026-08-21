@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.MacVipBlockEntity;
+import com.github.dumann089.theatricalextralights.blockentities.MacVipBlockEntity;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
 import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
@@ -18,6 +19,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -68,6 +70,9 @@ public class MacVipRenderer extends ExtraLightsFixtureRenderer<MacVipBlockEntity
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
@@ -126,7 +131,7 @@ public class MacVipRenderer extends ExtraLightsFixtureRenderer<MacVipBlockEntity
 
         int goboValue = blockEntity.getGobo();
         int color = blockEntity.getColour();
-        float intensityNorm = StrobeRenderHelper.renderedIntensity(blockEntity, partialTicks) / 255f;
+        float intensityNorm = blockEntity.getIntensity() / 255f;
 
         float zoomT = (blockEntity.getPrevZoom() + (blockEntity.getZoom() - blockEntity.getPrevZoom()) * partialTicks) / 255f;
         float spreadAngleDeg = 1.0f + (45.0f - 1.0f) * zoomT;
@@ -135,18 +140,29 @@ public class MacVipRenderer extends ExtraLightsFixtureRenderer<MacVipBlockEntity
         float focusNorm = focusInterpolated / 255f;
 
         // Grosor base: 0.15f para un Beam potente y grueso desde la lente
-        float baseRadius = 0.15f;
+        float baseRadius = 0.06f;
 
         if (goboValue == 0) {
             PoseStack singlePose = new PoseStack();
             preparePoseStack(blockEntity, singlePose, facing, partialTicks, isFlipped, blockstate, isHanging);
             singlePose.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
 
+            // 1. Obtenemos la textura para el slot 0 (o la de fallback si es nulo)
+            ResourceLocation tex = (GoboLibrary.MACVIP != null)
+                    ? GoboLibrary.MACVIP.getTexture(0)
+                    : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
+
+            // 2. Pasamos 'tex' en ambos parámetros de textura, y 0.0f en el progreso
             submitVolumetricBeam(blockEntity, singlePose, partialTicks, MIN_ANGLE_DEG, MAX_ANGLE_DEG,
-                    GoboLibrary.MACVIP, 0, focusNorm, 1.0f, 1.0f, 0, color, intensityNorm, baseRadius);
+                    tex, tex, 0.0f, focusNorm, 0.5f, 0.5f, 0, color, intensityNorm, baseRadius);
         } else {
             int beamCount = 2 + (int)((goboValue - 1) / 255f * 14);
             float goboRot = blockEntity.getGoboRotation();
+
+            // 1. Obtenemos la textura para el goboValue
+            ResourceLocation tex = (GoboLibrary.WASH != null)
+                    ? GoboLibrary.WASH.getTexture(goboValue)
+                    : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
 
             for (int i = 0; i < beamCount; i++) {
                 PoseStack beamPose = new PoseStack();
@@ -155,11 +171,12 @@ public class MacVipRenderer extends ExtraLightsFixtureRenderer<MacVipBlockEntity
 
                 float beamRotation = i * (360f / beamCount);
                 if (blockEntity.getGoboSpin() > 0) beamRotation += goboRot;
-                beamPose.mulPose(Axis.ZP.rotationDegrees(beamRotation));
-                beamPose.mulPose(Axis.XP.rotationDegrees(spreadAngleDeg));
+                beamPose.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(beamRotation));
+                beamPose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(spreadAngleDeg));
 
+                // 2. Volvemos a pasar 'tex' repetida y 0.0f
                 submitVolumetricBeam(blockEntity, beamPose, partialTicks, MIN_ANGLE_DEG, MAX_ANGLE_DEG,
-                        GoboLibrary.MACVIP, goboValue, focusNorm, 1.0f, 1.0f, i, color, intensityNorm, 0.10f);
+                        tex, tex, 0.0f, focusNorm, 0.5f, 0.5f, i, color, intensityNorm, 0.06f);
             }
         }
 
@@ -191,7 +208,6 @@ public class MacVipRenderer extends ExtraLightsFixtureRenderer<MacVipBlockEntity
 
     @Override
     public void preparePoseStack(MacVipBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if (isHanging) {
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -215,6 +231,9 @@ public class MacVipRenderer extends ExtraLightsFixtureRenderer<MacVipBlockEntity
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {

@@ -31,10 +31,7 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import net.minecraft.core.BlockPos;
 import org.joml.Vector4f;
-import tizio.dev.lle.api.SpotlightAPI;
-import tizio.dev.lle.api.data.SpotlightInstance;
 import org.joml.Vector3f;
-import tizio.dev.lle.core.client.renderer.GoboTextureManager;
 
 import java.util.WeakHashMap;
 
@@ -104,8 +101,9 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
             float partialTicks,
             float minAngleDeg,
             float maxAngleDeg,
-            GoboLibrary goboLibrary,
-            int goboSlot,
+            ResourceLocation tex0,         // ← Reemplazamos GoboLibrary
+            ResourceLocation tex1,         // ← Reemplazamos goboSlot
+            float wheelProgress,           // ← Nuevo parámetro de progreso
             float focusNorm,
             float widthScale,
             float heightScale,
@@ -123,12 +121,12 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
         Vec3 beamDir = new Vec3(-headMatrix.m20(), -headMatrix.m21(), -headMatrix.m22()).normalize();
 
         float tanHalfAngle = (float) Math.tan(Math.toRadians(minAngleDeg + focusNorm * (maxAngleDeg - minAngleDeg)));
-        ResourceLocation goboTexture = (goboLibrary != null) ? goboLibrary.getTexture(goboSlot) : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
 
+        // Instanciamos el renderData usando los nuevos parámetros de texturas duales y progreso
         BeamRenderData renderData = new BeamRenderData(
                 blockEntity.getBlockPos(), origin, beamDir, axisU, axisV, focusNorm,
                 (float) blockEntity.getDistance(), tanHalfAngle, customColor,
-                customIntensity, goboTexture, 0.0f, blockEntity.getLevel(), widthScale, heightScale, baseRadius
+                customIntensity, tex0, tex1, wheelProgress, 0.0f, blockEntity.getLevel(), widthScale, heightScale, baseRadius
         );
 
         volumetricRenderers.computeIfAbsent(blockEntity, k -> new java.util.HashMap<>())

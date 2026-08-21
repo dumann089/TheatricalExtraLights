@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -70,6 +71,9 @@ public class Source4warmRenderer extends ExtraLightsFixtureRenderer<Source4warmB
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
@@ -141,21 +145,26 @@ public class Source4warmRenderer extends ExtraLightsFixtureRenderer<Source4warmB
         preparePoseStack(blockEntity, beamPose, facing, partialTicks, isFlipped, blockstate, isHanging);
         beamPose.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
 
+        ResourceLocation tex = (GoboLibrary.MACVIP != null)
+                ? GoboLibrary.MACVIP.getTexture(0)
+                : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
+
         submitVolumetricBeam(
                 blockEntity,
                 beamPose,
                 partialTicks,
                 MIN_ANGLE_DEG,
                 MAX_ANGLE_DEG,
-                GoboLibrary.MACVIP,
-                0,
+                tex,         // <- tex0
+                tex,         // <- tex1
+                0.0f,        // <- wheelProgress
                 0.0f,        // focusNorm
                 1.0f,        // widthScale
                 1.0f,        // heightScale
                 0,           // beamIndex
                 color,
                 intensityNorm,
-                0.15f        // baseRadius
+                0.12f        // baseRadius
         );
 
         // ── Lens glow + lens cap ─────────────────────────────────────────────
@@ -194,7 +203,6 @@ public class Source4warmRenderer extends ExtraLightsFixtureRenderer<Source4warmB
 
     @Override
     public void preparePoseStack(Source4warmBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if (isHanging) {
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -217,6 +225,9 @@ public class Source4warmRenderer extends ExtraLightsFixtureRenderer<Source4warmB
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {

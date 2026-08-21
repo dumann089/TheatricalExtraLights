@@ -70,6 +70,9 @@ public class a2x8par64Renderer extends ExtraLightsRenderer<a2x8par64BlockEntity>
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -166,7 +169,6 @@ public void beforeRenderBeam(a2x8par64BlockEntity blockEntity, PoseStack poseSta
 
     @Override
     public void preparePoseStack(a2x8par64BlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         //#region Fixture Hanging
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
@@ -197,6 +199,9 @@ public void beforeRenderBeam(a2x8par64BlockEntity blockEntity, PoseStack poseSta
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

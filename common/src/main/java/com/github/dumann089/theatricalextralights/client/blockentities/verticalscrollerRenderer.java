@@ -71,6 +71,9 @@ public class verticalscrollerRenderer extends ExtraLightsRenderer<verticalscroll
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -160,7 +163,6 @@ public void beforeRenderBeam(verticalscrollerBlockEntity blockEntity, PoseStack 
 
     @Override
     public void preparePoseStack(verticalscrollerBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         //#region Fixture Hanging
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
@@ -191,6 +193,9 @@ public void beforeRenderBeam(verticalscrollerBlockEntity blockEntity, PoseStack 
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

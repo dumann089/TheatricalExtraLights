@@ -7,21 +7,30 @@ import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasJe
 import com.github.dumann089.theatricalextralights.client.particle.JetVariant;
 import com.github.dumann089.theatricalextralights.client.particle.WaterJetParticleOptions;
 import com.github.dumann089.theatricalextralights.particle.ModParticle;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity;
 import dev.imabad.theatrical.blocks.HangableBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
-import org.joml.Vector3f;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+import org.joml.Vector4f;
+
+import java.util.Optional;
 
 /**
  * Client-side water jet particles — per-frame spawns from BER (with distance culling).
  */
 public final class WaterJetClientEffects {
-    private static final double MAX_SPAWN_DISTANCE_SQ = 128.0 * 128.0;
+    private static final double MAX_SPAWN_DISTANCE_SQ = 512.0 * 512.0;
     private static final double[] ORGAN_PIPE_X = {-1.4375, -1.125, -0.75, -0.375, 0.0, 0.375, 0.75, 1.125, 1.4375};
     private static final double[] ORGAN_PIPE_HEIGHT_MULT = {0.6, 0.7, 0.8, 0.9, 1.0, 0.9, 0.8, 0.7, 0.6};
+    private static final double[] ORGAN_PIPE_INV_HEIGHT_MULT = {1.0, 0.9, 0.8, 0.7, 0.6, 0.7, 0.8, 0.9, 1.0};
     private static final double[][] SPINNER_NOZZLES = {
             {0.96, 2.0, 0.501},
             {0.5, 2.0, 0.968},
@@ -59,20 +68,19 @@ public final class WaterJetClientEffects {
             boolean legacyParticle,
             float pitchOffsetDeg,
             boolean fixedUp,
-            boolean movingJetPitch,
             double smoothFactor
     ) {
     }
 
-    public static final JetPreset WATER_JET = new JetPreset(8, 1.81F, 0.05, 37.0, null, true, 0.0F, false, false, 0.1);
-    public static final JetPreset BIG = new JetPreset(6, 2.03F, 0.09, 0.0, JetVariant.JET1, false, 0.0F, false, false, 0.1);
-    public static final JetPreset THIN = new JetPreset(8, 2.03F, 0.09, 0.0, JetVariant.JET3, false, 0.0F, false, false, 0.1);
-    public static final JetPreset SPREAD = new JetPreset(8, 2.03F, 0.09, 0.0, JetVariant.JET2, false, 0.0F, false, false, 0.1);
-    public static final JetPreset FOG = new JetPreset(4, 2.03F, 0.09, 0.0, JetVariant.JETFog, false, 0.0F, false, false, 0.1);
-    public static final JetPreset CONE = new JetPreset(4, 2.03F, 0.09, 0.0, JetVariant.JETCone, false, 0.0F, false, false, 0.1);
-    public static final JetPreset CENTRAL = new JetPreset(7, 2.03F, 0.09, 0.0, JetVariant.JET4, false, 0.0F, false, false, 0.1);
-    public static final JetPreset BLOOM = new JetPreset(4, 2.03F, 0.09, 0.0, JetVariant.JETBloom, false, 0.0F, true, false, 0.1);
-    public static final JetPreset MOVING = new JetPreset(8, 1.81F, 0.09, 0.0, JetVariant.JET3, false, 0.0F, false, true, 0.1);
+    public static final JetPreset WATER_JET = new JetPreset(8, 1.81F, 0.05, 37.0, null, true, 0.0F, false, 0.1);
+    public static final JetPreset BIG = new JetPreset(6, 2.03F, 0.09, 0.0, JetVariant.JET1, false, 0.0F, false, 0.1);
+    public static final JetPreset THIN = new JetPreset(8, 2.03F, 0.09, 0.0, JetVariant.JET3, false, 0.0F, false, 0.1);
+    public static final JetPreset SPREAD = new JetPreset(8, 2.03F, 0.09, 0.0, JetVariant.JET2, false, 0.0F, false, 0.1);
+    public static final JetPreset FOG = new JetPreset(4, 2.03F, 0.09, 0.0, JetVariant.JETFog, false, 0.0F, false, 0.1);
+    public static final JetPreset CONE = new JetPreset(4, 2.03F, 0.09, 0.0, JetVariant.JETCone, false, 0.0F, false, 0.1);
+    public static final JetPreset CENTRAL = new JetPreset(7, 2.03F, 0.09, 0.0, JetVariant.JET4, false, 0.0F, false, 0.1);
+    public static final JetPreset BLOOM = new JetPreset(4, 2.03F, 0.09, 0.0, JetVariant.JETBloom, false, 0.0F, true, 0.1);
+    public static final JetPreset MOVING = new JetPreset(8, 1.81F, 0.09, 0.0, JetVariant.JET3, false, 0.0F, false, 0.1);
 
     private WaterJetClientEffects() {
     }
@@ -95,6 +103,16 @@ public final class WaterJetClientEffects {
                 || blockEntity instanceof VaseWaterJetBlockEntity
                 || blockEntity instanceof WaltzesWaterJetBlockEntity
                 || blockEntity instanceof WaltzCurtainBlockEntity;
+    }
+
+    private static boolean usesWaterJetTiltConvention(BaseLightBlockEntity blockEntity) {
+        return blockEntity instanceof WaterJetThinBlockEntity
+                || blockEntity instanceof WaterJetSpreadBlockEntity
+                || blockEntity instanceof WaterJetBigBlockEntity
+                || blockEntity instanceof WaterJetCentralBlockEntity
+                || blockEntity instanceof OrganPipesBlockEntity
+                || blockEntity instanceof OrganPipesInvBlockEntity
+                || blockEntity instanceof FanWaterJetBlockEntity;
     }
 
     public static void updateWaltzesClient(WaltzesWaterJetBlockEntity blockEntity) {
@@ -121,7 +139,6 @@ public final class WaterJetClientEffects {
         blockEntity.smoothedHeight += (targetHeight - blockEntity.smoothedHeight) * 0.15;
     }
 
-    // Este método es exclusivo para el WaltzCurtain
     public static void updateWaltzCurtainClient(WaltzCurtainBlockEntity blockEntity) {
         if (resolveClientLevel(blockEntity) == null) {
             return;
@@ -146,61 +163,49 @@ public final class WaterJetClientEffects {
         blockEntity.smoothedHeight += (targetHeight - blockEntity.smoothedHeight) * 0.15;
     }
 
-    /** Called each render frame when the fixture is visible (LazyRenderers). */
     public static void spawnFromBeam(BaseLightBlockEntity blockEntity, float partialTick) {
         ClientLevel level = resolveClientLevel(blockEntity);
         if (level == null || blockEntity.getIntensity() <= 0) {
             return;
         }
 
-        float pan = blockEntity.getPrevPan() + (blockEntity.getPan() - blockEntity.getPrevPan()) * partialTick;
-        float tilt = blockEntity.getPrevTilt() + (blockEntity.getTilt() - blockEntity.getPrevTilt()) * partialTick;
-
         if (blockEntity instanceof WaterJetBlockEntity) {
-            spawnJet(blockEntity, level, WATER_JET, pan, tilt);
+            spawnJet(blockEntity, level, WATER_JET, partialTick);
         } else if (blockEntity instanceof WaterJetBigBlockEntity) {
-            spawnJet(blockEntity, level, BIG, pan, tilt);
+            spawnJet(blockEntity, level, BIG, partialTick);
         } else if (blockEntity instanceof WaterJetThinBlockEntity) {
-            spawnJet(blockEntity, level, THIN, pan, tilt);
+            spawnJet(blockEntity, level, THIN, partialTick);
         } else if (blockEntity instanceof WaterJetSpreadBlockEntity) {
-            spawnJet(blockEntity, level, SPREAD, pan, tilt);
+            spawnJet(blockEntity, level, SPREAD, partialTick);
         } else if (blockEntity instanceof WaterJetFogBlockEntity) {
-            spawnJet(blockEntity, level, FOG, pan, tilt);
+            spawnJet(blockEntity, level, FOG, partialTick);
         } else if (blockEntity instanceof WaterJetConeBlockEntity) {
-            spawnJet(blockEntity, level, CONE, pan, tilt);
+            spawnJet(blockEntity, level, CONE, partialTick);
         } else if (blockEntity instanceof WaterJetCentralBlockEntity) {
-            spawnJet(blockEntity, level, CENTRAL, pan, tilt);
+            spawnJet(blockEntity, level, CENTRAL, partialTick);
         } else if (blockEntity instanceof WaterJetBloomBlockEntity) {
-            spawnJet(blockEntity, level, BLOOM, pan, tilt);
+            spawnJet(blockEntity, level, BLOOM, partialTick);
         } else if (blockEntity instanceof MovingJetBlockEntity) {
-            spawnJet(blockEntity, level, MOVING, pan, tilt);
+            spawnJet(blockEntity, level, MOVING, partialTick);
         } else if (blockEntity instanceof OrganPipesBlockEntity organ) {
-            spawnOrganPipes(organ, level, JetVariant.JET3, pan, tilt);
-
+            spawnOrganPipes(organ, level, JetVariant.JET3, partialTick);
         } else if (blockEntity instanceof FanWaterJetBlockEntity fan) {
-            spawnFanJets(fan, level, JetVariant.JET3, pan, tilt);
-
+            spawnFanJets(fan, level, JetVariant.JET3, partialTick);
         } else if (blockEntity instanceof CakeWaterJetBlockEntity cake) {
-            spawnCakeJets(cake, level, JetVariant.JET3, pan, tilt);
-
+            spawnCakeJets(cake, level, JetVariant.JET3, partialTick);
         } else if (blockEntity instanceof VaseWaterJetBlockEntity vase) {
-            spawnVaseJets(vase, level, JetVariant.JET3, pan, tilt);
-
+            spawnVaseJets(vase, level, JetVariant.JET3, partialTick);
         } else if (blockEntity instanceof WaltzesWaterJetBlockEntity waltzes) {
             updateWaltzesClient(waltzes);
             spawnWaltzesParticles(waltzes, level, JetVariant.JET3, partialTick);
-
         } else if (blockEntity instanceof WaltzCurtainBlockEntity waltzcurtain) {
             updateWaltzCurtainClient(waltzcurtain);
             spawnWaltzCurtainParticles(waltzcurtain, level, JetVariant.JET3, partialTick);
-
         } else if (blockEntity instanceof OrganPipesInvBlockEntity organInv) {
-            spawnOrganPipes(organInv, level, JetVariant.JET3, pan, tilt);
+            spawnOrganPipes(organInv, level, JetVariant.JET3, partialTick);
         } else if (blockEntity instanceof SpinnerBlockEntity spinner) {
-            spawnSpinner(spinner, level);
-
             updateSpinnerClient(spinner);
-            spawnSpinner(spinner, level);
+            spawnSpinner(spinner, level, partialTick);
         }
     }
 
@@ -214,11 +219,90 @@ public final class WaterJetClientEffects {
         blockEntity.updateSpin();
     }
 
-    private static void spawnJet(BaseLightBlockEntity blockEntity, ClientLevel level, JetPreset preset, float pan, float tilt) {
-        if (!isNearPlayer(level, blockEntity.getBlockPos().getX() + 0.5, blockEntity.getBlockPos().getY() + preset.yOffset(), blockEntity.getBlockPos().getZ() + 0.5)) {
-            return;
+    private static PoseStack getFixturePoseStack(BaseLightBlockEntity blockEntity, float partialTick) {
+        PoseStack poseStack = new PoseStack();
+        BlockState blockState = blockEntity.getBlockState();
+
+        Direction facing = blockState.hasProperty(HangableBlock.FACING)
+                ? blockState.getValue(HangableBlock.FACING)
+                : Direction.NORTH;
+        boolean isHanging = blockState.hasProperty(HangableBlock.HANGING) && blockState.getValue(HangableBlock.HANGING);
+
+        float pan = blockEntity.getPrevPan() + (blockEntity.getPan() - blockEntity.getPrevPan()) * partialTick;
+        float tilt = blockEntity.getPrevTilt() + (blockEntity.getTilt() - blockEntity.getPrevTilt()) * partialTick;
+
+        poseStack.translate(0.5F, 0.0F, 0.5F);
+
+        if (isHanging && blockState.hasProperty(HangableBlock.HANG_DIRECTION)) {
+            Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
+            poseStack.translate(0.0, 0.5, 0.0);
+            if (hangDirection.getAxis() != Direction.Axis.Y) {
+                if (hangDirection.getAxis() == Direction.Axis.Z) {
+                    if (hangDirection == Direction.SOUTH) {
+                        poseStack.mulPose(Axis.XP.rotationDegrees(90));
+                    } else {
+                        poseStack.mulPose(Axis.XN.rotationDegrees(90));
+                    }
+                } else {
+                    if (hangDirection == Direction.EAST) {
+                        poseStack.mulPose(Axis.ZN.rotationDegrees(90));
+                    } else {
+                        poseStack.mulPose(Axis.ZN.rotationDegrees(-90));
+                    }
+                }
+            }
+            poseStack.translate(0.0, -0.5, 0.0);
         }
 
+        if (facing.getAxis() == Direction.Axis.X) {
+            poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
+        } else {
+            poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
+        }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+        poseStack.translate(-0.5F, 0.0F, -0.5F);
+
+        if (isHanging) {
+            if (blockEntity instanceof ExtraLightsLightBlockEntity extra) {
+                Optional<BlockState> optionalSupport = extra.getSupportingStructure();
+                if (optionalSupport != null && optionalSupport.isPresent()) {
+                    float[] transforms = extra.getFixture().getTransforms(blockState, optionalSupport.get());
+                    poseStack.translate(transforms[0], transforms[1], transforms[2]);
+                } else {
+                    poseStack.translate(0.0F, 0.19F, 0.0F);
+                }
+            } else {
+                poseStack.translate(0.0F, 0.19F, 0.0F);
+            }
+        }
+
+        float[] pans = blockEntity.getFixture().getPanRotationPosition();
+        poseStack.translate(pans[0], pans[1], pans[2]);
+        poseStack.mulPose(Axis.YN.rotationDegrees(pan));
+        poseStack.translate(-pans[0], -pans[1], -pans[2]);
+
+        float[] tilts = blockEntity.getFixture().getTiltRotationPosition();
+        poseStack.translate(tilts[0], tilts[1], tilts[2]);
+        poseStack.mulPose(Axis.XP.rotationDegrees(tilt));
+        poseStack.translate(-tilts[0], -tilts[1], -tilts[2]);
+
+        return poseStack;
+    }
+
+    private static Vec3 transformPoint(Matrix4f matrix, double x, double y, double z) {
+        Vector4f vec = new Vector4f((float) x, (float) y, (float) z, 1.0F);
+        vec.mul(matrix);
+        return new Vec3(vec.x(), vec.y(), vec.z());
+    }
+
+    private static Vec3 transformDirection(Matrix4f matrix, double vx, double vy, double vz) {
+        Vector4f vec = new Vector4f((float) vx, (float) vy, (float) vz, 0.0F);
+        vec.mul(matrix);
+        return new Vec3(vec.x(), vec.y(), vec.z());
+    }
+
+    private static void spawnJet(BaseLightBlockEntity blockEntity, ClientLevel level, JetPreset preset, float partialTick) {
         double maxHeight = preset.fixedMaxHeight() > 0.0
                 ? preset.fixedMaxHeight()
                 : ((HasJetHeight) blockEntity).getJetHeight();
@@ -228,26 +312,45 @@ public final class WaterJetClientEffects {
         writeSmoothedHeight(blockEntity, smoothed);
         double speed = smoothed * preset.speedMult();
 
-        double x = blockEntity.getBlockPos().getX() + 0.5;
-        double y = blockEntity.getBlockPos().getY() + preset.yOffset();
-        double z = blockEntity.getBlockPos().getZ() + 0.5;
+        Matrix4f pose = getFixturePoseStack(blockEntity, partialTick).last().pose();
 
-        Vector3f direction;
+        Vec3 posWorld = transformPoint(pose, 0.5, preset.yOffset(), 0.5);
+        double x = blockEntity.getBlockPos().getX() + posWorld.x;
+        double y = blockEntity.getBlockPos().getY() + posWorld.y;
+        double z = blockEntity.getBlockPos().getZ() + posWorld.z;
+
+        if (!isNearPlayer(level, x, y, z)) {
+            return;
+        }
+
+        Vec3 vel;
         if (preset.fixedUp()) {
-            direction = new Vector3f(0.0F, 1.0F, 0.0F);
+            vel = new Vec3(0.0, speed, 0.0);
         } else {
-            direction = computeDirection(
-                    pan,
-                    tilt,
-                    blockEntity.getBlockState().getValue(HangableBlock.FACING),
-                    preset.pitchOffsetDeg(),
-                    preset.movingJetPitch()
-            );
+            // Dirección local apuntando hacia ARRIBA (+Y)
+            double localDirX;
+            double localDirY;
+            double localDirZ;
+
+            if (usesWaterJetTiltConvention(blockEntity)) {
+                // Estos waterjets tienen 0° horizontal y +90° vertical.
+                localDirX = 0.0;
+                localDirY = 0.0;
+                localDirZ = -1.0;
+            } else {
+                // NO tocar los demás fixtures.
+                double pitchRad = Math.toRadians(preset.pitchOffsetDeg());
+                localDirX = 0.0;
+                localDirY = Math.cos(pitchRad);
+                localDirZ = Math.sin(pitchRad);
+            }
+
+            Vec3 dirWorld = transformDirection(pose, localDirX, localDirY, localDirZ);
+            vel = dirWorld.scale(speed);
         }
 
         if (preset.legacyParticle()) {
-            emit(level, ModParticle.WATERJETPARTICLE.get(), x, y, z,
-                    direction.x * (float) speed, direction.y * (float) speed, direction.z * (float) speed);
+            emit(level, ModParticle.WATERJETPARTICLE.get(), x, y, z, vel.x, vel.y, vel.z);
             return;
         }
 
@@ -255,16 +358,18 @@ public final class WaterJetClientEffects {
         float thickness = blockEntity instanceof HasJetThickness jetThickness ? jetThickness.getJetThickness() : 0.12F;
         float coneAngle = blockEntity instanceof HasJetConeAngle jetCone ? jetCone.getJetConeAngle() : 45.0F;
         WaterJetParticleOptions options = new WaterJetParticleOptions(intensity, thickness, coneAngle, preset.variant());
-        emit(level, options, x, y, z,
-                direction.x * speed, direction.y * speed, direction.z * speed);
+
+        emit(level, options, x, y, z, vel.x, vel.y, vel.z);
     }
 
-    private static void spawnOrganPipes(BaseLightBlockEntity blockEntity, ClientLevel level, JetVariant variant, float pan, float tilt) {
+    private static void spawnOrganPipes(BaseLightBlockEntity blockEntity, ClientLevel level, JetVariant variant, float partialTick) {
         if (!(blockEntity instanceof HasJetHeight hasJetHeight) || !(blockEntity instanceof HasJetThickness hasJetThickness)) {
             return;
         }
 
-        Direction facing = blockEntity.getBlockState().getValue(HangableBlock.FACING);
+        boolean isInv = blockEntity instanceof OrganPipesInvBlockEntity;
+        double[] currentHeightMult = isInv ? ORGAN_PIPE_INV_HEIGHT_MULT : ORGAN_PIPE_HEIGHT_MULT;
+
         double maxHeight = hasJetHeight.getJetHeight();
         double targetHeight = (blockEntity.getIntensity() / 255.0) * maxHeight;
         double smoothed = getOrganSmoothed(blockEntity);
@@ -274,47 +379,40 @@ public final class WaterJetClientEffects {
         double baseSpeed = smoothed * 0.09;
         float intensity = blockEntity.getIntensity() / 255.0F;
         float thickness = hasJetThickness.getJetThickness();
-        Vector3f baseDir = computeDirection(pan, tilt, facing, 0.0F, false);
 
-        double blockCenterX = blockEntity.getBlockPos().getX() + 0.5;
-        double blockCenterZ = blockEntity.getBlockPos().getZ() + 0.5;
-        double baseY = blockEntity.getBlockPos().getY() + 2.0;
-        double baseZOffset = 0.51;
-
-        double yaw = Math.toRadians(pan);
-        double cosYaw = Math.cos(yaw);
-        double sinYaw = Math.sin(yaw);
+        Matrix4f pose = getFixturePoseStack(blockEntity, partialTick).last().pose();
+        Vec3 dirWorld = transformDirection(pose, 0.0, 0.0, -1.0);
 
         for (int i = 0; i < ORGAN_PIPE_X.length; i++) {
-            double relativeX = ORGAN_PIPE_X[i];
-            double relativeZ = baseZOffset - 0.5;
-            double rotatedX = relativeX * cosYaw - relativeZ * sinYaw;
-            double rotatedZ = relativeX * sinYaw + relativeZ * cosYaw;
-            org.joml.Vector2f facingRot = rotateXZ(rotatedX, rotatedZ, facing);
+            double localX = 0.5 + ORGAN_PIPE_X[i];
+            double localY = 2.0;
+            double localZ = 0.5;
 
-            double particleX = blockCenterX + facingRot.x;
-            double particleZ = blockCenterZ + facingRot.y;
-            if (!isNearPlayer(level, particleX, baseY, particleZ)) {
+            Vec3 posWorld = transformPoint(pose, localX, localY, localZ);
+            double particleX = blockEntity.getBlockPos().getX() + posWorld.x;
+            double particleY = blockEntity.getBlockPos().getY() + posWorld.y;
+            double particleZ = blockEntity.getBlockPos().getZ() + posWorld.z;
+
+            if (!isNearPlayer(level, particleX, particleY, particleZ)) {
                 continue;
             }
 
-            double particleSpeed = baseSpeed * ORGAN_PIPE_HEIGHT_MULT[i];
+            double particleSpeed = baseSpeed * currentHeightMult[i];
             WaterJetParticleOptions options = new WaterJetParticleOptions(
-                    intensity * (float) ORGAN_PIPE_HEIGHT_MULT[i],
+                    intensity * (float) currentHeightMult[i],
                     thickness,
                     variant
             );
-            emit(level, options, particleX, baseY, particleZ,
-                    baseDir.x * particleSpeed, baseDir.y * particleSpeed, baseDir.z * particleSpeed);
+            emit(level, options, particleX, particleY, particleZ,
+                    dirWorld.x * particleSpeed, dirWorld.y * particleSpeed, dirWorld.z * particleSpeed);
         }
     }
 
-    private static void spawnCakeJets(BaseLightBlockEntity blockEntity, ClientLevel level, JetVariant variant, float pan, float tilt) {
+    private static void spawnCakeJets(BaseLightBlockEntity blockEntity, ClientLevel level, JetVariant variant, float partialTick) {
         if (!(blockEntity instanceof HasJetHeight hasJetHeight) || !(blockEntity instanceof HasJetThickness hasJetThickness)) {
             return;
         }
 
-        Direction facing = blockEntity.getBlockState().getValue(HangableBlock.FACING);
         double maxHeight = hasJetHeight.getJetHeight();
         double targetHeight = (blockEntity.getIntensity() / 255.0) * maxHeight;
 
@@ -326,15 +424,7 @@ public final class WaterJetClientEffects {
         float intensity = blockEntity.getIntensity() / 255.0F;
         float thickness = hasJetThickness.getJetThickness();
 
-        double blockCenterX = blockEntity.getBlockPos().getX() + 0.5;
-        double blockCenterZ = blockEntity.getBlockPos().getZ() + 0.5;
-        double baseY = blockEntity.getBlockPos().getY() + 2.0;
-
-        if (!isNearPlayer(level, blockCenterX, baseY, blockCenterZ)) {
-            return;
-        }
-
-        float blockFacingYaw = facing.toYRot();
+        Matrix4f pose = getFixturePoseStack(blockEntity, partialTick).last().pose();
 
         for (int t = 0; t < 3; t++) {
             int count = CAKE_COUNTS[t];
@@ -342,24 +432,34 @@ public final class WaterJetClientEffects {
             float elevation = CAKE_ELEVATIONS[t];
             double speedMult = CAKE_SPEED_MULT[t];
 
+            double elevationRad = Math.toRadians(elevation);
+            double verticalForce = Math.sin(elevationRad);
+            double horizontalForce = Math.cos(elevationRad);
+
             for (int i = 0; i < count; i++) {
                 float angleDeg = (360.0F / count) * i;
                 if (t == 1) angleDeg += (360.0F / count) / 2.0F;
 
-                float totalYaw = blockFacingYaw + pan + angleDeg;
-                double yawRad = Math.toRadians(totalYaw);
+                double angleRad = Math.toRadians(angleDeg);
 
-                double pitchRad = Math.toRadians(elevation);
+                double localX = 0.5 + Math.cos(angleRad) * radius;
+                double localY = 2.0;
+                double localZ = 0.5 + Math.sin(angleRad) * radius;
 
-                double verticalForce = Math.sin(pitchRad);
-                double horizontalForce = Math.cos(pitchRad);
-
-                double dirX = -Math.sin(yawRad) * horizontalForce;
+                double dirX = Math.cos(angleRad) * horizontalForce;
                 double dirY = verticalForce;
-                double dirZ = Math.cos(yawRad) * horizontalForce;
+                double dirZ = Math.sin(angleRad) * horizontalForce;
 
-                double spawnX = blockCenterX + (-Math.sin(yawRad) * radius);
-                double spawnZ = blockCenterZ + (Math.cos(yawRad) * radius);
+                Vec3 posWorld = transformPoint(pose, localX, localY, localZ);
+                Vec3 dirWorld = transformDirection(pose, dirX, dirY, dirZ);
+
+                double spawnX = blockEntity.getBlockPos().getX() + posWorld.x;
+                double spawnY = blockEntity.getBlockPos().getY() + posWorld.y;
+                double spawnZ = blockEntity.getBlockPos().getZ() + posWorld.z;
+
+                if (!isNearPlayer(level, spawnX, spawnY, spawnZ)) {
+                    continue;
+                }
 
                 double particleSpeed = baseSpeed * speedMult;
                 WaterJetParticleOptions options = new WaterJetParticleOptions(
@@ -367,18 +467,17 @@ public final class WaterJetClientEffects {
                         thickness,
                         variant
                 );
-                emit(level, options, spawnX, baseY, spawnZ,
-                        dirX * particleSpeed, dirY * particleSpeed, dirZ * particleSpeed);
+                emit(level, options, spawnX, spawnY, spawnZ,
+                        dirWorld.x * particleSpeed, dirWorld.y * particleSpeed, dirWorld.z * particleSpeed);
             }
         }
     }
 
-    private static void spawnVaseJets(BaseLightBlockEntity blockEntity, ClientLevel level, JetVariant variant, float pan, float tilt) {
+    private static void spawnVaseJets(BaseLightBlockEntity blockEntity, ClientLevel level, JetVariant variant, float partialTick) {
         if (!(blockEntity instanceof HasJetHeight hasJetHeight) || !(blockEntity instanceof HasJetThickness hasJetThickness)) {
             return;
         }
 
-        Direction facing = blockEntity.getBlockState().getValue(HangableBlock.FACING);
         double maxHeight = hasJetHeight.getJetHeight();
         double targetHeight = (blockEntity.getIntensity() / 255.0) * maxHeight;
 
@@ -390,15 +489,7 @@ public final class WaterJetClientEffects {
         float intensity = blockEntity.getIntensity() / 255.0F;
         float thickness = hasJetThickness.getJetThickness();
 
-        double blockCenterX = blockEntity.getBlockPos().getX() + 0.5;
-        double blockCenterZ = blockEntity.getBlockPos().getZ() + 0.5;
-        double baseY = blockEntity.getBlockPos().getY() + 2.0;
-
-        if (!isNearPlayer(level, blockCenterX, baseY, blockCenterZ)) {
-            return;
-        }
-
-        float blockFacingYaw = facing.toYRot();
+        Matrix4f pose = getFixturePoseStack(blockEntity, partialTick).last().pose();
 
         for (int t = 0; t < 3; t++) {
             int count = VASE_COUNTS[t];
@@ -406,24 +497,34 @@ public final class WaterJetClientEffects {
             float elevation = VASE_ELEVATIONS[t];
             double speedMult = VASE_SPEED_MULT[t];
 
+            double elevationRad = Math.toRadians(elevation);
+            double verticalForce = Math.sin(elevationRad);
+            double horizontalForce = Math.cos(elevationRad);
+
             for (int i = 0; i < count; i++) {
                 float angleDeg = (360.0F / count) * i;
                 if (t == 1) angleDeg += (360.0F / count) / 2.0F;
 
-                float totalYaw = blockFacingYaw + pan + angleDeg;
-                double yawRad = Math.toRadians(totalYaw);
+                double angleRad = Math.toRadians(angleDeg);
 
-                double pitchRad = Math.toRadians(elevation);
+                double localX = 0.5 + Math.cos(angleRad) * radius;
+                double localY = 2.0;
+                double localZ = 0.5 + Math.sin(angleRad) * radius;
 
-                double verticalForce = Math.sin(pitchRad);
-                double horizontalForce = Math.cos(pitchRad);
-
-                double dirX = -Math.sin(yawRad) * horizontalForce;
+                double dirX = Math.cos(angleRad) * horizontalForce;
                 double dirY = verticalForce;
-                double dirZ = Math.cos(yawRad) * horizontalForce;
+                double dirZ = Math.sin(angleRad) * horizontalForce;
 
-                double spawnX = blockCenterX + (-Math.sin(yawRad) * radius);
-                double spawnZ = blockCenterZ + (Math.cos(yawRad) * radius);
+                Vec3 posWorld = transformPoint(pose, localX, localY, localZ);
+                Vec3 dirWorld = transformDirection(pose, dirX, dirY, dirZ);
+
+                double spawnX = blockEntity.getBlockPos().getX() + posWorld.x;
+                double spawnY = blockEntity.getBlockPos().getY() + posWorld.y;
+                double spawnZ = blockEntity.getBlockPos().getZ() + posWorld.z;
+
+                if (!isNearPlayer(level, spawnX, spawnY, spawnZ)) {
+                    continue;
+                }
 
                 double particleSpeed = baseSpeed * speedMult;
                 WaterJetParticleOptions options = new WaterJetParticleOptions(
@@ -431,18 +532,17 @@ public final class WaterJetClientEffects {
                         thickness,
                         variant
                 );
-                emit(level, options, spawnX, baseY, spawnZ,
-                        dirX * particleSpeed, dirY * particleSpeed, dirZ * particleSpeed);
+                emit(level, options, spawnX, spawnY, spawnZ,
+                        dirWorld.x * particleSpeed, dirWorld.y * particleSpeed, dirWorld.z * particleSpeed);
             }
         }
     }
 
-    private static void spawnFanJets(BaseLightBlockEntity blockEntity, ClientLevel level, JetVariant variant, float pan, float tilt) {
+    private static void spawnFanJets(BaseLightBlockEntity blockEntity, ClientLevel level, JetVariant variant, float partialTick) {
         if (!(blockEntity instanceof HasJetHeight hasJetHeight) || !(blockEntity instanceof HasJetThickness hasJetThickness)) {
             return;
         }
 
-        Direction facing = blockEntity.getBlockState().getValue(HangableBlock.FACING);
         double maxHeight = hasJetHeight.getJetHeight();
         double targetHeight = (blockEntity.getIntensity() / 255.0) * maxHeight;
 
@@ -454,33 +554,28 @@ public final class WaterJetClientEffects {
         float intensity = blockEntity.getIntensity() / 255.0F;
         float thickness = hasJetThickness.getJetThickness();
 
-        double blockCenterX = blockEntity.getBlockPos().getX() + 0.5;
-        double blockCenterZ = blockEntity.getBlockPos().getZ() + 0.5;
-        double baseY = blockEntity.getBlockPos().getY() + 2.0;
-
-        if (!isNearPlayer(level, blockCenterX, baseY, blockCenterZ)) {
-            return;
-        }
-
-        Vector3f baseDir = computeDirection(pan, tilt, facing, 0.0F, false);
-
-        double baseRightX = facing.getClockWise().getStepX();
-        double baseRightZ = facing.getClockWise().getStepZ();
-
-        double panRad = Math.toRadians(pan);
-        double rightX = baseRightX * Math.cos(panRad) - baseRightZ * Math.sin(panRad);
-        double rightZ = baseRightX * Math.sin(panRad) + baseRightZ * Math.cos(panRad);
+        Matrix4f pose = getFixturePoseStack(blockEntity, partialTick).last().pose();
 
         for (int i = 0; i < FAN_OFFSETS_X.length; i++) {
-            double spawnX = blockCenterX + (FAN_OFFSETS_X[i] * rightX);
-            double spawnZ = blockCenterZ + (FAN_OFFSETS_X[i] * rightZ);
+            double localX = 0.5 + FAN_OFFSETS_X[i];
+            double localY = 2.0;
+            double localZ = 0.5;
 
             double angleRad = Math.toRadians(FAN_ANGLES[i]);
-            double cosAngle = Math.cos(angleRad);
-            double sinAngle = Math.sin(angleRad);
-            double dirX = (baseDir.x * cosAngle) + (rightX * sinAngle);
-            double dirY = (baseDir.y * cosAngle);
-            double dirZ = (baseDir.z * cosAngle) + (rightZ * sinAngle);
+            double dirX = Math.sin(angleRad);
+            double dirY = 0.0;
+            double dirZ = -Math.cos(angleRad);
+
+            Vec3 posWorld = transformPoint(pose, localX, localY, localZ);
+            Vec3 dirWorld = transformDirection(pose, dirX, dirY, dirZ);
+
+            double spawnX = blockEntity.getBlockPos().getX() + posWorld.x;
+            double spawnY = blockEntity.getBlockPos().getY() + posWorld.y;
+            double spawnZ = blockEntity.getBlockPos().getZ() + posWorld.z;
+
+            if (!isNearPlayer(level, spawnX, spawnY, spawnZ)) {
+                continue;
+            }
 
             double particleSpeed = baseSpeed * FAN_HEIGHT_MULT[i];
 
@@ -490,123 +585,85 @@ public final class WaterJetClientEffects {
                     variant
             );
 
-            emit(level, options, spawnX, baseY, spawnZ,
-                    dirX * particleSpeed, dirY * particleSpeed, dirZ * particleSpeed);
+            emit(level, options, spawnX, spawnY, spawnZ,
+                    dirWorld.x * particleSpeed, dirWorld.y * particleSpeed, dirWorld.z * particleSpeed);
         }
     }
+
     public static void spawnWaltzesParticles(WaltzesWaterJetBlockEntity blockEntity, ClientLevel level, JetVariant variant, float partialTicks) {
-        if (!isNearPlayer(level, blockEntity.getBlockPos().getX() + 0.5, blockEntity.getBlockPos().getY() + 2.0, blockEntity.getBlockPos().getZ() + 0.5)) {
-            return;
-        }
-
         float intensityNorm = blockEntity.getIntensity() / 255.0f;
-
-        net.minecraft.core.Direction facing = blockEntity.getBlockState().getValue(dev.imabad.theatrical.blocks.HangableBlock.FACING);
-        float yawRad = (float) Math.toRadians(facing.getOpposite().toYRot());
-
         float smoothAngle = blockEntity.getRenderAngle(partialTicks);
-        float tiltRad = (float) Math.toRadians(smoothAngle);
+        double tiltRad = Math.toRadians(smoothAngle);
 
-        double yOffsetFromBlock = 2.0;
+        Matrix4f pose = getFixturePoseStack(blockEntity, partialTicks).last().pose();
 
-        double xBase = blockEntity.getBlockPos().getX() + 0.5;
-        double yBase = blockEntity.getBlockPos().getY() + yOffsetFromBlock;
-        double zBase = blockEntity.getBlockPos().getZ() + 0.5;
+        double speed = blockEntity.smoothedHeight * 0.1;
+        double localDirY = Math.sin(tiltRad);
+        double localDirZ = -Math.cos(tiltRad);
+        Vec3 dirWorld = transformDirection(pose, 0.0, localDirY, localDirZ);
 
         double[] xOffsets = {-1.4375, -1.125, -0.75, -0.375, 0.0, 0.375, 0.75, 1.125, 1.4375};
 
-        double cosYaw = Math.cos(yawRad);
-        double sinYaw = Math.sin(yawRad);
-
-        double speed = blockEntity.smoothedHeight * 0.1;
-
-        double vLocalY = speed * Math.cos(tiltRad);
-        double vLocalZ = speed * Math.sin(tiltRad);
-
-        double vGlobalX = vLocalZ * -sinYaw;
-        double vGlobalY = vLocalY;
-        double vGlobalZ = vLocalZ * cosYaw;
-
         for (double xOffset : xOffsets) {
-            double finalX = xBase + (xOffset * cosYaw);
-            double finalY = yBase;
-            double finalZ = zBase - (xOffset * sinYaw);
+            Vec3 posWorld = transformPoint(pose, 0.5 + xOffset, 2.0, 0.5);
+
+            double finalX = blockEntity.getBlockPos().getX() + posWorld.x;
+            double finalY = blockEntity.getBlockPos().getY() + posWorld.y;
+            double finalZ = blockEntity.getBlockPos().getZ() + posWorld.z;
+
+            if (!isNearPlayer(level, finalX, finalY, finalZ)) {
+                continue;
+            }
 
             emit(level,
                     new WaterJetParticleOptions(intensityNorm, blockEntity.getJetThickness(), variant),
-                    finalX,
-                    finalY,
-                    finalZ,
-                    vGlobalX,
-                    vGlobalY,
-                    vGlobalZ
+                    finalX, finalY, finalZ,
+                    dirWorld.x * speed, dirWorld.y * speed, dirWorld.z * speed
             );
         }
     }
 
     public static void spawnWaltzCurtainParticles(WaltzCurtainBlockEntity blockEntity, ClientLevel level, JetVariant variant, float partialTicks) {
-        if (!isNearPlayer(level, blockEntity.getBlockPos().getX() + 0.5, blockEntity.getBlockPos().getY() + 2.0, blockEntity.getBlockPos().getZ() + 0.5)) {
-            return;
-        }
-
         float intensityNorm = blockEntity.getIntensity() / 255.0f;
-
-        net.minecraft.core.Direction facing = blockEntity.getBlockState().getValue(dev.imabad.theatrical.blocks.HangableBlock.FACING);
-        float yawRad = (float) Math.toRadians(facing.getOpposite().toYRot());
-
         float smoothAngle = blockEntity.getRenderAngle(partialTicks);
-        float tiltRad = (float) Math.toRadians(smoothAngle);
+        double tiltRad = Math.toRadians(smoothAngle);
 
-        double yOffsetFromBlock = 2.0;
-
-        double xBase = blockEntity.getBlockPos().getX() + 0.5;
-        double yBase = blockEntity.getBlockPos().getY() + yOffsetFromBlock;
-        double zBase = blockEntity.getBlockPos().getZ() + 0.5;
-
-        double[] xOffsets = { -0.375, 0.0, 0.375,};
-
-        double cosYaw = Math.cos(yawRad);
-        double sinYaw = Math.sin(yawRad);
+        Matrix4f pose = getFixturePoseStack(blockEntity, partialTicks).last().pose();
 
         double speed = blockEntity.smoothedHeight * 0.1;
-        double vLocalX = speed * Math.sin(tiltRad); // Movimiento lateral
-        double vLocalY = speed * Math.cos(tiltRad); // Elevación
-        double vLocalZ = 0; // Sin profundidad
+        double localDirX = Math.sin(tiltRad);
+        double localDirZ = -Math.cos(tiltRad);
+        Vec3 dirWorld = transformDirection(pose, localDirX, 0.0, localDirZ);
 
-        double vGlobalX = (vLocalX * cosYaw) + (vLocalZ * sinYaw);
-        double vGlobalY = vLocalY;
-        double vGlobalZ = (-vLocalX * sinYaw) + (vLocalZ * cosYaw);
+        double[] xOffsets = {-0.375, 0.0, 0.375};
 
         for (double xOffset : xOffsets) {
-            double finalX = xBase + (xOffset * cosYaw);
-            double finalY = yBase;
-            double finalZ = zBase - (xOffset * sinYaw);
+            Vec3 posWorld = transformPoint(pose, 0.5 + xOffset, 2.0, 0.5);
+
+            double finalX = blockEntity.getBlockPos().getX() + posWorld.x;
+            double finalY = blockEntity.getBlockPos().getY() + posWorld.y;
+            double finalZ = blockEntity.getBlockPos().getZ() + posWorld.z;
+
+            if (!isNearPlayer(level, finalX, finalY, finalZ)) {
+                continue;
+            }
 
             emit(level,
                     new WaterJetParticleOptions(intensityNorm, blockEntity.getJetThickness(), variant),
-                    finalX,
-                    finalY,
-                    finalZ,
-                    vGlobalX,
-                    vGlobalY,
-                    vGlobalZ
+                    finalX, finalY, finalZ,
+                    dirWorld.x * speed, dirWorld.y * speed, dirWorld.z * speed
             );
         }
     }
 
-    private static void spawnSpinner(SpinnerBlockEntity blockEntity, ClientLevel level) {
-        if (!isNearPlayer(level, blockEntity.getBlockPos().getX() + 0.5, blockEntity.getBlockPos().getY() + 2.0, blockEntity.getBlockPos().getZ() + 0.5)) {
-            return;
-        }
-
+    private static void spawnSpinner(SpinnerBlockEntity blockEntity, ClientLevel level, float partialTick) {
         double speed = blockEntity.smoothedHeight * 0.10;
         float intensity = blockEntity.getIntensity() / 255.0F;
         float thickness = blockEntity.getJetThickness();
         WaterJetParticleOptions options = new WaterJetParticleOptions(intensity, thickness, JetVariant.JET3);
 
-        double baseX = blockEntity.getBlockPos().getX();
-        double baseY = blockEntity.getBlockPos().getY();
-        double baseZ = blockEntity.getBlockPos().getZ();
+        Matrix4f pose = getFixturePoseStack(blockEntity, partialTick).last().pose();
+
         float angle = blockEntity.getSpinAngle() % 360.0F;
         double rad = Math.toRadians(angle);
         double nozzleRad = Math.toRadians(blockEntity.getNozzleAngle());
@@ -617,9 +674,14 @@ public final class WaterJetClientEffects {
             double rotatedX = offsetX * Math.cos(rad) - offsetZ * Math.sin(rad);
             double rotatedZ = offsetX * Math.sin(rad) + offsetZ * Math.cos(rad);
 
-            double worldX = baseX + 0.5 + rotatedX;
-            double worldY = baseY + nozzle[1];
-            double worldZ = baseZ + 0.5 + rotatedZ;
+            Vec3 posWorld = transformPoint(pose, 0.5 + rotatedX, nozzle[1], 0.5 + rotatedZ);
+            double worldX = blockEntity.getBlockPos().getX() + posWorld.x;
+            double worldY = blockEntity.getBlockPos().getY() + posWorld.y;
+            double worldZ = blockEntity.getBlockPos().getZ() + posWorld.z;
+
+            if (!isNearPlayer(level, worldX, worldY, worldZ)) {
+                continue;
+            }
 
             double dirX = rotatedX;
             double dirZ = rotatedZ;
@@ -632,61 +694,13 @@ public final class WaterJetClientEffects {
                 dirZ = 0.0;
             }
 
-            double velY = speed * Math.cos(nozzleRad);
-            double horizontalSpeed = speed * Math.sin(nozzleRad);
-            emit(level, options, worldX, worldY, worldZ, dirX * horizontalSpeed, velY, dirZ * horizontalSpeed);
+            double velAlongAxis = Math.cos(nozzleRad);
+            double horizontalSpeed = Math.sin(nozzleRad);
+
+            Vec3 dirWorld = transformDirection(pose, dirX * horizontalSpeed, velAlongAxis, dirZ * horizontalSpeed);
+
+            emit(level, options, worldX, worldY, worldZ, dirWorld.x * speed, dirWorld.y * speed, dirWorld.z * speed);
         }
-    }
-
-    private static Vector3f computeDirection(float pan, float tilt, Direction facing, float pitchOffsetDeg, boolean movingJetPitch) {
-        double yaw = Math.toRadians(pan);
-        double pitch = Math.toRadians(tilt + pitchOffsetDeg + (movingJetPitch ? 90.0 : 0.0));
-
-        double dirX = -Math.sin(yaw) * Math.cos(pitch);
-        double dirY = Math.sin(pitch);
-        double dirZ = Math.cos(yaw) * Math.cos(pitch);
-
-        switch (facing) {
-            case NORTH -> {
-                dirX = -dirX;
-                dirZ = -dirZ;
-            }
-            case EAST -> {
-                double tmp = dirX;
-                dirX = dirZ;
-                dirZ = -tmp;
-            }
-            case WEST -> {
-                double tmp = dirX;
-                dirX = -dirZ;
-                dirZ = tmp;
-            }
-            default -> {
-            }
-        }
-        return new Vector3f((float) dirX, (float) dirY, (float) dirZ);
-    }
-
-    private static org.joml.Vector2f rotateXZ(double x, double z, Direction facing) {
-        double dirX = x;
-        double dirZ = z;
-        switch (facing) {
-            case NORTH -> {
-                dirX = -x;
-                dirZ = -z;
-            }
-            case EAST -> {
-                dirX = z;
-                dirZ = -x;
-            }
-            case WEST -> {
-                dirX = -z;
-                dirZ = x;
-            }
-            default -> {
-            }
-        }
-        return new org.joml.Vector2f((float) dirX, (float) dirZ);
     }
 
     private static double readSmoothedHeight(BaseLightBlockEntity blockEntity) {
@@ -761,8 +775,6 @@ public final class WaterJetClientEffects {
             e.smoothedHeight = value;
         }
     }
-
-
 
     private static ClientLevel resolveClientLevel(BaseLightBlockEntity blockEntity) {
         if (Minecraft.getInstance().isPaused()) {

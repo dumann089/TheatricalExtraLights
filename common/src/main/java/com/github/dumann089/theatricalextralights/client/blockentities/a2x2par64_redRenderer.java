@@ -74,6 +74,9 @@ public class a2x2par64_redRenderer extends ExtraLightsRenderer<a2x2par64_redBloc
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -190,6 +193,9 @@ public class a2x2par64_redRenderer extends ExtraLightsRenderer<a2x2par64_redBloc
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

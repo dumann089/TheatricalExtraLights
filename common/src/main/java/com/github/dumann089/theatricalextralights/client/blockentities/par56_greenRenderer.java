@@ -70,6 +70,10 @@ public class par56_greenRenderer extends ExtraLightsRenderer<par56_greenBlockEnt
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -80,6 +84,9 @@ public class par56_greenRenderer extends ExtraLightsRenderer<par56_greenBlockEnt
                 poseStack.translate(0, 0.19, 0);
             }
         }
+
+
+
         // Static Model Render
         minecraftRenderModel(poseStack, vertexConsumer, blockState, cachedStaticModel, packedLight, packedOverlay);
         //#region Model Pan
@@ -140,7 +147,6 @@ public class par56_greenRenderer extends ExtraLightsRenderer<par56_greenBlockEnt
 
     @Override
     public void preparePoseStack(par56_greenBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         //#region Fixture Hanging
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
@@ -171,6 +177,9 @@ public class par56_greenRenderer extends ExtraLightsRenderer<par56_greenBlockEnt
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

@@ -14,6 +14,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
 /**
  * Base DMX Extra Lights : préserve tous les prev* au sync client et les avance côté client
@@ -157,6 +158,14 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         prevTilt = ti;
     }
 
+    @Override
+    public AABB getRenderBoundingBox() {
+        // Tomamos la posición del bloque (1x1x1) y la "inflamos" 256 bloques
+        // en todas las direcciones. Esto garantiza que mientras estés a menos de
+        // 256 bloques de distancia, el haz no desaparecerá al mover la cámara.
+        return new AABB(this.getBlockPos()).inflate(256.0);
+    }
+
     /** Exact server-side values from the console — avoids DMX round-trip drift on pan/tilt. */
     public void applyDirectControl(int intensity, int red, int green, int blue, int focus, int pan, int tilt) {
         if (level == null || level.isClientSide) {
@@ -211,6 +220,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
                 StrobeRenderHelper.markSectionDirty(getBlockPos());
             }
         }
+
     }
 
     /**
@@ -228,19 +238,18 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         return false;
     }
 
-    @Override
+
     public void applyDmxFrameBase(int intensity, int red, int green, int blue,
                                   int prevIntensity, int prevRed, int prevGreen, int prevBlue) {
-        super.applyDmxFrameBase(intensity, red, green, blue, prevIntensity, prevRed, prevGreen, prevBlue);
+        applyDmxFrameBase(intensity, red, green, blue, prevIntensity, prevRed, prevGreen, prevBlue);
         if (level != null && level.isClientSide) {
             StrobeRenderHelper.markSectionDirty(getBlockPos());
         }
     }
 
-    @Override
     public void applyDmxFramePanTiltFocus(int pan, int tilt, int focus,
                                           int prevPan, int prevTilt, int prevFocus) {
-        super.applyDmxFramePanTiltFocus(pan, tilt, focus, prevPan, prevTilt, prevFocus);
+        applyDmxFramePanTiltFocus(pan, tilt, focus, prevPan, prevTilt, prevFocus);
         if (level != null && level.isClientSide) {
             StrobeRenderHelper.markSectionDirty(getBlockPos());
         }

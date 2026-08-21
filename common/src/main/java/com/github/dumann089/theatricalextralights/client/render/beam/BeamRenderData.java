@@ -16,14 +16,16 @@ public record BeamRenderData(
         float tanHalfAngle,
         int color,
         float intensity,
-        ResourceLocation goboTexture,
+        ResourceLocation tex0,         // <- Textura del Gobo 1
+        ResourceLocation tex1,         // <- Textura del Gobo 2
+        float wheelProgress,           // <- Progreso de la mezcla
         float goboRotation,
         Level level,
         float widthScale,
         float heightScale,
-        float baseRadius // Añadida la coma arriba y esto aquí
+        float baseRadius
 ) {
-    /** Constructor de compatibilidad actualizado */
+    /** Constructor de compatibilidad actualizado (Opcional, pero útil si lo llamás desde otro lado sin el baseRadius) */
     public BeamRenderData(
             BlockPos fixturePos,
             Vec3 origin,
@@ -35,7 +37,9 @@ public record BeamRenderData(
             float tanHalfAngle,
             int color,
             float intensity,
-            ResourceLocation goboTexture,
+            ResourceLocation tex0,
+            ResourceLocation tex1,
+            float wheelProgress,
             float goboRotation,
             Level level,
             float widthScale,
@@ -43,7 +47,7 @@ public record BeamRenderData(
     ) {
         this(fixturePos, origin, beamDir, axisU, axisV,
                 zoomNorm, scanLen, tanHalfAngle,
-                color, intensity, goboTexture, goboRotation, level,
+                color, intensity, tex0, tex1, wheelProgress, goboRotation, level,
                 widthScale, heightScale, 0.05f);
     }
 
@@ -61,12 +65,14 @@ public record BeamRenderData(
         hash = 31 * hash + Float.floatToIntBits(tanHalfAngle);
         hash = 31 * hash + color;
         hash = 31 * hash + Float.floatToIntBits(intensity);
-        hash = 31 * hash + (goboTexture != null ? goboTexture.hashCode() : 0);
+        hash = 31 * hash + (tex0 != null ? tex0.hashCode() : 0); // Añadido tex0 al hash
+        hash = 31 * hash + (tex1 != null ? tex1.hashCode() : 0); // Añadido tex1 al hash
+        hash = 31 * hash + Float.floatToIntBits(wheelProgress);  // Añadido progress al hash
         hash = 31 * hash + Float.floatToIntBits(goboRotation);
         hash = 31 * hash + slices;
         hash = 31 * hash + Float.floatToIntBits(widthScale);
         hash = 31 * hash + Float.floatToIntBits(heightScale);
-        hash = 31 * hash + Float.floatToIntBits(baseRadius); // Añadido al hash
+        hash = 31 * hash + Float.floatToIntBits(baseRadius);
         return hash;
     }
 }

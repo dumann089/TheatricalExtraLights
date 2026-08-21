@@ -64,6 +64,9 @@ public class LEDPanel2Renderer extends ExtraLightsRenderer<LEDPanel2BlockEntity>
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         //#endregion
         if(facing.getAxis() == Direction.Axis.X){
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
@@ -140,7 +143,6 @@ public class LEDPanel2Renderer extends ExtraLightsRenderer<LEDPanel2BlockEntity>
 
     @Override
     public void preparePoseStack(LEDPanel2BlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         //#region Fixture Hanging
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
@@ -171,6 +173,9 @@ public class LEDPanel2Renderer extends ExtraLightsRenderer<LEDPanel2BlockEntity>
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

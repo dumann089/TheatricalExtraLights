@@ -39,20 +39,19 @@ public class TheatricalExtraLightsClientFabric implements ClientModInitializer {
             buffers.endBatch(LensRenderTypes.LENS);
         });
 
-        if (!ModCompat.SHIMMER) {
-            CoreShaderRegistrationCallback.EVENT.register(context -> {
-                context.register(
-                        new ResourceLocation("theatricalextralights", "gobo_projector"),
-                        DefaultVertexFormat.POSITION_COLOR,
-                        shader -> ModShaders.goboProjectorShader = shader
-                );
-                context.register(
-                        new ResourceLocation("theatricalextralights", "volumetric_beam"),
-                        DefaultVertexFormat.POSITION_COLOR_TEX,
-                        shader -> ModShaders.volumetricBeamShader = shader
-                );
-            });
-        }
+        CoreShaderRegistrationCallback.EVENT.register(context -> {
+            context.register(
+                    new ResourceLocation("theatricalextralights", "gobo_projector"),
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    shader -> ModShaders.goboProjectorShader = shader
+            );
+
+            context.register(
+                    new ResourceLocation("theatricalextralights", "volumetric_beam"),
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    shader -> ModShaders.volumetricBeamShader = shader
+            );
+        });
     }
 
     private static void registerConfettiCannonItemRenderer() {

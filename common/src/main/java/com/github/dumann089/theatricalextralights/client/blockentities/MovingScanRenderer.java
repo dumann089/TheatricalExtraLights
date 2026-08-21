@@ -1,5 +1,6 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
+import com.github.dumann089.theatricalextralights.blockentities.MovingBeamBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.MovingScanBlockEntity;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
@@ -17,6 +18,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -67,6 +69,9 @@ public class MovingScanRenderer extends ExtraLightsFixtureRenderer<MovingScanBlo
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
@@ -110,7 +115,7 @@ public class MovingScanRenderer extends ExtraLightsFixtureRenderer<MovingScanBlo
     }
     private final Double beamOpacity = TheatricalConfig.INSTANCE.CLIENT.beamOpacity;
 
-    private static final Vec3 LENS_OFFSET = new Vec3(0.5f, 0.78125f, 0.023f);
+    private static final Vec3 LENS_OFFSET = new Vec3(0.5f, 1.25f, 0.418f);
     private static final float MIN_ANGLE_DEG = 1.0f;
     private static final float MAX_ANGLE_DEG = 15.0f;
 
@@ -134,18 +139,29 @@ public class MovingScanRenderer extends ExtraLightsFixtureRenderer<MovingScanBlo
         float focusNorm = focusInterpolated / 255f;
 
         // Grosor base: 0.15f para un Beam potente y grueso desde la lente
-        float baseRadius = 0.15f;
+        float baseRadius = 0.06f;
 
         if (goboValue == 0) {
             PoseStack singlePose = new PoseStack();
             preparePoseStack(blockEntity, singlePose, facing, partialTicks, isFlipped, blockstate, isHanging);
             singlePose.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
 
+            // 1. Obtenemos la textura para el slot 0 (o la de fallback si es nulo)
+            ResourceLocation tex = (GoboLibrary.WASH != null)
+                    ? GoboLibrary.WASH.getTexture(0)
+                    : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
+
+            // 2. Pasamos 'tex' en ambos parámetros de textura, y 0.0f en el progreso
             submitVolumetricBeam(blockEntity, singlePose, partialTicks, MIN_ANGLE_DEG, MAX_ANGLE_DEG,
-                    GoboLibrary.MACVIP, 0, focusNorm, 1.0f, 1.0f, 0, color, intensityNorm, baseRadius);
+                    tex, tex, 0.0f, focusNorm, 0.5f, 0.5f, 0, color, intensityNorm, baseRadius);
         } else {
             int beamCount = 2 + (int)((goboValue - 1) / 255f * 14);
             float goboRot = blockEntity.getGoboRotation();
+
+            // 1. Obtenemos la textura para el goboValue
+            ResourceLocation tex = (GoboLibrary.WASH != null)
+                    ? GoboLibrary.WASH.getTexture(goboValue)
+                    : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
 
             for (int i = 0; i < beamCount; i++) {
                 PoseStack beamPose = new PoseStack();
@@ -154,11 +170,12 @@ public class MovingScanRenderer extends ExtraLightsFixtureRenderer<MovingScanBlo
 
                 float beamRotation = i * (360f / beamCount);
                 if (blockEntity.getGoboSpin() > 0) beamRotation += goboRot;
-                beamPose.mulPose(Axis.ZP.rotationDegrees(beamRotation));
-                beamPose.mulPose(Axis.XP.rotationDegrees(spreadAngleDeg));
+                beamPose.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(beamRotation));
+                beamPose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(spreadAngleDeg));
 
+                // 2. Volvemos a pasar 'tex' repetida y 0.0f
                 submitVolumetricBeam(blockEntity, beamPose, partialTicks, MIN_ANGLE_DEG, MAX_ANGLE_DEG,
-                        GoboLibrary.MACVIP, goboValue, focusNorm, 1.0f, 1.0f, i, color, intensityNorm, 0.10f);
+                        tex, tex, 0.0f, focusNorm, 0.5f, 0.5f, i, color, intensityNorm, 0.06f);
             }
         }
 
@@ -190,7 +207,6 @@ public class MovingScanRenderer extends ExtraLightsFixtureRenderer<MovingScanBlo
 
     @Override
     public void preparePoseStack(MovingScanBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if (isHanging) {
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -214,6 +230,9 @@ public class MovingScanRenderer extends ExtraLightsFixtureRenderer<MovingScanBlo
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {

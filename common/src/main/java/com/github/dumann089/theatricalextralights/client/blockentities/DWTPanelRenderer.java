@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.DWTPanelBlockEntity;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -49,6 +50,8 @@ public class DWTPanelRenderer extends ExtraLightsRenderer<DWTPanelBlockEntity> {
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
 
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
@@ -278,6 +281,8 @@ public class DWTPanelRenderer extends ExtraLightsRenderer<DWTPanelBlockEntity> {
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
 
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);

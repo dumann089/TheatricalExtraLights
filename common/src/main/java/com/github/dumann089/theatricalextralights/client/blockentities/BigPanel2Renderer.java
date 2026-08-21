@@ -72,6 +72,9 @@ public class BigPanel2Renderer extends ExtraLightsRenderer<BigPanel2BlockEntity>
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -142,7 +145,6 @@ public class BigPanel2Renderer extends ExtraLightsRenderer<BigPanel2BlockEntity>
 
     @Override
     public void preparePoseStack(BigPanel2BlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         //#region Fixture Hanging
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
@@ -167,12 +169,16 @@ public class BigPanel2Renderer extends ExtraLightsRenderer<BigPanel2BlockEntity>
                 }
             poseStack.translate(0, -0.52, 0F);
         }
+
         //#endregion
         if(facing.getAxis() == Direction.Axis.X){
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

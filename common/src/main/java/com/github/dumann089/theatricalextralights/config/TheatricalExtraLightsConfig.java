@@ -26,8 +26,17 @@ public class TheatricalExtraLightsConfig {
     @ConfigOption(name = "Render Lens", tooltip = "Enable/disable lens rendering")
     public Boolean renderLens = true;
 
-    @ConfigOption(name = "Max Gobo Distance", min = 10.0, max = 1000.0)
-    public Float maxGoboDistance = 90.0f;
+    @ConfigOption(name = "Max Gobo Distance", min = 5.0, max = 360.0)
+    public Float maxGoboDistance = 50.0f;
+
+
+    @ConfigOption(name = "Gobo Raymarching Intensity", min = 0.0, max = 1.0)
+    public Float goboRaymarchingIntensity = 0.25f;
+
+    @ConfigOption(name = "Gobo Smoke Noise Amount", min = 0.0, max = 2.0)
+    public Float goboSmokeNoiseAmount = 0.7f;
+
+
 
     @ConfigOption(name = "Render 2D Beam")
     public Boolean render2DBeam = true;
@@ -80,13 +89,24 @@ public class TheatricalExtraLightsConfig {
 
     private transient Set<String> laserPassThroughSet;
 
+    private Boolean fireworkDynamicRenderDistance = true;
+
+
     // Inicialización
     static {
         ConfigManager.load();
     }
-
     /* ================= GETTERS (Compatibilidad con tu código actual) ================= */
     private static TheatricalExtraLightsConfig get() { return ConfigManager.getInstance(); }
+
+    public static float getGoboRaymarchingIntensity() {
+        return get().goboRaymarchingIntensity != null ? get().goboRaymarchingIntensity : 0.25f;
+    }
+
+    public static float getGoboSmokeNoiseAmount() {
+        return get().goboSmokeNoiseAmount != null ? get().goboSmokeNoiseAmount : 0.7f;
+    }
+
 
     public static boolean isVolumetricBeamEnabled() { return get().volumetricBeamEnabled; }
     public static float getVolumetricBeamDistance() { return get().volumetricBeamDistance; }
@@ -95,11 +115,14 @@ public class TheatricalExtraLightsConfig {
     public static float getVolumetricBeamDensity() { return get().volumetricBeamDensity; }
     public static float getVolumetricBeamMaxAlpha() { return get().volumetricBeamMaxAlpha; }
     public static float getVolumetricBeamFadeLength() { return get().volumetricBeamFadeLength != null ? get().volumetricBeamFadeLength : 2.0f; }
+
     public static float getLaserBeamLength() { return get().laserBeamLength; }
     public static float getRgbBarBeamLength() { return get().rgbBarBeamLength; }
     public static boolean shouldRenderLens() { return get().renderLens; }
     public static float getMaxGoboDistance() { return get().maxGoboDistance; }
     public static boolean shouldRender2DBeam() { return get().render2DBeam; }
+
+    public static boolean useFireworkDynamicRenderDistance() { return INSTANCE.fireworkDynamicRenderDistance == null || INSTANCE.fireworkDynamicRenderDistance; }
 
     public static int getMaxConcurrentRockets() { return get().maxConcurrentRockets != null ? get().maxConcurrentRockets : 768; }
     public static int getMaxSparksPerRocket() { return get().maxSparksPerRocket != null ? get().maxSparksPerRocket : 600; }
@@ -111,6 +134,7 @@ public class TheatricalExtraLightsConfig {
     public static int getLedFacadeMaxUniverses() { return INSTANCE.ledFacadeMaxUniverses != null ? INSTANCE.ledFacadeMaxUniverses : 64; }
 
     /* ================= SETTERS ================= */
+
     public static void setVolumetricBeamEnabled(boolean value) { get().volumetricBeamEnabled = value; ConfigManager.save(); }
     public static void setVolumetricBeamDistance(float value) { get().volumetricBeamDistance = value; ConfigManager.save(); }
     public static void setVolumetricBeamBrightness(float value) { get().volumetricBeamBrightness = value; ConfigManager.save(); }

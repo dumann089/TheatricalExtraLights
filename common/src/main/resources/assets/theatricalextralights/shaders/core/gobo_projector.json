@@ -1,10 +1,17 @@
 {
   "blend": {
     "func": "add",
-    "srcrgb": "src_alpha",
-    "dstrgb": "one"
+    "srcrgb": "srcalpha",
+    "dstrgb": "one",
+    "srcalpha": "zero",
+    "dstalpha": "one"
   },
-  "cull": false,
+  "depthtest": {
+    "func": "always"
+  },
+  "cull": {
+    "enable": false
+  },
   "vertex": "theatricalextralights:gobo_projector",
   "fragment": "theatricalextralights:gobo_projector",
   "attributes": [
@@ -13,17 +20,133 @@
     "UV0"
   ],
   "samplers": [
-    { "name": "Sampler0" }
+    { "name": "Sampler0" },
+    { "name": "Sampler1" },
+    { "name": "Sampler2" }
   ],
   "uniforms": [
-    { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-    { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-    { "name": "LightPos", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
-    { "name": "LightDir", "type": "float", "count": 3, "values": [ 0.0, -1.0, 0.0 ] },
-    { "name": "AxisU", "type": "float", "count": 3, "values": [ 1.0, 0.0, 0.0 ] },
-    { "name": "AxisV", "type": "float", "count": 3, "values": [ 0.0, 0.0, 1.0 ] },
-    { "name": "TanHalfAngle", "type": "float", "count": 1, "values": [ 0.5 ] },
-    { "name": "MaxLen", "type": "float", "count": 1, "values": [ 20.0 ] },
-    { "name": "MaxGoboDist", "type": "float", "count": 1, "values": [ 100.0 ] }
+    {
+      "name": "ModelViewMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+      ]
+    },
+    {
+      "name": "ProjMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+      ]
+    },
+    {
+      "name": "InvProjMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+      ]
+    },
+    {
+      "name": "ScreenSize",
+      "type": "float",
+      "count": 2,
+      "values": [1920.0, 1080.0]
+    },
+    {
+      "name": "CameraPos",
+      "type": "float",
+      "count": 3,
+      "values": [0.0, 0.0, 0.0]
+    },
+    {
+      "name": "CameraRight",
+      "type": "float",
+      "count": 3,
+      "values": [1.0, 0.0, 0.0]
+    },
+    {
+      "name": "CameraUp",
+      "type": "float",
+      "count": 3,
+      "values": [0.0, 1.0, 0.0]
+    },
+    {
+      "name": "CameraLook",
+      "type": "float",
+      "count": 3,
+      "values": [0.0, 0.0, -1.0]
+    },
+    {
+      "name": "LightPos",
+      "type": "float",
+      "count": 3,
+      "values": [0.0, 0.0, 0.0]
+    },
+    {
+      "name": "LightDir",
+      "type": "float",
+      "count": 3,
+      "values": [0.0, 0.0, -1.0]
+    },
+    {
+      "name": "AxisU",
+      "type": "float",
+      "count": 3,
+      "values": [1.0, 0.0, 0.0]
+    },
+    {
+      "name": "AxisV",
+      "type": "float",
+      "count": 3,
+      "values": [0.0, 1.0, 0.0]
+    },
+    {
+      "name": "TanHalfAngle",
+      "type": "float",
+      "count": 1,
+      "values": [0.5]
+    },
+    {
+      "name": "MaxLen",
+      "type": "float",
+      "count": 1,
+      "values": [32.0]
+    },
+    {
+      "name": "WheelProgress",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "Time",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "RaymarchingIntensity",
+      "type": "float",
+      "count": 1,
+      "values": [0.25]
+    },
+    {
+      "name": "SmokeNoiseAmount",
+      "type": "float",
+      "count": 1,
+      "values": [0.7]
+    }
   ]
 }

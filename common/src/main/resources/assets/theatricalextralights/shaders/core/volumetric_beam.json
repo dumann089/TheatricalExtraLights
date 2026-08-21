@@ -1,9 +1,10 @@
 {
   "blend": {
     "func": "add",
-    "srcrgb": "srcalpha",
+    "srcrgb": "src_alpha",
     "dstrgb": "one"
   },
+  "cull": false,
   "vertex": "theatricalextralights:volumetric_beam",
   "fragment": "theatricalextralights:volumetric_beam",
   "attributes": [
@@ -12,20 +13,12 @@
     "UV0"
   ],
   "samplers": [
-    { "name": "Sampler0" }
+    { "name": "Sampler0" },
+    { "name": "Sampler1" }
   ],
   "uniforms": [
-    {
-      "name": "ModelViewMat",
-      "type": "matrix4x4",
-      "count": 16,
-      "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ]
-    },
-    {
-      "name": "ProjMat",
-      "type": "matrix4x4",
-      "count": 16,
-      "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ]
-    }
+    { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "WheelProgress", "type": "float", "count": 1, "values": [ 0.0 ] }
   ]
 }

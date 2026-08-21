@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -73,6 +74,9 @@ public class WashlightRenderer extends ExtraLightsFixtureRenderer<WashlightBlock
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
@@ -129,21 +133,26 @@ public class WashlightRenderer extends ExtraLightsFixtureRenderer<WashlightBlock
         preparePoseStack(blockEntity, beamPose, facing, partialTicks, isFlipped, blockstate, isHanging);
         beamPose.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
 
+        ResourceLocation tex = (GoboLibrary.MACVIP != null)
+                ? GoboLibrary.MACVIP.getTexture(0)
+                : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
+
         submitVolumetricBeam(
                 blockEntity,
                 beamPose,
                 partialTicks,
                 MIN_ANGLE_DEG,
                 MAX_ANGLE_DEG,
-                GoboLibrary.MACVIP,
-                0,
+                tex,                                 // <- tex0
+                tex,                                 // <- tex1
+                0.0f,                                // <- wheelProgress (fijo en 0.0f)
                 focusNorm,
                 1.0f,
                 1.0f,
-                0,
+                0,                                   // beamIndex
                 blockEntity.getColour(),
                 blockEntity.getIntensity() / 255.0f,
-                0.25f
+                0.25f                                // baseRadius
         );
 
         // ── 4. GLOW DE LA LENTE (Efecto físico en el faro) ──
@@ -206,6 +215,9 @@ public class WashlightRenderer extends ExtraLightsFixtureRenderer<WashlightBlock
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);

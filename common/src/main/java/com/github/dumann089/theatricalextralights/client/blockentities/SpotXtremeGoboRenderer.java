@@ -1,6 +1,8 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
+import com.github.dumann089.theatricalextralights.blockentities.MovingVL2CBeamsBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.SpotXtremeGoboBlockEntity;
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.blockentities.SpotXtremeGoboBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.SpotXtremeGoboBlockEntity;
@@ -45,6 +47,9 @@ public class SpotXtremeGoboRenderer extends ExtraLightsFixtureRenderer<SpotXtrem
         float smoothTilt = 0f;
         long lastUpdateTime = -1;
     }
+
+    private final java.util.Map<SpotXtremeGoboBlockEntity, GoboWheelAnimator> goboAnimators = new java.util.WeakHashMap<>();
+
     private final Map<SpotXtremeGoboBlockEntity, SpotXtremeGoboRenderer.SmoothingState> smoothingStates = new WeakHashMap<>();
     private static final float SMOOTH_SPEED = 25f;
     
@@ -114,6 +119,9 @@ public class SpotXtremeGoboRenderer extends ExtraLightsFixtureRenderer<SpotXtrem
         }
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -182,6 +190,8 @@ public class SpotXtremeGoboRenderer extends ExtraLightsFixtureRenderer<SpotXtrem
         if (blockEntity.getIntensity() <= 0) return;
 
         if (blockEntity.getGobo() >= 0) {
+            GoboWheelAnimator animator = goboAnimators.computeIfAbsent(blockEntity, k -> new GoboWheelAnimator());
+
             Vec3 localLensOffset = new Vec3(0.5f, 0.640f, 0.163f);
             float[] panPivot = blockEntity.getFixture().getPanRotationPosition();
             float[] tiltPivot = blockEntity.getFixture().getTiltRotationPosition();
@@ -189,9 +199,23 @@ public class SpotXtremeGoboRenderer extends ExtraLightsFixtureRenderer<SpotXtrem
 
             SpotXtremeGoboRenderer.SmoothingState state = smoothingStates.computeIfAbsent(blockEntity, k -> new SpotXtremeGoboRenderer.SmoothingState());
 
+            animator.updateTarget(blockEntity.getGoboLibrary(), blockEntity.getGobo());
+
+            // 2. Extraemos los datos para el Shader Dual
+            int slot0 = animator.getOutgoingSlot(blockEntity.getGoboLibrary());
+            int slot1 = animator.getIncomingSlot(blockEntity.getGoboLibrary());
+            float wheelProgress = animator.getShaderProgress(blockEntity.getGoboLibrary());
+
+            // 3. Resolvemos las dos texturas
+            ResourceLocation tex0 = resolveGoboTexture(blockEntity, slot0);
+            ResourceLocation tex1 = resolveGoboTexture(blockEntity, slot1);
+
             goboProjectors.computeIfAbsent(blockEntity, k -> new GoboGPUProjector()).render(
                     blockEntity,
                     multiBufferSource,
+                    tex0,               // <- CORREGIDO: tex0 va aquí
+                    tex1,               // <- CORREGIDO: tex1 va aquí
+                    wheelProgress,      // <- CORREGIDO: wheelProgress va aquí
                     facing,
                     partialTicks,
                     isFlipped,
@@ -201,13 +225,12 @@ public class SpotXtremeGoboRenderer extends ExtraLightsFixtureRenderer<SpotXtrem
                     panPivot,
                     tiltPivot,
                     structuralTransform,
-                    1.0f,   // minAngle: zoom gobo
-                    19.0f,   // maxAngle: zoom gobo
+                    1.0f,
+                    19.0f,
                     state.smoothPan,
-                    state.smoothTilt
+                    state.smoothTilt    // <- CORREGIDO: smoothTilt vuelve al final
             );
-            
-            // =========================================================================
+
             if (TheatricalExtraLightsConfig.isVolumetricBeamEnabled()) {
                 PoseStack localStack = new PoseStack();
                 preparePoseStack(blockEntity, localStack, facing, partialTicks, isFlipped, blockstate, isHanging);
@@ -237,7 +260,7 @@ public class SpotXtremeGoboRenderer extends ExtraLightsFixtureRenderer<SpotXtrem
                     goboTex = new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
                 }
 
-                // NUEVO: Instancia corregida con baseRadius
+                // Reemplaza tu vieja creación de BeamRenderData por esto:
                 BeamRenderData renderData = new BeamRenderData(
                         blockEntity.getBlockPos(),
                         origin,
@@ -249,12 +272,14 @@ public class SpotXtremeGoboRenderer extends ExtraLightsFixtureRenderer<SpotXtrem
                         tanHalfAngle,
                         blockEntity.getColour(),
                         blockEntity.getIntensity() / 255.0f,
-                        goboTex,
+                        tex0,               // <- ¡Directo al renderData!
+                        tex1,               // <- ¡Directo al renderData!
+                        wheelProgress,      // <- ¡Directo al renderData!
                         (float) blockEntity.getGoboRotation(),
                         blockEntity.getLevel(),
-                        1.0f, // widthScale
-                        1.0f,
-                        0.15f
+                        1f,
+                        1f,
+                        0.05f
                 );
 
                 volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())
@@ -321,6 +346,24 @@ public class SpotXtremeGoboRenderer extends ExtraLightsFixtureRenderer<SpotXtrem
         });
     }
 
+    private ResourceLocation resolveGoboTexture(SpotXtremeGoboBlockEntity blockEntity, int slot) {
+        if (slot < 0) {
+            return new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
+        }
+
+        String customFileName = GlobalGoboManager.getCustomGobo(blockEntity.getGoboLibrary(), slot);
+        if (customFileName != null) {
+            return CustomGoboLoader.getOrCreateCustomGobo(customFileName);
+        }
+
+        ResourceLocation tex = blockEntity.getGoboLibrary().getTexture(slot);
+        if (tex != null) {
+            return tex;
+        }
+
+        return new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
+    }
+
     private void renderFakeVolumetricBeams(
             VertexConsumer builder,
             PoseStack poseStack,
@@ -370,7 +413,6 @@ public class SpotXtremeGoboRenderer extends ExtraLightsFixtureRenderer<SpotXtrem
 
     @Override
     public void preparePoseStack(SpotXtremeGoboBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -396,8 +438,12 @@ public class SpotXtremeGoboRenderer extends ExtraLightsFixtureRenderer<SpotXtrem
             }
             poseStack.translate(0, -0.5, 0F);
         }
+
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
+
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

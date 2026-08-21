@@ -79,46 +79,69 @@ public class MovingBeamBlockEntity extends ExtraLightsLightBlockEntity implement
     // ─── Consume DMX ─────────────────────────────────────────────────────────
     @Override
     public void consume(byte[] dmxValues) {
-        int channelCount = getFixture().getDMXPersonalities().get(activePersonalityIndex).getChannelCount();
-        int start = this.getChannelStart() > 0 ? this.getChannelStart() - 1 : 0;
-        byte[] ourValues = Arrays.copyOfRange(dmxValues, start, start + channelCount);
+        int channelCount = getFixture().getDMXPersonalities()
+                .get(activePersonalityIndex)
+                .getChannelCount();
 
-        if (ourValues.length < 7) return;
+        int start = this.getChannelStart() > 0 ? this.getChannelStart() - 1 : 0;
+
+        byte[] ourValues = Arrays.copyOfRange(
+                dmxValues,
+                start,
+                start + channelCount
+        );
+
+        if (ourValues.length < 7)
+            return;
 
         boolean prevAdvanced = beginDmxUpdate();
 
-        int _pi = intensity, _pr = red, _pg = green, _pb = blue, _pf = focus, _pp = pan, _pt = tilt;
-
-                int prevIntensity = intensity;
-        int prevRed = red;
-        int prevGreen = green;
-        int prevBlue = blue;
-        int prevFocus = focus;
+        int _pi = intensity;
+        int _pr = red;
+        int _pg = green;
+        int _pb = blue;
+        int _pf = focus;
+        int _pp = pan;
+        int _pt = tilt;
 
         intensity = convertByteToInt(ourValues[0]);
         red       = convertByteToInt(ourValues[1]);
         green     = convertByteToInt(ourValues[2]);
         blue      = convertByteToInt(ourValues[3]);
         focus     = convertByteToInt(ourValues[4]);
-        pan       = (int) ((convertByteToInt(ourValues[5]) * 360) / 255f) - 180;
-        tilt      = (int) ((convertByteToInt(ourValues[6]) * 270) / 255F) - 225;
 
+        pan = (int) ((convertByteToInt(ourValues[5]) * 360) / 255f) - 180;
+        tilt = (int) ((convertByteToInt(ourValues[6]) * 270) / 255f) - 225;
 
-        boolean changed = intensity != _pi || red != _pr || green != _pg || blue != _pb
-                || focus != _pf || pan != _pp || tilt != _pt;
+        boolean changed =
+                intensity != _pi ||
+                        red       != _pr ||
+                        green     != _pg ||
+                        blue      != _pb ||
+                        focus     != _pf ||
+                        pan       != _pp ||
+                        tilt      != _pt;
 
-                boolean otherChanged = intensity != prevIntensity || red != prevRed || green != prevGreen
-                || blue != prevBlue || focus != prevFocus;
-
+        // CANALES 8-10: GOBO / ZOOM / GOBO SPEED
         if (channelCount >= 10 && ourValues.length >= 10) {
+
             int newGobo     = convertByteToInt(ourValues[7]);
             int newZoom     = convertByteToInt(ourValues[8]);
             int newGoboSpin = convertByteToInt(ourValues[9]);
-            if (newGobo != gobo || newZoom != zoom || newGoboSpin != goboSpin) {
-                gobo     = newGobo;
-                zoom     = newZoom;
+
+            if (newGobo != gobo) {
+                gobo = newGobo;
+                changed = true;
+            }
+
+            if (newZoom != zoom) {
+                zoom = newZoom;
+                changed = true;
+            }
+
+            if (newGoboSpin != goboSpin) {
                 goboSpin = newGoboSpin;
-                otherChanged = true;
+                changed = true;
             }
         }
 
