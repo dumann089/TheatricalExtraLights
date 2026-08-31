@@ -4,6 +4,7 @@ import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData;
+import com.github.dumann089.theatricalextralights.client.render.beam.BeamSpotState;
 import com.github.dumann089.theatricalextralights.client.render.beam.VolumetricBeamRenderer;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
@@ -88,6 +89,30 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
      * @param heightScale   V-axis scale — 1.0f for circular spots, <1.0f for bar fixtures
      */
 
+    /**
+     * Publie la geometrie du cone pour que la tache lumineuse s'y cale.
+     *
+     * <p>Appele uniquement par les projecteurs dont le cone <b>varie</b> : les lyres a focus,
+     * quand l'angle max depasse l'angle min, et les lyres a gobo, dont le zoom ouvre le cone de
+     * 1 a 19 degres. Les appareils a cone fixe — les PAR, dont l'angle min egale l'angle max —
+     * ne publient rien et gardent le dimensionnement d'origine de Theatrical, tout comme les
+     * strobes et blinders, qui surchargent deja {@code getLightSpread()}.
+     *
+     * <p>Publie sans condition de rendu : la tache depend de la geometrie du cone, pas de ce qui
+     * est effectivement dessine. Un projecteur dont le faisceau s'eteint avant l'obstacle eclaire
+     * quand meme la surface.
+     */
+    protected void publishCone(T blockEntity, BeamRenderData data) {
+        if (blockEntity.getLevel() == null) return;
+        BeamSpotState.publish(
+                data.fixturePos(),
+                data.tanHalfAngle(),
+                data.baseRadius(),
+                Math.max(data.widthScale(), data.heightScale()),
+                blockEntity.getLevel().getGameTime()
+        );
+    }
+
     protected void submitVolumetricBeam(
             T blockEntity,
             PoseStack beamPose,      // ← es PoseStack, NO Direction
@@ -120,6 +145,11 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
                 (float) blockEntity.getDistance(), tanHalfAngle, customColor,
                 customIntensity, goboTexture, 0.0f, blockEntity.getLevel(), widthScale, heightScale, baseRadius
         );
+
+        // Cone variable = lyre a focus. Un PAR a minAngleDeg == maxAngleDeg et ne publie rien.
+        if (maxAngleDeg > minAngleDeg + 1.0e-3f) {
+            publishCone(blockEntity, renderData);
+        }
 
         volumetricRenderers.computeIfAbsent(blockEntity, k -> new java.util.HashMap<>())
                 .computeIfAbsent(beamIndex, k -> new VolumetricBeamRenderer())

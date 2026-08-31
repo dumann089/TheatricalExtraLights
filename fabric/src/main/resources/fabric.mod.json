@@ -22,6 +22,9 @@
     ],
     "client": [
       "com.github.dumann089.theatricalextralights.fabric.TheatricalExtraLightsClientFabric"
+    ],
+    "modmenu": [
+      "com.github.dumann089.theatricalextralights.fabric.ModMenuIntegration"
     ]
   },
   "mixins": [

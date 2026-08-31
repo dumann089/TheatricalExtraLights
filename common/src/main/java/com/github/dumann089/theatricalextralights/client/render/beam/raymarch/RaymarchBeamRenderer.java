@@ -50,6 +50,19 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         }
     }
 
+    /**
+     * Periode de repli des coordonnees monde envoyees au bruit volumetrique. Loin du spawn,
+     * une coordonnee brute epuise la precision du flottant et le bruit devient grossier ;
+     * repliee, elle reste petite. Le repli porte sur l'origine du faisceau, constante pour
+     * un projecteur fixe : il ne peut donc pas sauter quand le joueur se deplace.
+     */
+    private static final float WORLD_NOISE_PERIOD = 4096.0f;
+
+    private static float wrapWorld(float v) {
+        float w = v % WORLD_NOISE_PERIOD;
+        return w < 0.0f ? w + WORLD_NOISE_PERIOD : w;
+    }
+
     public static void submit(BeamRenderData data) {
         INSTANCE.enqueue(data);
     }
@@ -190,6 +203,14 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 shader.safeGetUniform("BeamDir").set(dirVS.x, dirVS.y, dirVS.z);
                 shader.safeGetUniform("AxisU").set(uVS.x, uVS.y, uVS.z);
                 shader.safeGetUniform("AxisV").set(vVS.x, vVS.y, vVS.z);
+                // Le meme repere, mais en coordonnees monde : le shader s'en sert pour
+                // reancrer la poussiere volumetrique dans l'environnement. Sans lui, la
+                // marche se faisant en espace vue, la fumee resterait collee a la camera.
+                shader.safeGetUniform("BeamOriginW")
+                        .set(wrapWorld(s.originX), wrapWorld(s.originY), wrapWorld(s.originZ));
+                shader.safeGetUniform("BeamDirW").set(s.dirX, s.dirY, s.dirZ);
+                shader.safeGetUniform("AxisUW").set(s.uX, s.uY, s.uZ);
+                shader.safeGetUniform("AxisVW").set(s.vX, s.vY, s.vZ);
                 shader.safeGetUniform("TanHalfAngle").set(s.tanHalfAngle);
                 shader.safeGetUniform("BeamLength").set(s.scanLen);
                 shader.safeGetUniform("BaseRadius").set(s.baseRadius);

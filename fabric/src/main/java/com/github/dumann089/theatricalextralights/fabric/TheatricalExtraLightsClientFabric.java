@@ -30,6 +30,7 @@ public class TheatricalExtraLightsClientFabric implements ClientModInitializer {
         registerConfettiCannonItemRenderer();
 
         com.github.dumann089.theatricalextralights.fabric.FollowspotCameraFabric.init();
+        SettingsCommandFabric.init();
 
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             Minecraft minecraft = Minecraft.getInstance();

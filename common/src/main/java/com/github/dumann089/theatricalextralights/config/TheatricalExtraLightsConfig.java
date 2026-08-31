@@ -45,6 +45,14 @@ public class TheatricalExtraLightsConfig {
     private Float raymarchDustAmount = 0.55f;
     private Integer raymarchMaxBeamsPerFrame = 128;
 
+    /**
+     * Dimensionne la tache lumineuse des lyres sur la section du cone a la distance eclairee,
+     * au lieu du rayon derive du seul focus par Theatrical, qui ignore la distance.
+     */
+    private Boolean spotFollowsBeam = true;
+    /** Garde-fou : au-dela, la lumiere dynamique couvrirait un volume absurde. */
+    private Float spotMaxRadius = 48.0f;
+
     private Integer maxConcurrentRockets = 768;
     private Integer maxSparksPerRocket = 600;
     private Double fireworkRenderDistance = 2048.0;
@@ -86,7 +94,37 @@ public class TheatricalExtraLightsConfig {
         save();
     }
 
+    /**
+     * Ecriture differee. L'ecran de reglages ouvre un lot a l'ouverture et le ferme a la
+     * fermeture : les curseurs modifient la config en direct pour l'apercu, sans reecrire le
+     * fichier JSON a chaque pixel de glissement.
+     */
+    private static boolean batching = false;
+
+    public static void beginBatch() {
+        batching = true;
+    }
+
+    public static void endBatch() {
+        batching = false;
+        save();
+    }
+
+    /**
+     * Remet tous les reglages a leurs valeurs par defaut.
+     *
+     * <p>On repart d'une instance neuve plutot que de reaffecter champ par champ : les defauts
+     * sont portes par les initialiseurs de champs, donc c'est la seule facon de garantir
+     * qu'aucun reglage n'est oublie quand on en ajoute un.
+     */
+    public static void resetDefaults() {
+        INSTANCE = new TheatricalExtraLightsConfig();
+        save();
+    }
+
     public static void save() {
+        if (batching) return;
+
         try (FileWriter writer = new FileWriter(FILE)) {
             GSON.toJson(INSTANCE, writer);
         } catch (IOException e) {
@@ -129,6 +167,76 @@ public class TheatricalExtraLightsConfig {
 
     public static float getRaymarchDustAmount() {
         return INSTANCE.raymarchDustAmount != null ? INSTANCE.raymarchDustAmount : 0.55f;
+    }
+
+    public static boolean doesSpotFollowBeam() {
+        return INSTANCE.spotFollowsBeam == null || INSTANCE.spotFollowsBeam;
+    }
+
+    public static float getSpotMaxRadius() {
+        float v = INSTANCE.spotMaxRadius != null ? INSTANCE.spotMaxRadius : 48.0f;
+        return Math.max(1.0f, Math.min(256.0f, v));
+    }
+
+    public static void setSpotMaxRadius(float value) {
+        INSTANCE.spotMaxRadius = Math.max(1.0f, Math.min(256.0f, value));
+        save();
+    }
+
+    /** RAYMARCH ou LEGACY_SLICES. */
+    public static String getVolumetricEngine() {
+        return INSTANCE.volumetricEngine != null ? INSTANCE.volumetricEngine : "RAYMARCH";
+    }
+
+    public static void setVolumetricEngine(String value) {
+        INSTANCE.volumetricEngine = "LEGACY_SLICES".equalsIgnoreCase(value) ? "LEGACY_SLICES" : "RAYMARCH";
+        save();
+    }
+
+    public static void setRaymarchQuality(String value) {
+        String q = value == null ? "HIGH" : value.trim().toUpperCase();
+        INSTANCE.raymarchQuality = switch (q) {
+            case "LOW", "MEDIUM", "ULTRA" -> q;
+            default -> "HIGH";
+        };
+        save();
+    }
+
+    public static void setRaymarchAnisotropy(float value) {
+        INSTANCE.raymarchAnisotropy = Math.max(-0.9f, Math.min(0.9f, value));
+        save();
+    }
+
+    public static void setRaymarchDustAmount(float value) {
+        INSTANCE.raymarchDustAmount = Math.max(0.0f, Math.min(1.0f, value));
+        save();
+    }
+
+    public static void setRaymarchMaxBeamsPerFrame(int value) {
+        INSTANCE.raymarchMaxBeamsPerFrame = Math.max(1, Math.min(128, value));
+        save();
+    }
+
+    public static void setRender2DBeam(boolean value) { INSTANCE.render2DBeam = value; save(); }
+
+    public static void setVolumetricBeamSlices(int value) {
+        INSTANCE.volumetricBeamSlices = Math.max(16, Math.min(512, value));
+        save();
+    }
+
+    public static void setVolumetricBeamDensity(float value) {
+        INSTANCE.volumetricBeamDensity = Math.max(0.0f, Math.min(2.0f, value));
+        save();
+    }
+
+    public static void setVolumetricBeamMaxAlpha(float value) {
+        INSTANCE.volumetricBeamMaxAlpha = Math.max(0.0f, Math.min(1.0f, value));
+        save();
+    }
+
+    public static void setSpotFollowsBeam(boolean value) {
+        INSTANCE.spotFollowsBeam = value;
+        save();
     }
 
     public static int getRaymarchMaxBeamsPerFrame() {

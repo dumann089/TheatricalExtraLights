@@ -81,7 +81,6 @@
   "block.theatricalextralights.a2x2par64_yellow": "2x2 Par64 Yellow",
   "block.theatricalextralights.a2x2par64_warm": "2x2 Par64 Warm",
   "block.theatricalextralights.a2x2par64_white": "2x2 Par64 White",
-
   "block.theatricalextralights.bigscroller": "Big Scroller",
   "block.theatricalextralights.horizontalscroller": "Horizontal Scroller",
   "block.theatricalextralights.verticalscroller": "Vertical Scroller",
@@ -89,7 +88,6 @@
   "block.theatricalextralights.blinder_warm": "Blinder (warm)",
   "block.theatricalextralights.moving_bar": "Moving Bar",
   "block.theatricalextralights.moving_mini_bar": "Moving Mini Bar",
-
   "block.theatricalextralights.water_jet": "Water Jet (25m)",
   "block.theatricalextralights.moving_jet": "Moving Jet (Adjustable)",
   "block.theatricalextralights.water_jet_thin": "Water Jet 1 (Adjustable)",
@@ -108,8 +106,6 @@
   "block.theatricalextralights.vase_water_jet": "Vase Water Jet (Adjustable)",
   "block.theatricalextralights.waltzes_water_jet": "9 Waltzes Water Jets (Adjustable)",
   "block.theatricalextralights.waltz_curtain": "Waltz Curtain Water Jets (Adjustable)",
-
-
   "block.theatricalextralights.white_strobe": "White Strobe (1 Channel)",
   "block.theatricalextralights.firework_red_comet": "Firework Launcher - Red Comet",
   "block.theatricalextralights.firework_blue_comet": "Firework Launcher - Blue Comet",
@@ -206,43 +202,19 @@
   "block.theatricalextralights.pro_spot_gobo": "Pro Spot LX (Gobos)",
   "block.theatricalextralights.mini_scan_gobo": "Mini Scan (Gobos)",
   "block.theatricalextralights.mini_spot_gobo": "Mini Spot (Gobos)",
-
   "block.theatricalextralights.led_panels": "LED Panels (Shapes)",
-
   "block.theatricalextralights.panel_1x3": "1x3 Panel",
   "block.theatricalextralights.panel_2x1": "2x1 Panel",
   "block.theatricalextralights.panel_2x2": "2x2 Panel",
   "block.theatricalextralights.panel_2x3h": "2x3 Half Panel",
   "block.theatricalextralights.panel_2x2h": "2x2 Half Panel",
-
   "block.theatricalextralights.a1x1par64": "2x2 Par64 (Block/Color Preset)",
   "block.theatricalextralights.a2x8par64": "2x8 Par64 (Color Preset)",
   "block.theatricalextralights.a6x3par64_vertical": "6x3 Par64 Vertical (Color Preset)",
-
   "block.theatricalextralights.truss": "Mini Truss",
   "block.theatricalextralights.truss_joint": "Mini Truss Cross",
   "block.theatricalextralights.truss_corner": "Mini Truss Corner (L)",
   "block.theatricalextralights.truss_corner_t": "Mini Truss Corner (T)",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   "itemGroup.theatricalextralights": "Theatrical: Extra Lights",
   "itemGroup.theatricalextralights.pyro": "Theatrical Pyro",
   "fixture.position": "Position",
@@ -303,5 +275,36 @@
   "screen.theatricalextralights.mount.yaw": "Yaw",
   "screen.theatricalextralights.mount.pitch": "Pitch",
   "screen.theatricalextralights.mount.roll": "Roll",
-  "screen.theatricalextralights.mount.reset": "Reset"
+  "screen.theatricalextralights.mount.reset": "Reset",
+  "tel.settings.title": "Theatrical: Extra Lights",
+  "tel.settings.tab.general": "General",
+  "tel.settings.tab.beam": "Beam",
+  "tel.settings.tab.spot": "Spot",
+  "tel.settings.reset": "Reset defaults",
+  "tel.settings.volumetric": "Volumetric beam",
+  "tel.settings.lens": "Lens glow",
+  "tel.settings.beam2d": "2D beam",
+  "tel.settings.brightness": "Brightness",
+  "tel.settings.distance": "Beam range",
+  "tel.settings.fade": "Fade length",
+  "tel.settings.gobodistance": "Gobo distance",
+  "tel.settings.engine": "Engine",
+  "tel.settings.engine.raymarch": "Raymarch",
+  "tel.settings.engine.legacy_slices": "Slices",
+  "tel.settings.quality": "Quality",
+  "tel.settings.quality.low": "Low",
+  "tel.settings.quality.medium": "Medium",
+  "tel.settings.quality.high": "High",
+  "tel.settings.quality.ultra": "Ultra",
+  "tel.settings.anisotropy": "Anisotropy",
+  "tel.settings.dust": "Haze",
+  "tel.settings.maxbeams": "Max beams per frame",
+  "tel.settings.density": "Density",
+  "tel.settings.maxalpha": "Max alpha",
+  "tel.settings.slices": "Slices",
+  "tel.settings.spotfollow": "Spot follows cone",
+  "tel.settings.spotmax": "Max spot radius",
+  "tel.settings.beam.note": "Density, max alpha and slices only apply to the Slices engine.",
+  "tel.settings.spot.note": "Spot sized on cone angle x lit distance.",
+  "tel.command.config.opened": "Extra Lights settings opened."
 }

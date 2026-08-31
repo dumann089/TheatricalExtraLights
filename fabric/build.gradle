@@ -33,6 +33,11 @@ dependencies {
     // Theatrical
     modImplementation "dev.imabad:Theatrical-fabric:${theatrical_version}"
 
+    // ModMenu : dependance de compilation seulement. Fabric ne charge le point d'entree
+    // "modmenu" que si ModMenu est present a l'execution, donc son absence est sans
+    // consequence et la commande /tel config reste le chemin de secours.
+    modCompileOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
+
     if(include_shimmer == "true") {
         //Shimmer
         modImplementation("com.lowdragmc.shimmer:Shimmer-fabric:${shimmer_version}") {

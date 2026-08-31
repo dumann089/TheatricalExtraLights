@@ -242,6 +242,9 @@ public class MiniSpotGobosRenderer extends ExtraLightsFixtureRenderer<MiniSpotGo
                         0.09f
                 );
 
+                // Cone pilote par le zoom (1 a 19 deg) : la tache doit suivre.
+                publishCone(blockEntity, renderData);
+
                 volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())
                         .render(renderData, poseStack);
             }

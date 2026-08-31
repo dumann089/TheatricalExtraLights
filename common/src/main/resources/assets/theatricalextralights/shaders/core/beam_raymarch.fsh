@@ -8,6 +8,15 @@ uniform vec3 BeamOrigin;
 uniform vec3 BeamDir;
 uniform vec3 AxisU;
 uniform vec3 AxisV;
+// Meme repere que BeamOrigin/BeamDir/AxisU/AxisV, mais en coordonnees MONDE et non en
+// espace vue. Sert a reancrer la poussiere volumetrique : la marche se fait en espace
+// vue, donc echantillonner le bruit sur la position de marche collerait la fumee a la
+// camera. L'origine est repliee modulo un grand pas cote Java pour garder la precision
+// des flottants loin du spawn.
+uniform vec3 BeamOriginW;
+uniform vec3 BeamDirW;
+uniform vec3 AxisUW;
+uniform vec3 AxisVW;
 uniform vec3 BeamColor;
 uniform float TanHalfAngle;
 uniform float BeamLength;
@@ -315,15 +324,24 @@ void main() {
         }
 
         // Volumetric haze: domain-warped fBm billows plus fine drifting wisps.
-        // Sampled at world positions, so it parallaxes correctly in 3D as the
-        // camera moves — the beam reveals real depth structure inside.
+        // Sampled at true world positions, so the haze stays anchored in the
+        // environment: turning the head or walking parallaxes through it instead
+        // of dragging it along with the camera.
         float haze = 1.0;
         if (DustAmount > 0.0) {
-            vec3 hp = pos * 0.8 + wind;
+            // Position MONDE du point de marche, reconstruite depuis ses coordonnees dans
+            // le repere du faisceau : le repere (BeamDir, AxisU, AxisV) est orthonorme, la
+            // reconstruction est donc exacte. u et v sont deja divises par les echelles,
+            // on les remultiplie pour retrouver les distances reelles.
+            vec3 wpos = BeamOriginW
+                      + zDist * BeamDirW
+                      + (u * wScale) * AxisUW
+                      + (v * hScale) * AxisVW;
+            vec3 hp = wpos * 0.8 + wind;
             float warp = vnoise(hp * 1.9 - wind * 1.6);
             hp += (warp - 0.5) * 0.9;
             float billow = fbm(hp);
-            float wisp = vnoise(pos * 3.1 + wind * 2.4);
+            float wisp = vnoise(wpos * 3.1 + wind * 2.4);
             float h = billow * (0.65 + 0.7 * wisp);
             h = h * h * 1.8; // contrast: darker gaps, brighter curls
             haze = mix(1.0, 0.25 + h, clamp(DustAmount, 0.0, 1.0));

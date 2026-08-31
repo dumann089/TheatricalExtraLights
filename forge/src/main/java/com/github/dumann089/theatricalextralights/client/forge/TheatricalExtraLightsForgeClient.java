@@ -3,6 +3,9 @@ package com.github.dumann089.theatricalextralights.client.forge;
 import com.github.dumann089.theatricalextralights.TheatricalExtraLightsClient;
 import com.github.dumann089.theatricalextralights.client.ConfettiCannonClientSetup;
 import com.github.dumann089.theatricalextralights.client.ModShaders;
+import com.github.dumann089.theatricalextralights.client.gui.ExtraLightsSettingsScreen;
+import net.minecraftforge.client.ConfigScreenHandler;
+import net.minecraftforge.fml.ModLoadingContext;
 import com.github.dumann089.theatricalextralights.client.entities.FireworkRocketRenderer;
 import com.github.dumann089.theatricalextralights.entities.ModEntities;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -35,6 +38,9 @@ public final class TheatricalExtraLightsForgeClient {
     public static void register(IEventBus modEventBus) {
         modEventBus.addListener(TheatricalExtraLightsForgeClient::clientSetup);
 
+        // RegisterClientCommandsEvent est diffuse sur le bus Forge, pas sur le bus du mod.
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(SettingsCommandForge::register);
+
         // Registramos el evento para cargar nuestros Shaders de GPU
         modEventBus.addListener(TheatricalExtraLightsForgeClient::registerShaders);
 
@@ -59,6 +65,13 @@ public final class TheatricalExtraLightsForgeClient {
     private static void clientSetup(final FMLClientSetupEvent event) {
         // Inicializamos los renders generales a través de Architectury/común
         TheatricalExtraLightsClient.init();
+
+        // Bouton « Configuration » dans la liste des mods de Forge.
+        ModLoadingContext.get().registerExtensionPoint(
+                ConfigScreenHandler.ConfigScreenFactory.class,
+                () -> new ConfigScreenHandler.ConfigScreenFactory(
+                        (minecraft, parent) -> new ExtraLightsSettingsScreen(parent))
+        );
     }
 
     private static void registerShaders(final RegisterShadersEvent event) {

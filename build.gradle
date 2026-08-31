@@ -51,6 +51,8 @@ allprojects {
             url "https://maven.firstdarkdev.xyz/snapshots"
         }
         maven { url 'https://jitpack.io' }
+        // ModMenu (bouton de reglages dans la liste des mods, cote Fabric)
+        maven { url 'https://maven.terraformersmc.com/releases' }
         mavenCentral()
         mavenLocal()
         // Add repositories to retrieve artifacts from in here.
