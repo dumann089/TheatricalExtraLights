@@ -1,0 +1,194 @@
+{
+  "blend": {
+    "func": "add",
+    "srcrgb": "srcalpha",
+    "dstrgb": "one"
+  },
+  "vertex": "theatricalextralights:beam_raymarch",
+  "fragment": "theatricalextralights:beam_raymarch",
+  "attributes": [
+    "Position",
+    "Color",
+    "UV0"
+  ],
+  "samplers": [
+    { "name": "Sampler0" },
+    { "name": "Sampler1" }
+  ],
+  "uniforms": [
+    {
+      "name": "ModelViewMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]
+    },
+    {
+      "name": "ProjMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]
+    },
+    {
+      "name": "InvProjMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]
+    },
+    {
+      "name": "BeamOrigin",
+      "type": "float",
+      "count": 3,
+      "values": [0.0,0.0,0.0]
+    },
+    {
+      "name": "BeamDir",
+      "type": "float",
+      "count": 3,
+      "values": [0.0,0.0,-1.0]
+    },
+    {
+      "name": "AxisU",
+      "type": "float",
+      "count": 3,
+      "values": [1.0,0.0,0.0]
+    },
+    {
+      "name": "AxisV",
+      "type": "float",
+      "count": 3,
+      "values": [0.0,1.0,0.0]
+    },
+    {
+      "name": "BeamOriginW",
+      "type": "float",
+      "count": 3,
+      "values": [0.0,0.0,0.0]
+    },
+    {
+      "name": "BeamDirW",
+      "type": "float",
+      "count": 3,
+      "values": [0.0,0.0,-1.0]
+    },
+    {
+      "name": "AxisUW",
+      "type": "float",
+      "count": 3,
+      "values": [1.0,0.0,0.0]
+    },
+    {
+      "name": "AxisVW",
+      "type": "float",
+      "count": 3,
+      "values": [0.0,1.0,0.0]
+    },
+    {
+      "name": "BeamColor",
+      "type": "float",
+      "count": 3,
+      "values": [1.0,1.0,1.0]
+    },
+    {
+      "name": "TanHalfAngle",
+      "type": "float",
+      "count": 1,
+      "values": [0.1]
+    },
+    {
+      "name": "BeamLength",
+      "type": "float",
+      "count": 1,
+      "values": [32.0]
+    },
+    {
+      "name": "BaseRadius",
+      "type": "float",
+      "count": 1,
+      "values": [0.05]
+    },
+    {
+      "name": "WidthScale",
+      "type": "float",
+      "count": 1,
+      "values": [1.0]
+    },
+    {
+      "name": "HeightScale",
+      "type": "float",
+      "count": 1,
+      "values": [1.0]
+    },
+    {
+      "name": "Intensity",
+      "type": "float",
+      "count": 1,
+      "values": [1.0]
+    },
+    {
+      "name": "Density",
+      "type": "float",
+      "count": 1,
+      "values": [0.15]
+    },
+    {
+      "name": "MaxAlpha",
+      "type": "float",
+      "count": 1,
+      "values": [0.15]
+    },
+    {
+      "name": "Brightness",
+      "type": "float",
+      "count": 1,
+      "values": [0.15]
+    },
+    {
+      "name": "Anisotropy",
+      "type": "float",
+      "count": 1,
+      "values": [0.55]
+    },
+    {
+      "name": "FadeLength",
+      "type": "float",
+      "count": 1,
+      "values": [12.0]
+    },
+    {
+      "name": "DustAmount",
+      "type": "float",
+      "count": 1,
+      "values": [0.35]
+    },
+    {
+      "name": "GoboRotation",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "Time",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "Ambient",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "ScreenSize",
+      "type": "float",
+      "count": 2,
+      "values": [1.0,1.0]
+    },
+    {
+      "name": "StepCount",
+      "type": "int",
+      "count": 1,
+      "values": [16]
+    }
+  ]
+}

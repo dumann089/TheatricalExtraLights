@@ -156,12 +156,12 @@ public class ParScrollerRenderer extends ExtraLightsFixtureRenderer<ParScrollerB
                     if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {
                         poseStack.pushPose();
                         poseStack.translate(0.5f, 0.56f, 0.143f);
-                        renderLightBeam2D(builder, poseStack, blockEntity, camera, alpha, 0.14f, (float) blockEntity.getDistance(), color, 0.002f);
+                        renderLightBeam2D(builder, poseStack, blockEntity, camera, alpha, 0.0f, (float) blockEntity.getDistance(), color, 0.002f);
                         poseStack.popPose();
                     } else {
                         poseStack.pushPose();
                         poseStack.translate(0.5f, 0.56f, 0.143f);
-                        renderLightBeam4D(builder, poseStack, blockEntity, partialTick, alpha, 0.14f, (float) blockEntity.getDistance(), color, 0.002f);
+                        renderLightBeam4D(builder, poseStack, blockEntity, partialTick, alpha, 0.0f, (float) blockEntity.getDistance(), color, 0.002f);
                         poseStack.popPose();
                     }
 

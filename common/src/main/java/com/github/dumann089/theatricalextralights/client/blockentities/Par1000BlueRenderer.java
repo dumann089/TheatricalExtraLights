@@ -139,15 +139,11 @@ public class Par1000BlueRenderer extends ExtraLightsFixtureRenderer<Par1000BlueB
 
         int color = blockEntity.getColour();
         float intensityNorm = blockEntity.getIntensity() / 255.0f;
-        float baseRadius = 0.15f;
+        float baseRadius = 0.25f;
 
         PoseStack beamPose = new PoseStack();
         preparePoseStack(blockEntity, beamPose, facing, partialTicks, isFlipped, blockstate, isHanging);
         beamPose.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
-
-        ResourceLocation tex = (GoboLibrary.MACVIP != null)
-                ? GoboLibrary.MACVIP.getTexture(0)
-                : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
 
         submitVolumetricBeam(
                 blockEntity,
@@ -155,16 +151,15 @@ public class Par1000BlueRenderer extends ExtraLightsFixtureRenderer<Par1000BlueB
                 partialTicks,
                 MIN_ANGLE_DEG,
                 MAX_ANGLE_DEG,
-                tex,         // <- tex0
-                tex,         // <- tex1
-                0.0f,        // <- wheelProgress
+                GoboLibrary.MACVIP,
+                0,
                 0.0f,        // focusNorm
                 1.0f,        // widthScale
                 1.0f,        // heightScale
                 0,           // beamIndex
                 color,
                 intensityNorm,
-                0.12f        // baseRadius
+                0.30f        // baseRadius
         );
         // ── Lens glow + lens cap ─────────────────────────────────────────────
         LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {

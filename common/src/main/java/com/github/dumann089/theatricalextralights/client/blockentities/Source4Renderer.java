@@ -144,19 +144,14 @@ public class Source4Renderer extends ExtraLightsFixtureRenderer<Source4BlockEnti
         preparePoseStack(blockEntity, beamPose, facing, partialTicks, isFlipped, blockstate, isHanging);
         beamPose.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
 
-        ResourceLocation tex = (GoboLibrary.MACVIP != null)
-                ? GoboLibrary.MACVIP.getTexture(0)
-                : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
-
         submitVolumetricBeam(
                 blockEntity,
                 beamPose,
                 partialTicks,
                 MIN_ANGLE_DEG,
                 MAX_ANGLE_DEG,
-                tex,         // <- tex0
-                tex,         // <- tex1
-                0.0f,        // <- wheelProgress
+                GoboLibrary.MACVIP,
+                0,
                 0.0f,        // focusNorm
                 1.0f,        // widthScale
                 1.0f,        // heightScale
@@ -165,6 +160,7 @@ public class Source4Renderer extends ExtraLightsFixtureRenderer<Source4BlockEnti
                 intensityNorm,
                 0.12f        // baseRadius
         );
+
 
         // ── Lens glow + lens cap ─────────────────────────────────────────────
         LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {

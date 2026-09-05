@@ -26,20 +26,11 @@ public class TheatricalExtraLightsConfig {
     @ConfigOption(name = "Render Lens", tooltip = "Enable/disable lens rendering")
     public Boolean renderLens = true;
 
-    @ConfigOption(name = "Max Gobo Distance", min = 5.0, max = 360.0)
+    @ConfigOption(name = "Max Gobo Distance", min = 5.0, max = 500.0)
     public Float maxGoboDistance = 50.0f;
 
-
-    @ConfigOption(name = "Gobo Raymarching Intensity", min = 0.0, max = 1.0)
-    public Float goboRaymarchingIntensity = 0.25f;
-
-    @ConfigOption(name = "Gobo Smoke Noise Amount", min = 0.0, max = 2.0)
-    public Float goboSmokeNoiseAmount = 0.7f;
-
-
-
     @ConfigOption(name = "Render 2D Beam")
-    public Boolean render2DBeam = true;
+    public Boolean render2DBeam = false;
 
     public List<String> laserPassThroughBlocks = null;
 
@@ -63,6 +54,24 @@ public class TheatricalExtraLightsConfig {
 
     @ConfigOption(name = "Volumetric Beam Fade Length", min = 1.0, max = 50.0)
     public Float volumetricBeamFadeLength = 12.0f;
+
+    /* ================= RAYMARCH ================= */
+
+    @ConfigOption(name = "Volumetric Engine")
+    public String volumetricEngine = "RAYMARCH";
+
+    @ConfigOption(name = "Raymarch Quality")
+    public String raymarchQuality = "HIGH";
+
+    @ConfigOption(name = "Raymarch Anisotropy", min = -1.0, max = 1.0)
+    public Float raymarchAnisotropy = 0.55f;
+
+    @ConfigOption(name = "Raymarch Dust Amount", min = 0.0, max = 1.0)
+    public Float raymarchDustAmount = 0.55f;
+
+    @ConfigOption(name = "Raymarch Max Beams Per Frame", min = 1.0, max = 256.0)
+    public Integer raymarchMaxBeamsPerFrame = 128;
+
 
     @ConfigOption(name = "Max Concurrent Rockets", min = 10.0, max = 2000.0)
     public Integer maxConcurrentRockets = 768;
@@ -99,14 +108,6 @@ public class TheatricalExtraLightsConfig {
     /* ================= GETTERS (Compatibilidad con tu código actual) ================= */
     private static TheatricalExtraLightsConfig get() { return ConfigManager.getInstance(); }
 
-    public static float getGoboRaymarchingIntensity() {
-        return get().goboRaymarchingIntensity != null ? get().goboRaymarchingIntensity : 0.25f;
-    }
-
-    public static float getGoboSmokeNoiseAmount() {
-        return get().goboSmokeNoiseAmount != null ? get().goboSmokeNoiseAmount : 0.7f;
-    }
-
 
     public static boolean isVolumetricBeamEnabled() { return get().volumetricBeamEnabled; }
     public static float getVolumetricBeamDistance() { return get().volumetricBeamDistance; }
@@ -115,6 +116,57 @@ public class TheatricalExtraLightsConfig {
     public static float getVolumetricBeamDensity() { return get().volumetricBeamDensity; }
     public static float getVolumetricBeamMaxAlpha() { return get().volumetricBeamMaxAlpha; }
     public static float getVolumetricBeamFadeLength() { return get().volumetricBeamFadeLength != null ? get().volumetricBeamFadeLength : 2.0f; }
+
+    /* ================= RAYMARCH GETTERS ================= */
+
+    public static boolean isRaymarchEngine() {
+        String engine = get().volumetricEngine;
+        return engine == null || !"LEGACY_SLICES".equalsIgnoreCase(engine.trim());
+    }
+
+    public static String getVolumetricEngine() {
+        return get().volumetricEngine != null
+                ? get().volumetricEngine
+                : "RAYMARCH";
+    }
+
+    public static String getRaymarchQuality() {
+        return get().raymarchQuality != null
+                ? get().raymarchQuality
+                : "HIGH";
+    }
+
+    public static int getRaymarchSteps() {
+        String q = getRaymarchQuality().trim().toUpperCase();
+
+        return switch (q) {
+            case "LOW" -> 8;
+            case "MEDIUM" -> 16;
+            case "ULTRA" -> 32;
+            default -> 24;
+        };
+    }
+
+    public static float getRaymarchAnisotropy() {
+        return get().raymarchAnisotropy != null
+                ? get().raymarchAnisotropy
+                : 0.55f;
+    }
+
+    public static float getRaymarchDustAmount() {
+        return get().raymarchDustAmount != null
+                ? get().raymarchDustAmount
+                : 0.55f;
+    }
+
+    public static int getRaymarchMaxBeamsPerFrame() {
+        int value = get().raymarchMaxBeamsPerFrame != null
+                ? get().raymarchMaxBeamsPerFrame
+                : 128;
+
+        return Math.max(1, Math.min(128, value));
+    }
+
 
     public static float getLaserBeamLength() { return get().laserBeamLength; }
     public static float getRgbBarBeamLength() { return get().rgbBarBeamLength; }
@@ -139,10 +191,39 @@ public class TheatricalExtraLightsConfig {
     public static void setVolumetricBeamDistance(float value) { get().volumetricBeamDistance = value; ConfigManager.save(); }
     public static void setVolumetricBeamBrightness(float value) { get().volumetricBeamBrightness = value; ConfigManager.save(); }
     public static void setVolumetricBeamFadeLength(float value) { get().volumetricBeamFadeLength = value; ConfigManager.save(); }
+
     public static void setLaserBeamLength(float value) { get().laserBeamLength = Math.max(20f, value); ConfigManager.save(); }
     public static void setRgbBarBeamLength(float value) { get().rgbBarBeamLength = Math.max(1f, value); ConfigManager.save(); }
     public static void setRenderLens(boolean value) { get().renderLens = value; ConfigManager.save(); }
     public static void setMaxGoboDistance(float value) { get().maxGoboDistance = value; ConfigManager.save(); }
+
+    /* ================= RAYMARCH SETTERS ================= */
+
+    public static void setVolumetricEngine(String value) {
+        get().volumetricEngine = value;
+        ConfigManager.save();
+    }
+
+    public static void setRaymarchQuality(String value) {
+        get().raymarchQuality = value;
+        ConfigManager.save();
+    }
+
+    public static void setRaymarchAnisotropy(float value) {
+        get().raymarchAnisotropy = Math.max(-1.0f, Math.min(1.0f, value));
+        ConfigManager.save();
+    }
+
+    public static void setRaymarchDustAmount(float value) {
+        get().raymarchDustAmount = Math.max(0.0f, Math.min(1.0f, value));
+        ConfigManager.save();
+    }
+
+    public static void setRaymarchMaxBeamsPerFrame(int value) {
+        get().raymarchMaxBeamsPerFrame = Math.max(1, Math.min(128, value));
+        ConfigManager.save();
+    }
+
 
     public static void load() {
         ConfigManager.load();

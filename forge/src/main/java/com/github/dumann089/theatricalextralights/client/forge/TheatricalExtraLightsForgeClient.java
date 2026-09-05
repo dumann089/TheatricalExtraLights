@@ -68,7 +68,7 @@ public final class TheatricalExtraLightsForgeClient {
                     new ShaderInstance(
                             event.getResourceProvider(),
                             new ResourceLocation("theatricalextralights", "gobo_projector"),
-                            DefaultVertexFormat.POSITION_COLOR
+                            DefaultVertexFormat.POSITION_COLOR_TEX
                     ),
                     shader -> ModShaders.goboProjectorShader = shader
             );
@@ -82,6 +82,14 @@ public final class TheatricalExtraLightsForgeClient {
                             DefaultVertexFormat.POSITION_COLOR_TEX
                     ),
                     shader -> ModShaders.volumetricBeamShader = shader
+            );
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            new ResourceLocation("theatricalextralights", "beam_raymarch"),
+                            DefaultVertexFormat.POSITION_COLOR_TEX
+                    ),
+                    shader -> ModShaders.beamRaymarchShader = shader
             );
         } catch (IOException e) {
             throw new RuntimeException("Error cargando los shaders para Theatrical Extra Lights", e);

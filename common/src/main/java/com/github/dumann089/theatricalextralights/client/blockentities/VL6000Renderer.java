@@ -134,27 +134,21 @@ public class VL6000Renderer extends ExtraLightsFixtureRenderer<VL6000BlockEntity
         beamPose.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
 
         // Usamos el método avanzado que acepta el beamPose y el focusNorm
-        // 1. Resolvemos la textura del MACVIP (usando el slot 0)
-        ResourceLocation tex = (GoboLibrary.MACVIP != null)
-                ? GoboLibrary.MACVIP.getTexture(0)
-                : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
-
         submitVolumetricBeam(
                 blockEntity,
                 beamPose,
                 partialTicks,
                 MIN_ANGLE_DEG,
                 MAX_ANGLE_DEG,
-                tex,                                 // <- tex0
-                tex,                                 // <- tex1
-                0.0f,                                // <- wheelProgress (fijo en 0.0f)
+                GoboLibrary.MACVIP,
+                0,
                 focusNorm,
                 1.0f,
                 1.0f,
-                0,                                   // beamIndex
+                0,
                 blockEntity.getColour(),
                 blockEntity.getIntensity() / 255.0f,
-                0.25f                                // baseRadius
+                0.4f
         );
 
         // ── 4. GLOW DE LA LENTE (Efecto físico en el faro) ──

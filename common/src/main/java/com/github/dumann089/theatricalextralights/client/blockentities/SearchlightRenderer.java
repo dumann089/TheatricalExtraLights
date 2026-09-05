@@ -139,29 +139,18 @@ public class SearchlightRenderer extends ExtraLightsFixtureRenderer<SearchlightB
         float focusNorm = focusInterpolated / 255f;
 
         // Grosor base: 0.15f para un Beam potente y grueso desde la lente
-        float baseRadius = 0.06f;
+        float baseRadius = 0.35f;
 
         if (goboValue == 0) {
             PoseStack singlePose = new PoseStack();
             preparePoseStack(blockEntity, singlePose, facing, partialTicks, isFlipped, blockstate, isHanging);
             singlePose.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
 
-            // 1. Obtenemos la textura para el slot 0 (o la de fallback si es nulo)
-            ResourceLocation tex = (GoboLibrary.WASH != null)
-                    ? GoboLibrary.WASH.getTexture(0)
-                    : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
-
-            // 2. Pasamos 'tex' en ambos parámetros de textura, y 0.0f en el progreso
             submitVolumetricBeam(blockEntity, singlePose, partialTicks, MIN_ANGLE_DEG, MAX_ANGLE_DEG,
-                    tex, tex, 0.0f, focusNorm, 0.5f, 0.5f, 0, color, intensityNorm, baseRadius);
+                    GoboLibrary.MACVIP, 0, focusNorm, 1.0f, 1.0f, 0, color, intensityNorm, baseRadius);
         } else {
             int beamCount = 2 + (int)((goboValue - 1) / 255f * 14);
             float goboRot = blockEntity.getGoboRotation();
-
-            // 1. Obtenemos la textura para el goboValue
-            ResourceLocation tex = (GoboLibrary.WASH != null)
-                    ? GoboLibrary.WASH.getTexture(goboValue)
-                    : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
 
             for (int i = 0; i < beamCount; i++) {
                 PoseStack beamPose = new PoseStack();
@@ -170,12 +159,11 @@ public class SearchlightRenderer extends ExtraLightsFixtureRenderer<SearchlightB
 
                 float beamRotation = i * (360f / beamCount);
                 if (blockEntity.getGoboSpin() > 0) beamRotation += goboRot;
-                beamPose.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(beamRotation));
-                beamPose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(spreadAngleDeg));
+                beamPose.mulPose(Axis.ZP.rotationDegrees(beamRotation));
+                beamPose.mulPose(Axis.XP.rotationDegrees(spreadAngleDeg));
 
-                // 2. Volvemos a pasar 'tex' repetida y 0.0f
                 submitVolumetricBeam(blockEntity, beamPose, partialTicks, MIN_ANGLE_DEG, MAX_ANGLE_DEG,
-                        tex, tex, 0.0f, focusNorm, 0.5f, 0.5f, i, color, intensityNorm, 0.06f);
+                        GoboLibrary.MACVIP, goboValue, focusNorm, 1.0f, 1.0f, i, color, intensityNorm, 0.35f);
             }
         }
 

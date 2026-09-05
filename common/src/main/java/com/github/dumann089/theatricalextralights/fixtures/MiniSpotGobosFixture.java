@@ -103,6 +103,6 @@ public class MiniSpotGobosFixture extends Fixture {
 
     @Override
     public double getLightRadius() {
-        return 7.5;
+        return 0.0;
     }
 }

@@ -1,13 +1,12 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
-import com.github.dumann089.theatricalextralights.client.CustomGoboLoader;
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData;
 import com.github.dumann089.theatricalextralights.client.render.beam.VolumetricBeamRenderer;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
-import com.github.dumann089.theatricalextralights.util.GlobalGoboManager;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity;
@@ -21,17 +20,10 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import net.minecraft.core.BlockPos;
-import org.joml.Vector4f;
-import org.joml.Vector3f;
 
 import java.util.WeakHashMap;
 
@@ -41,8 +33,6 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
      * subclass gets cache isolation between multiple placed fixtures for free.
      */
     private final WeakHashMap<T, java.util.Map<Integer, VolumetricBeamRenderer>> volumetricRenderers = new WeakHashMap<>();
-
-    private final Double beamOpacity = dev.imabad.theatrical.config.TheatricalConfig.INSTANCE.CLIENT.beamOpacity;
 
     public ExtraLightsFixtureRenderer(BlockEntityRendererProvider.Context context) {
         super(context);
@@ -59,6 +49,9 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
     public void render(T blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource multiBufferSource,
                        int packedLight, int packedOverlay) {
         poseStack.pushPose();
+        // renderModel duplicates hang/pan/tilt and never called preparePoseStack — apply mount here
+        // so the wrench moves the block model (beams already apply mount in preparePoseStack).
+        FixtureMountTransform.apply(poseStack, blockEntity);
         VertexConsumer vertexConsumer = multiBufferSource.getBuffer(RenderType.cutout());
         BlockState blockState = blockEntity.getBlockState();
         boolean isFlipped = blockEntity.isUpsideDown();
@@ -101,9 +94,8 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
             float partialTicks,
             float minAngleDeg,
             float maxAngleDeg,
-            ResourceLocation tex0,         // ← Reemplazamos GoboLibrary
-            ResourceLocation tex1,         // ← Reemplazamos goboSlot
-            float wheelProgress,           // ← Nuevo parámetro de progreso
+            GoboLibrary goboLibrary,
+            int goboSlot,
             float focusNorm,
             float widthScale,
             float heightScale,
@@ -121,12 +113,12 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
         Vec3 beamDir = new Vec3(-headMatrix.m20(), -headMatrix.m21(), -headMatrix.m22()).normalize();
 
         float tanHalfAngle = (float) Math.tan(Math.toRadians(minAngleDeg + focusNorm * (maxAngleDeg - minAngleDeg)));
+        ResourceLocation goboTexture = (goboLibrary != null) ? goboLibrary.getTexture(goboSlot) : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
 
-        // Instanciamos el renderData usando los nuevos parámetros de texturas duales y progreso
         BeamRenderData renderData = new BeamRenderData(
                 blockEntity.getBlockPos(), origin, beamDir, axisU, axisV, focusNorm,
                 (float) blockEntity.getDistance(), tanHalfAngle, customColor,
-                customIntensity, tex0, tex1, wheelProgress, 0.0f, blockEntity.getLevel(), widthScale, heightScale, baseRadius
+                customIntensity, goboTexture, 0.0f, blockEntity.getLevel(), widthScale, heightScale, baseRadius
         );
 
         volumetricRenderers.computeIfAbsent(blockEntity, k -> new java.util.HashMap<>())

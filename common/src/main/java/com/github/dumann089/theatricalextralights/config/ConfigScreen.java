@@ -45,37 +45,66 @@ public class ConfigScreen extends Screen {
 
         // Initialize left-panel configuration options
         for (Field field : TheatricalExtraLightsConfig.class.getDeclaredFields()) {
-            if (field.isAnnotationPresent(ConfigOption.class)) {
-                ConfigOption option = field.getAnnotation(ConfigOption.class);
-                field.setAccessible(true);
+            if (!field.isAnnotationPresent(ConfigOption.class)) continue;
 
-                try {
-                    Object value = field.get(ConfigManager.getInstance());
-                    AbstractWidget widget = null;
+            ConfigOption option = field.getAnnotation(ConfigOption.class);
+            field.setAccessible(true);
 
-                    if (value instanceof Boolean) {
-                        widget = CycleButton.onOffBuilder((Boolean) value)
-                                .displayOnlyValue()
-                                .withTooltip(val -> Tooltip.create(Component.literal(getTooltipDescription(option.name()))))
-                                .create(x, y, 200, 20, Component.literal(option.name()), (button, val) -> {
-                                    setValue(field, val);
-                                });
-                    } else if (value instanceof Number) {
-                        widget = new NumberSlider(x, y, 200, 20, Component.literal(option.name()), field, option);
+            try {
+                Object value = field.get(ConfigManager.getInstance());
+                AbstractWidget widget = null;
+
+                if (value instanceof Boolean) {
+                    widget = CycleButton.onOffBuilder((Boolean) value)
+                            .displayOnlyValue()
+                            .withTooltip(val -> Tooltip.create(Component.literal(getTooltipDescription(option.name()))))
+                            .create(x, y, 200, 20, Component.literal(option.name()), (button, val) -> {
+                                setValue(field, val);
+                            });
+
+                } else if (value instanceof Number) {
+                    widget = new NumberSlider(
+                            x, y, 200, 20,
+                            Component.literal(option.name()),
+                            field,
+                            option
+                    );
+
+                } else if (value instanceof String) {
+                    if (field.getName().equals("volumetricEngine")) {
+                        widget = CycleButton.builder(Component::literal)
+                                .withValues("RAYMARCH", "LEGACY_SLICES")
+                                .withInitialValue((String) value)
+                                .withTooltip(val -> Tooltip.create(
+                                        Component.literal("Selects the volumetric rendering engine.")
+                                ))
+                                .create(x, y, 200, 20,
+                                        Component.literal(option.name()),
+                                        (button, val) -> setValue(field, val));
+
+                    } else if (field.getName().equals("raymarchQuality")) {
+                        widget = CycleButton.builder(Component::literal)
+                                .withValues("LOW", "MEDIUM", "HIGH", "ULTRA")
+                                .withInitialValue((String) value)
+                                .withTooltip(val -> Tooltip.create(
+                                        Component.literal("Controls raymarch quality.")
+                                ))
+                                .create(x, y, 200, 20,
+                                        Component.literal(option.name()),
+                                        (button, val) -> setValue(field, val));
                     }
-
-                    if (widget != null) {
-                        configWidgets.add(widget);
-                        widgetOriginalYs.add(y);
-                        addRenderableWidget(widget);
-                    }
-
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
                 }
 
-                y += 26;
+                if (widget != null) {
+                    configWidgets.add(widget);
+                    widgetOriginalYs.add(y);
+                    addRenderableWidget(widget);
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
             }
+
+            y += 26;
         }
 
         // Calculate maximum scroll depth based on the last widget's Y position

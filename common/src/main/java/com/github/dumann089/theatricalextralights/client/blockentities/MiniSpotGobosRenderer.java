@@ -208,9 +208,6 @@ public class MiniSpotGobosRenderer extends ExtraLightsFixtureRenderer<MiniSpotGo
             goboProjectors.computeIfAbsent(blockEntity, k -> new GoboGPUProjector()).render(
                     blockEntity,
                     multiBufferSource,
-                    tex0,               // <- CORREGIDO: tex0 va aquí
-                    tex1,               // <- CORREGIDO: tex1 va aquí
-                    wheelProgress,      // <- CORREGIDO: wheelProgress va aquí
                     facing,
                     partialTicks,
                     isFlipped,
@@ -220,10 +217,11 @@ public class MiniSpotGobosRenderer extends ExtraLightsFixtureRenderer<MiniSpotGo
                     panPivot,
                     tiltPivot,
                     structuralTransform,
-                    1.0f,
-                    12.0f,
+                    1.0f,   // minAngle
+                    19.0f,  // maxAngle
                     state.smoothPan,
-                    state.smoothTilt    // <- CORREGIDO: smoothTilt vuelve al final
+                    state.smoothTilt,
+                    0.0f    // baseRadius
             );
 
             if (TheatricalExtraLightsConfig.isVolumetricBeamEnabled()) {
@@ -243,16 +241,25 @@ public class MiniSpotGobosRenderer extends ExtraLightsFixtureRenderer<MiniSpotGo
                 float tanHalfAngle  = (float) Math.tan(Math.toRadians(coneHalfAngle));
 
                 ResourceLocation goboTex = null;
-                String customFileName = GlobalGoboManager.getCustomGobo(blockEntity.getGoboLibrary(), blockEntity.getGobo());
+
+                String customFileName = GlobalGoboManager.getCustomGobo(
+                        blockEntity.getGoboLibrary(),
+                        blockEntity.getGobo()
+                );
 
                 if (customFileName != null) {
                     goboTex = CustomGoboLoader.getOrCreateCustomGobo(customFileName);
                 }
+
                 if (goboTex == null) {
                     goboTex = blockEntity.getGoboLibrary().getTexture(blockEntity.getGobo());
                 }
+
                 if (goboTex == null) {
-                    goboTex = new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
+                    goboTex = new ResourceLocation(
+                            "theatricalextralights",
+                            "textures/empty_fallback.png"
+                    );
                 }
 
                 // Reemplaza tu vieja creación de BeamRenderData por esto:
@@ -267,14 +274,12 @@ public class MiniSpotGobosRenderer extends ExtraLightsFixtureRenderer<MiniSpotGo
                         tanHalfAngle,
                         blockEntity.getColour(),
                         blockEntity.getIntensity() / 255.0f,
-                        tex0,               // <- ¡Directo al renderData!
-                        tex1,               // <- ¡Directo al renderData!
-                        wheelProgress,      // <- ¡Directo al renderData!
+                        goboTex,
                         (float) blockEntity.getGoboRotation(),
                         blockEntity.getLevel(),
-                        1f,
-                        1f,
-                        0.05f
+                        1.0f, // widthScale
+                        1.0f,
+                        0.15f
                 );
 
                 volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())

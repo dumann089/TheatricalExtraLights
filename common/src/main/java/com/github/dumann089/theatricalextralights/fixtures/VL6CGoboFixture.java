@@ -104,6 +104,6 @@ public class VL6CGoboFixture extends Fixture {
 
     @Override
     public double getLightRadius() {
-        return 8;
+        return 0;
     }
 }

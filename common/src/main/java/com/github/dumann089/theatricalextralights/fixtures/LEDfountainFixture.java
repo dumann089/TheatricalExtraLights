@@ -96,16 +96,16 @@ public class LEDfountainFixture extends Fixture {
 
     @Override
     public boolean invertTilt() {
-        return true;
+        return false;
     }
 
     @Override
     public boolean invertPan() {
-        return true;
+        return false;
     }
 
     @Override
     public double getLightRadius() {
-        return 16.0;
+        return 1.0;
     }
 }

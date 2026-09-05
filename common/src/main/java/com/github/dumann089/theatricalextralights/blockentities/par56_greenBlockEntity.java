@@ -2,20 +2,46 @@ package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
-import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGobo;
+import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 
 import java.util.Arrays;
 
-public class par56_greenBlockEntity extends ExtraLightsLightBlockEntity {
+public class par56_greenBlockEntity extends ExtraLightsLightBlockEntity implements HasGobo {
+
+    // Valores hardcodeados para el sistema de gobo y zoom
+    private final int fixedGobo = 0;
+    private final int fixedZoom = 255; // Equivale a un zoom intermedio (~50%)
+    private final float fixedGoboRotation = 0f;
 
     public par56_greenBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.PAR56_GREEN.get(), pos, state);
-        setChannelCount(1);
+        setChannelCount(1); // Solo utiliza RGB
     }
+
+    @Override
+    public GoboLibrary getGoboLibrary() {
+        return GoboLibrary.WASH;
+    }
+
+    @Override
+    public int getGobo() { return fixedGobo; }
+
+    public int getPrevGobo() { return fixedGobo; }
+
+    public int getZoom() { return fixedZoom; }
+
+    public int getPrevZoom() { return fixedZoom; }
+
+    public float getPartialZoom(float partialTicks) { return (float) fixedZoom; }
+
+    public int getGoboSpin() { return 0; }
+
+    public float getGoboRotation() { return fixedGoboRotation; }
+
     @Override
     public Fixture getFixture() {
         return Fixtures.PAR56_GREEN.get();
@@ -23,7 +49,7 @@ public class par56_greenBlockEntity extends ExtraLightsLightBlockEntity {
 
     @Override
     public int getFocus() {
-        return 255;
+        return 1;
     }
 
     @Override
@@ -34,7 +60,7 @@ public class par56_greenBlockEntity extends ExtraLightsLightBlockEntity {
         if(ourValues.length < 1){
             return;
         }
-                boolean prevAdvanced = beginDmxUpdate();
+        boolean prevAdvanced = beginDmxUpdate();
         int _pi = intensity, _pr = red, _pg = green, _pb = blue, _pf = focus, _pp = pan, _pt = tilt;
         intensity = convertByteToInt(ourValues[0]);
         green = convertByteToInt(ourValues[0]);
@@ -42,31 +68,45 @@ public class par56_greenBlockEntity extends ExtraLightsLightBlockEntity {
     }
 
     @Override
-    public int getDeviceTypeId() {
-        return 0x02;
+    public int getDeviceTypeId() { return 0x02; }
+
+    @Override
+    public String getModelName() { return "Par56 Green"; }
+
+    @Override
+    public ResourceLocation getFixtureId() { return Fixtures.PAR56_GREEN.getId(); }
+
+    @Override
+    public int getActivePersonality() { return 0; }
+
+    public int convertByteToInt(byte val) { return Byte.toUnsignedInt(val); }
+
+    @Override
+    public String getTranslationKey() { return "block.theatricalextralights.par56_green"; }
+
+    @Override
+    public int getBasePan() { return 0; }
+
+    @Override
+    public boolean isUpsideDown() { return false; }
+
+    @Override
+    public float getPartialIntensity(float partialTicks) {
+        return getPrevIntensity() + (getIntensity() - getPrevIntensity()) * partialTicks;
     }
 
     @Override
-    public String getModelName() {
-        return "Par56 Green";
+    public int getColour() {
+        return ((getRed() & 0xFF) << 16) | ((getGreen() & 0xFF) << 8) | (getBlue() & 0xFF);
     }
 
     @Override
-    public ResourceLocation getFixtureId() {
-        return Fixtures.PAR56_GREEN.getId();
+    public float getPartialPanDeg(float partialTicks) {
+        return getPrevPan() + (getPan() - getPrevPan()) * partialTicks;
     }
 
     @Override
-    public int getActivePersonality() {
-        return 0;
-    }
-
-    public int convertByteToInt(byte val) {
-        return Byte.toUnsignedInt(val);
-    }
-
-    @Override
-    public String getTranslationKey() {
-        return "block.theatricalextralights.par56_green";
+    public float getPartialTiltDeg(float partialTicks) {
+        return getPrevTilt() + (getTilt() - getPrevTilt()) * partialTicks;
     }
 }

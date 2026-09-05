@@ -6,15 +6,20 @@ import com.github.dumann089.theatricalextralights.client.ConfettiCannonClientSet
 import com.github.dumann089.theatricalextralights.client.ModShaders;
 import com.github.dumann089.theatricalextralights.client.entities.FireworkRocketRenderer;
 import com.github.dumann089.theatricalextralights.client.forge.ModParticleClientImpl;
+import com.github.dumann089.theatricalextralights.client.render.beam.raymarch.SceneDepthCopy;
+import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.github.dumann089.theatricalextralights.entities.ModEntities;
 import dev.imabad.theatrical.compat.ModCompat;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.client.event.RegisterShadersEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -33,9 +38,28 @@ public final class TheatricalExtraLightsForgeClient {
     @SubscribeEvent
     public static void clientSetup(final FMLClientSetupEvent event) {
         TheatricalExtraLightsClient.init();
+        MinecraftForge.EVENT_BUS.addListener(TheatricalExtraLightsForgeClient::onRenderLevelStage);
     }
 
-    @SubscribeEvent
+    /**
+     * Capture la profondeur juste après les block entities, AVANT le rendu
+     * translucide et les particules : sinon chaque particule (quad carré qui
+     * écrit dans le depth buffer) découpe un trou carré dans les faisceaux,
+     * et les vitres coupent le faisceau au lieu de le laisser passer.
+     */
+    private static void onRenderLevelStage(final RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
+            return;
+        }
+        if (!TheatricalExtraLightsConfig.isRaymarchEngine() || !ModShaders.canUseRaymarch()) {
+            return;
+        }
+        // Flush les batches en attente pour que leur profondeur soit incluse.
+        Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
+        SceneDepthCopy.capture();
+    }
+
+        @SubscribeEvent
     public static void registerParticleProviders(final RegisterParticleProvidersEvent event) {
         ModParticleClientImpl.registerForgeProviders(event);
     }
@@ -63,7 +87,7 @@ public final class TheatricalExtraLightsForgeClient {
                     new ShaderInstance(
                             event.getResourceProvider(),
                             new ResourceLocation("theatricalextralights", "gobo_projector"),
-                            DefaultVertexFormat.POSITION_COLOR
+                            DefaultVertexFormat.POSITION_COLOR_TEX
                     ),
                     shader -> ModShaders.goboProjectorShader = shader
             );
@@ -76,8 +100,18 @@ public final class TheatricalExtraLightsForgeClient {
                     ),
                     shader -> ModShaders.volumetricBeamShader = shader
             );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            new ResourceLocation("theatricalextralights", "beam_raymarch"),
+                            DefaultVertexFormat.POSITION_COLOR_TEX
+                    ),
+                    shader -> ModShaders.beamRaymarchShader = shader
+            );
+
         } catch (IOException e) {
-            throw new RuntimeException("Error cargando los shaders para Theatrical Extra Lights", e);
+            throw new RuntimeException("Error Loading Shader Theatrical Extra Lights", e);
         }
     }
 }

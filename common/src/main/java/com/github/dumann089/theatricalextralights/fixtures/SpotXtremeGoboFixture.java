@@ -104,6 +104,6 @@ public class SpotXtremeGoboFixture extends Fixture {
 
     @Override
     public double getLightRadius() {
-        return 8;
+        return 0;
     }
 }

@@ -104,6 +104,6 @@ public class MovingVL2CBeamsFixture extends Fixture {
 
     @Override
     public double getLightRadius() {
-        return 4.5;
+        return 0.0;
     }
 }

@@ -94,17 +94,17 @@ public class par56_lightblueFixture extends Fixture {
 
     @Override
     public boolean invertTilt() {
-        return true;
+        return false;
     }
 
     @Override
     public boolean invertPan() {
-        return true;
+        return false;
     }
 
 
     @Override
     public double getLightRadius() {
-        return 13.5;
+        return 0;
     }
 }

@@ -133,26 +133,21 @@ public class WashlightRenderer extends ExtraLightsFixtureRenderer<WashlightBlock
         preparePoseStack(blockEntity, beamPose, facing, partialTicks, isFlipped, blockstate, isHanging);
         beamPose.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
 
-        ResourceLocation tex = (GoboLibrary.MACVIP != null)
-                ? GoboLibrary.MACVIP.getTexture(0)
-                : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
-
         submitVolumetricBeam(
                 blockEntity,
                 beamPose,
                 partialTicks,
                 MIN_ANGLE_DEG,
                 MAX_ANGLE_DEG,
-                tex,                                 // <- tex0
-                tex,                                 // <- tex1
-                0.0f,                                // <- wheelProgress (fijo en 0.0f)
+                GoboLibrary.MACVIP,
+                0,
                 focusNorm,
                 1.0f,
                 1.0f,
-                0,                                   // beamIndex
+                0,
                 blockEntity.getColour(),
                 blockEntity.getIntensity() / 255.0f,
-                0.25f                                // baseRadius
+                0.25f
         );
 
         // ── 4. GLOW DE LA LENTE (Efecto físico en el faro) ──

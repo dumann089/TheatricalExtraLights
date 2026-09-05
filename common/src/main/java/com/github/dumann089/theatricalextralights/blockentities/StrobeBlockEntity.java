@@ -32,7 +32,7 @@ public class StrobeBlockEntity extends ExtraLightsLightBlockEntity implements Ha
     /** Dimmer fixe pour le mode RGB only (100 %). */
     private static final int FIXED_RGB_ONLY_INTENSITY = 255;
     /** Focus fixe pour le mode RGB only (faisceau serré type strobe). */
-    private static final int FIXED_RGB_ONLY_FOCUS = 4;
+    private static final int FIXED_RGB_ONLY_FOCUS = 255;
     private static final int OPEN = 255;
     /** Tache au sol (rayon Shimmer) : focus DMX 1 ≈ 3 blocs, focus 255 ≈ 20 blocs. */
     private static final float MIN_LIGHT_SPREAD = 3.0f;
