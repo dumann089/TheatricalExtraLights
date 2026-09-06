@@ -79,26 +79,15 @@ public class Beam2DRenderTypes {
                     .createCompositeState(false)
     );
 
-    private static Boolean shadersActiveCache = null;
-
     public static RenderType getBeam() {
         return isShadersActive() ? BEAM_SHADERS : BEAM_VANILLA;
     }
 
     public static boolean isShadersActive() {
-        if (shadersActiveCache == null) {
-            try {
-                Class<?> irisApi = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
-                Object instance = irisApi.getMethod("getInstance").invoke(null);
-                shadersActiveCache = (boolean) instance.getClass()
-                        .getMethod("isShaderPackInUse").invoke(instance);
-            } catch (Exception e) {
-                shadersActiveCache = false;
-            }
-        }
-        return shadersActiveCache;
+        return IrisCompat.isShadersActive();
     }
+
     public static void invalidateShadersCache() {
-        shadersActiveCache = null;
+        // no-op (API kept for callers)
     }
 }

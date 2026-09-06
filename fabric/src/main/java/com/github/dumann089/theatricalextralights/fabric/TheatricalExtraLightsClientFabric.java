@@ -21,13 +21,16 @@ import net.minecraft.resources.ResourceLocation;
 public class TheatricalExtraLightsClientFabric implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        // Inicialización original
         EntityModelLayerRegistry.registerModelLayer(
                 ConfettiCannonModel.LAYER_LOCATION,
                 ConfettiCannonModel::createBodyLayer
         );
         TheatricalExtraLightsClient.init();
         registerConfettiCannonItemRenderer();
+
         com.github.dumann089.theatricalextralights.fabric.FollowspotCameraFabric.init();
+        SettingsCommandFabric.init();
 
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             Minecraft minecraft = Minecraft.getInstance();
@@ -39,24 +42,37 @@ public class TheatricalExtraLightsClientFabric implements ClientModInitializer {
             buffers.endBatch(LensRenderTypes.LENS);
         });
 
-        CoreShaderRegistrationCallback.EVENT.register(context -> {
-            context.register(
-                    new ResourceLocation("theatricalextralights", "gobo_projector"),
-                    DefaultVertexFormat.POSITION_COLOR_TEX,
-                    shader -> ModShaders.goboProjectorShader = shader
-            );
-
-            context.register(
-                    new ResourceLocation("theatricalextralights", "volumetric_beam"),
-                    DefaultVertexFormat.POSITION_COLOR_TEX,
-                    shader -> ModShaders.volumetricBeamShader = shader
-            );
-            context.register(
-                    new ResourceLocation("theatricalextralights", "beam_raymarch"),
-                    DefaultVertexFormat.POSITION_COLOR_TEX,
-                    shader -> ModShaders.beamRaymarchShader = shader
-            );
+        // Capture la profondeur après les block entities mais avant le rendu
+        // translucide et les particules, pour que ni les particules ni les
+        // vitres ne découpent les faisceaux raymarch.
+        WorldRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, hitResult) -> {
+            if (com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.isRaymarchEngine()
+                    && ModShaders.canUseRaymarch()) {
+                Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
+                com.github.dumann089.theatricalextralights.client.render.beam.raymarch.SceneDepthCopy.capture();
+            }
+            return true;
         });
+
+        if (!ModCompat.SHIMMER) {
+            CoreShaderRegistrationCallback.EVENT.register(context -> {
+                context.register(
+                        new ResourceLocation("theatricalextralights", "gobo_projector"),
+                        DefaultVertexFormat.POSITION_COLOR,
+                        shader -> ModShaders.goboProjectorShader = shader
+                );
+                context.register(
+                        new ResourceLocation("theatricalextralights", "volumetric_beam"),
+                        DefaultVertexFormat.POSITION_COLOR_TEX,
+                        shader -> ModShaders.volumetricBeamShader = shader
+                );
+                context.register(
+                        new ResourceLocation("theatricalextralights", "beam_raymarch"),
+                        DefaultVertexFormat.POSITION_COLOR_TEX,
+                        shader -> ModShaders.beamRaymarchShader = shader
+                );
+            });
+        }
     }
 
     private static void registerConfettiCannonItemRenderer() {

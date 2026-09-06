@@ -1,8 +1,6 @@
 package com.github.dumann089.theatricalextralights.pyro;
 
 import com.github.dumann089.theatricalextralights.blockentities.ConfettiCannonBlockEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import dev.imabad.theatrical.blocks.HangableBlock;
 import dev.imabad.theatrical.blocks.light.BaseLightBlock;
 import net.minecraft.core.BlockPos;
@@ -11,11 +9,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 /**
  * Barrel aim derived from the same transforms as {@code ConfettiCannonRenderer}.
+ * Uses JOML only so dedicated server ticks never touch client-only {@code PoseStack}.
  */
 public final class ConfettiCannonOrientation {
     /** Blockbench barrel part rotation (Z -37.5°). */
@@ -29,13 +29,12 @@ public final class ConfettiCannonOrientation {
     }
 
     public static Vec3 getLaunchDirection(BlockState state, ConfettiCannonBlockEntity blockEntity) {
-        PoseStack pose = new PoseStack();
-        applyRenderingTransforms(pose, state, blockEntity);
+        Matrix4f pose = buildOrientationMatrix(state, blockEntity);
 
         Vector3f mouth = modelPointToBlockLocal(MOUTH_X, MOUTH_Y, 0.0F);
         Vector3f tip = modelPointToBlockLocal(barrelTipX(), barrelTipY(), 0.0F);
-        mouth.mulPosition(pose.last().pose());
-        tip.mulPosition(pose.last().pose());
+        mouth.mulPosition(pose);
+        tip.mulPosition(pose);
 
         Vector3f dir = new Vector3f(tip).sub(mouth);
         if (dir.lengthSquared() < 1.0E-6F) {
@@ -50,61 +49,64 @@ public final class ConfettiCannonOrientation {
     }
 
     public static Vec3 getNozzlePosition(BlockPos pos, BlockState state, ConfettiCannonBlockEntity blockEntity) {
-        PoseStack pose = new PoseStack();
-        applyRenderingTransforms(pose, state, blockEntity);
+        Matrix4f pose = buildOrientationMatrix(state, blockEntity);
 
         Vector3f mouth = modelPointToBlockLocal(MOUTH_X, MOUTH_Y, 0.0F);
-        mouth.mulPosition(pose.last().pose());
+        mouth.mulPosition(pose);
         return new Vec3(pos.getX() + mouth.x, pos.getY() + mouth.y, pos.getZ() + mouth.z);
     }
 
-    /** Shared with {@code ConfettiCannonRenderer}. */
-    public static void applyRenderingTransforms(PoseStack poseStack, BlockState state, ConfettiCannonBlockEntity blockEntity) {
+    /**
+     * Same transform chain as the block entity renderer (server-safe).
+     */
+    public static Matrix4f buildOrientationMatrix(BlockState state, ConfettiCannonBlockEntity blockEntity) {
+        Matrix4f m = new Matrix4f().identity();
         Direction facing = state.getValue(HangableBlock.FACING);
         boolean isFlipped = blockEntity.isUpsideDown();
         boolean isHanging = state.getValue(BaseLightBlock.HANGING);
 
-        poseStack.translate(0.5F, 0.0F, 0.5F);
+        m.translate(0.5F, 0.0F, 0.5F);
         if (isHanging) {
             Direction hangDirection = state.getValue(HangableBlock.HANG_DIRECTION);
-            poseStack.translate(0.0F, 0.5F, 0.0F);
+            m.translate(0.0F, 0.5F, 0.0F);
             if (hangDirection.getAxis() != Direction.Axis.Y) {
                 if (hangDirection.getAxis() == Direction.Axis.Z) {
-                    poseStack.mulPose(Axis.XP.rotationDegrees(hangDirection == Direction.SOUTH ? -90.0F : 90.0F));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+                    m.rotateX((hangDirection == Direction.SOUTH ? -90.0F : 90.0F) * Mth.DEG_TO_RAD);
+                    m.rotateY(180.0F * Mth.DEG_TO_RAD);
                 } else {
-                    poseStack.mulPose(Axis.ZN.rotationDegrees(hangDirection == Direction.EAST ? -90.0F : 90.0F));
+                    // PoseStack used Axis.ZN (negative Z) with EAST -90 / else +90
+                    m.rotateZ(-(hangDirection == Direction.EAST ? -90.0F : 90.0F) * Mth.DEG_TO_RAD);
                 }
             }
-            poseStack.translate(0.0F, -0.5F, 0.0F);
+            m.translate(0.0F, -0.5F, 0.0F);
         }
-        poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
-        poseStack.translate(-0.5F, 0.0F, -0.5F);
+        m.rotateY(facing.toYRot() * Mth.DEG_TO_RAD);
+        m.translate(-0.5F, 0.0F, -0.5F);
 
         if (isHanging) {
             var support = blockEntity.getSupportingStructure();
             if (support.isPresent()) {
                 float[] transforms = blockEntity.getFixture().getTransforms(state, support.get());
-                poseStack.translate(transforms[0], transforms[1], transforms[2]);
+                m.translate(transforms[0], transforms[1], transforms[2]);
             } else {
-                poseStack.translate(0.0F, 0.19F, 0.0F);
+                m.translate(0.0F, 0.19F, 0.0F);
             }
-            poseStack.translate(0.0F, -0.08F, 0.0F);
+            m.translate(0.0F, -0.08F, 0.0F);
         }
         if (isFlipped) {
-            poseStack.translate(0.5F, 0.5F, 0.5F);
-            poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
-            poseStack.translate(-0.5F, -0.5F, -0.5F);
+            m.translate(0.5F, 0.5F, 0.5F);
+            m.rotateZ(180.0F * Mth.DEG_TO_RAD);
+            m.translate(-0.5F, -0.5F, -0.5F);
         }
 
-        applyBlockbenchEntityTransform(poseStack);
+        applyBlockbenchEntityTransform(m);
+        return m;
     }
 
-    /** Item / inventory preview — blockbench entity transform only. */
-    public static void applyBlockbenchEntityTransform(PoseStack poseStack) {
-        poseStack.translate(0.5D, 1.5D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        poseStack.scale(-1.0F, -1.0F, 1.0F);
+    public static void applyBlockbenchEntityTransform(Matrix4f m) {
+        m.translate(0.5F, 1.5F, 0.5F);
+        m.rotateY(180.0F * Mth.DEG_TO_RAD);
+        m.scale(-1.0F, -1.0F, 1.0F);
     }
 
     public static Vector3f spreadDirection(RandomSource random, Vec3 axis, float spread) {

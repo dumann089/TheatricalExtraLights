@@ -8,8 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 /**
  * Distances pyro liées à la render distance client / view distance serveur.
@@ -75,16 +73,22 @@ public final class FireworkRenderDistances {
 
     public static boolean isPlayerNearFirework(ServerLevel level, FireworkRocketEntity rocket) {
         double range = serverKeepBlocks(level);
-        AABB rocketBox = rocket.getBoundingBox().inflate(range);
+        double rangeSq = range * range;
+        double launcherRangeSq = (range + ALTITUDE_MARGIN) * (range + ALTITUDE_MARGIN);
         BlockPos launcher = rocket.getLauncherPos();
-        AABB launcherBox = new AABB(launcher).inflate(range, range + ALTITUDE_MARGIN, range);
+        double lx = launcher.getX() + 0.5;
+        double ly = launcher.getY() + 0.5;
+        double lz = launcher.getZ() + 0.5;
+        double rx = rocket.getX();
+        double ry = rocket.getY();
+        double rz = rocket.getZ();
 
         for (ServerPlayer player : level.players()) {
             if (player.isSpectator() || player.isDeadOrDying()) {
                 continue;
             }
-            Vec3 pos = player.position();
-            if (rocketBox.contains(pos) || launcherBox.contains(pos)) {
+            if (player.distanceToSqr(rx, ry, rz) <= rangeSq
+                    || player.distanceToSqr(lx, ly, lz) <= launcherRangeSq) {
                 return true;
             }
         }

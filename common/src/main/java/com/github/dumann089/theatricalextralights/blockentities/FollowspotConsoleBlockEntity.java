@@ -28,6 +28,8 @@ public class FollowspotConsoleBlockEntity extends ClientSyncBlockEntity {
     private int focus = 128;
     private int pan;
     private int tilt;
+    /** When true, console only writes pan/tilt — intensity/RGB/focus stay on the desk / Art-Net. */
+    private boolean panTiltOnly;
 
     public FollowspotConsoleBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -94,12 +96,23 @@ public class FollowspotConsoleBlockEntity extends ClientSyncBlockEntity {
         return tilt;
     }
 
+    public boolean isPanTiltOnly() {
+        return panTiltOnly;
+    }
+
+    public void setPanTiltOnly(boolean panTiltOnly) {
+        this.panTiltOnly = panTiltOnly;
+        setChanged();
+    }
+
     public void setControlState(int intensity, int red, int green, int blue, int focus, int pan, int tilt) {
-        this.intensity = clamp(intensity);
-        this.red = clamp(red);
-        this.green = clamp(green);
-        this.blue = clamp(blue);
-        this.focus = clamp(focus);
+        if (!panTiltOnly) {
+            this.intensity = clamp(intensity);
+            this.red = clamp(red);
+            this.green = clamp(green);
+            this.blue = clamp(blue);
+            this.focus = clamp(focus);
+        }
         this.pan = FollowspotDmxHelper.quantizePan(pan);
         this.tilt = FollowspotDmxHelper.quantizeTilt(tilt);
         setChanged();
@@ -133,6 +146,24 @@ public class FollowspotConsoleBlockEntity extends ClientSyncBlockEntity {
         if (start < 0 || start + FollowspotTargetHelper.REQUIRED_CHANNEL_COUNT > dmx.length) {
             return;
         }
+
+        if (panTiltOnly) {
+            // Aim only — do not rewrite intensity/RGB/focus (timecode / desk owns them).
+            if (light instanceof ExtraLightsLightBlockEntity extra) {
+                extra.applyDirectPanTilt(pan, tilt);
+            } else if (light instanceof dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity consumer) {
+                dmx[start] = (byte) (int) light.getIntensity();
+                dmx[start + 1] = (byte) light.getRed();
+                dmx[start + 2] = (byte) light.getGreen();
+                dmx[start + 3] = (byte) light.getBlue();
+                dmx[start + 4] = (byte) light.getFocus();
+                dmx[start + 5] = (byte) FollowspotDmxHelper.panToDmxByte(pan);
+                dmx[start + 6] = (byte) FollowspotDmxHelper.tiltToDmxByte(tilt);
+                consumer.consume(dmx);
+            }
+            return;
+        }
+
         dmx[start] = (byte) intensity;
         dmx[start + 1] = (byte) red;
         dmx[start + 2] = (byte) green;
@@ -181,6 +212,7 @@ public class FollowspotConsoleBlockEntity extends ClientSyncBlockEntity {
         tag.putInt("focus", focus);
         tag.putInt("pan", pan);
         tag.putInt("tilt", tilt);
+        tag.putBoolean("panTiltOnly", panTiltOnly);
     }
 
     @Override
@@ -197,5 +229,6 @@ public class FollowspotConsoleBlockEntity extends ClientSyncBlockEntity {
         focus = tag.contains("focus") ? tag.getInt("focus") : 128;
         pan = tag.getInt("pan");
         tilt = tag.getInt("tilt");
+        panTiltOnly = tag.contains("panTiltOnly") && tag.getBoolean("panTiltOnly");
     }
 }

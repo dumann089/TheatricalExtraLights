@@ -1,5 +1,9 @@
 package com.github.dumann089.theatricalextralights.client;
 
+/**
+ * Iris / Oculus detection. Prefer IrisApi — Oculus 1.8 does not expose
+ * IrisRenderingPipeline.isShadersEnabled() as a static method.
+ */
 public final class IrisCompat {
 
     private IrisCompat() {}
@@ -9,6 +13,8 @@ public final class IrisCompat {
     static {
         boolean found = false;
         String[] classesToProbe = {
+                "net.irisshaders.iris.api.v0.IrisApi",
+                "net.coderbot.iris.api.v0.IrisApi",
                 "net.irisshaders.iris.Iris",
                 "net.coderbot.iris.Iris"
         };
@@ -17,7 +23,8 @@ public final class IrisCompat {
                 Class.forName(cls);
                 found = true;
                 break;
-            } catch (ClassNotFoundException ignored) {}
+            } catch (ClassNotFoundException ignored) {
+            }
         }
         IRIS_PRESENT = found;
     }
@@ -27,33 +34,22 @@ public final class IrisCompat {
     }
 
     public static boolean isShadersActive() {
-        if (!IRIS_PRESENT) return false;
+        if (!IRIS_PRESENT) {
+            return false;
+        }
+        if (probeIrisApi("net.irisshaders.iris.api.v0.IrisApi")) {
+            return true;
+        }
+        return probeIrisApi("net.coderbot.iris.api.v0.IrisApi");
+    }
+
+    private static boolean probeIrisApi(String className) {
         try {
-            Class<?> pipelineManager = Class.forName("net.irisshaders.iris.pipeline.IrisRenderingPipeline");
-            return (boolean) pipelineManager
-                    .getMethod("isShadersEnabled")
-                    .invoke(null);
-        } catch (Exception ignored) {}
-        try {
-            Class<?> pipelineManager = Class.forName("net.coderbot.iris.pipeline.IrisRenderingPipeline");
-            return (boolean) pipelineManager
-                    .getMethod("isShadersEnabled")
-                    .invoke(null);
-        } catch (Exception ignored) {}
-        try {
-            Class<?> irisApi = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+            Class<?> irisApi = Class.forName(className);
             Object instance = irisApi.getMethod("getInstance").invoke(null);
-            return (boolean) instance.getClass()
-                    .getMethod("isShaderPackInUse")
-                    .invoke(instance);
-        } catch (Exception ignored) {}
-        try {
-            Class<?> irisApi = Class.forName("net.coderbot.iris.api.v0.IrisApi");
-            Object instance = irisApi.getMethod("getInstance").invoke(null);
-            return (boolean) instance.getClass()
-                    .getMethod("isShaderPackInUse")
-                    .invoke(instance);
-        } catch (Exception ignored) {}
-        return false;
+            return (boolean) irisApi.getMethod("isShaderPackInUse").invoke(instance);
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 }

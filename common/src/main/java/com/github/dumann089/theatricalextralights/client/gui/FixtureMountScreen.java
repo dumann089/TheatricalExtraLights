@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.gui;
 
 import com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity;
+import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import com.github.dumann089.theatricalextralights.net.ModNetworkHandler;
 import com.github.dumann089.theatricalextralights.net.SetMountTransformPacket;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
@@ -167,6 +168,8 @@ public class FixtureMountScreen extends Screen {
     }
 
     private void sendUpdate() {
+        // Sodium caches BE meshes — force a section rebuild so the model moves live
+        StrobeRenderHelper.markSectionDirty(pos);
         ModNetworkHandler.CHANNEL.sendToServer(new SetMountTransformPacket(
                 pos,
                 blockEntity.getMountOffsetX(),

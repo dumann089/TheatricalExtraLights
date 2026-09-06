@@ -18,12 +18,15 @@ public class FollowspotConsolePatchPacket {
     private final UUID networkId;
     private final int universe;
     private final int dmxAddress;
+    private final boolean panTiltOnly;
 
-    public FollowspotConsolePatchPacket(BlockPos consolePos, UUID networkId, int universe, int dmxAddress) {
+    public FollowspotConsolePatchPacket(BlockPos consolePos, UUID networkId, int universe, int dmxAddress,
+                                        boolean panTiltOnly) {
         this.consolePos = consolePos;
         this.networkId = networkId;
         this.universe = universe;
         this.dmxAddress = dmxAddress;
+        this.panTiltOnly = panTiltOnly;
     }
 
     public static FollowspotConsolePatchPacket decode(FriendlyByteBuf buf) {
@@ -31,7 +34,8 @@ public class FollowspotConsolePatchPacket {
                 buf.readBlockPos(),
                 buf.readUUID(),
                 buf.readVarInt(),
-                buf.readVarInt()
+                buf.readVarInt(),
+                buf.readBoolean()
         );
     }
 
@@ -40,6 +44,7 @@ public class FollowspotConsolePatchPacket {
         buf.writeUUID(networkId);
         buf.writeVarInt(universe);
         buf.writeVarInt(dmxAddress);
+        buf.writeBoolean(panTiltOnly);
     }
 
     public void handle(Supplier<NetworkManager.PacketContext> contextSupplier) {
@@ -60,6 +65,7 @@ public class FollowspotConsolePatchPacket {
             console.setNetworkId(networkId);
             console.setUniverse(universe);
             console.setDmxAddress(dmxAddress);
+            console.setPanTiltOnly(panTiltOnly);
             console.syncFromLinkedFixture(player.level());
             console.applyToLinkedFixture(player.level());
             console.syncToClients();

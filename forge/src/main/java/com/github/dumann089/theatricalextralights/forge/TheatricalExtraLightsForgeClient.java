@@ -59,7 +59,7 @@ public final class TheatricalExtraLightsForgeClient {
         SceneDepthCopy.capture();
     }
 
-        @SubscribeEvent
+    @SubscribeEvent
     public static void registerParticleProviders(final RegisterParticleProvidersEvent event) {
         ModParticleClientImpl.registerForgeProviders(event);
     }
@@ -109,7 +109,6 @@ public final class TheatricalExtraLightsForgeClient {
                     ),
                     shader -> ModShaders.beamRaymarchShader = shader
             );
-
         } catch (IOException e) {
             throw new RuntimeException("Error Loading Shader Theatrical Extra Lights", e);
         }

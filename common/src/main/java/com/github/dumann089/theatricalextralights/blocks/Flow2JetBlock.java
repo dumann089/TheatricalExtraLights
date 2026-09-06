@@ -4,7 +4,6 @@ import com.github.dumann089.theatricalextralights.TheatricalExtraLightsScreens;
 import com.github.dumann089.theatricalextralights.blockentities.Flow2JetBlockEntity;
 import com.github.dumann089.theatricalextralights.client.Flow2JetClientEffects;
 import com.github.dumann089.theatricalextralights.net.OpenExtraLightsScreenPacket;
-import dev.imabad.theatrical.TheatricalClient;
 import dev.imabad.theatrical.blocks.Blocks;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.core.BlockPos;
@@ -131,19 +130,21 @@ public class Flow2JetBlock extends ExtraLightsLightBlock {
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (super.use(state, level, pos, player, hand, hit) == InteractionResult.PASS) {
-            if (!level.isClientSide) {
-                if (player.isCrouching()) {
-                    if (TheatricalClient.DEBUG_BLOCKS.contains(pos)) {
-                        TheatricalClient.DEBUG_BLOCKS.remove(pos);
-                    } else {
-                        TheatricalClient.DEBUG_BLOCKS.add(pos);
-                    }
-                    return InteractionResult.SUCCESS;
-                }
-                new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.CHANNEL_PANTILT)
-                        .sendTo((ServerPlayer) player);
+        InteractionResult base = super.use(state, level, pos, player, hand, hit);
+        // Wrench / config card handled by ExtraLightsLightBlock — do not open pan/tilt over them.
+        if (base != InteractionResult.PASS) {
+            return base;
+        }
+        // TheatricalClient is client-only — never touch it on the dedicated server.
+        if (level.isClientSide) {
+            if (player.isCrouching()) {
+                Flow2JetClientEffects.toggleDebugOverlay(pos);
             }
+            return InteractionResult.SUCCESS;
+        }
+        if (!player.isCrouching()) {
+            new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.CHANNEL_PANTILT)
+                    .sendTo((ServerPlayer) player);
         }
         return InteractionResult.SUCCESS;
     }
@@ -151,8 +152,7 @@ public class Flow2JetBlock extends ExtraLightsLightBlock {
     @Override
     public void destroy(LevelAccessor level, BlockPos pos, BlockState state) {
         if (level.isClientSide()) {
-            TheatricalClient.DEBUG_BLOCKS.remove(pos);
-            Flow2JetClientEffects.stop(pos);
+            Flow2JetClientEffects.onBlockRemoved(pos);
         }
         super.destroy(level, pos, state);
     }

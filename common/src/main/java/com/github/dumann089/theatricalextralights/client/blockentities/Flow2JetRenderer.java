@@ -38,6 +38,8 @@ public class Flow2JetRenderer extends ExtraLightsRenderer<Flow2JetBlockEntity> {
             int packedOverlay
     ) {
         poseStack.pushPose();
+        // Same as ExtraLightsRenderer / pyro: mount wrench must apply before the baked model path.
+        FixtureMountTransform.apply(poseStack, blockEntity);
         VertexConsumer vertexConsumer = multiBufferSource.getBuffer(RenderType.cutout());
         BlockState blockState = blockEntity.getBlockState();
         boolean isFlipped = blockEntity.isUpsideDown();

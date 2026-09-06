@@ -34,16 +34,12 @@ public final class FollowspotOrientationHelper {
         Vec3 dPan = panPlus.subtract(base);
         Vec3 dTilt = tiltPlus.subtract(base);
 
+        // Sampling already includes hang / upside-down transforms from FollowspotBeamHelper —
+        // do not flip again or hung fixtures feel inverted.
         float panLeft = signOrDefault(dPan.dot(right.scale(-1.0)));
         float panRight = signOrDefault(dPan.dot(right));
         float tiltUp = signOrDefault(dTilt.dot(cameraUp));
         float tiltDown = signOrDefault(dTilt.dot(cameraUp.scale(-1.0)));
-
-        // Head mounted upside-down (HANG_DIRECTION = UP): DMX tilt runs opposite to operator keys.
-        if (fixture.isUpsideDown()) {
-            tiltUp = -tiltUp;
-            tiltDown = -tiltDown;
-        }
 
         return new InputRemap(panLeft, panRight, tiltUp, tiltDown);
     }

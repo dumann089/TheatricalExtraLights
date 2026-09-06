@@ -8,6 +8,8 @@ import com.github.dumann089.theatricalextralights.firework.FireworkRenderDistanc
 import com.github.dumann089.theatricalextralights.fixtures.Flow2JetFixture;
 import com.github.dumann089.theatricalextralights.sounds.ModSounds;
 import com.github.dumann089.theatricalextralights.util.FixtureJetDirection;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
+import dev.imabad.theatrical.TheatricalClient;
 import dev.imabad.theatrical.blocks.HangableBlock;
 import dev.imabad.theatrical.blocks.light.BaseLightBlock;
 import net.fabricmc.api.EnvType;
@@ -97,6 +99,9 @@ public final class Flow2JetClientEffects {
         );
         nozzle = Flow2JetParticleSpawner.adjustNozzleForFacing(facing, pos, nozzle);
         jetDirection = Flow2JetParticleSpawner.adjustDirectionForFacing(facing, jetDirection);
+        // Keep CO₂ aligned with wrench mount (same transform as the model).
+        nozzle = FixtureMountTransform.transformWorldPoint(blockEntity, pos, nozzle);
+        jetDirection = FixtureMountTransform.transformDirection(blockEntity, jetDirection);
 
         if (active) {
             Flow2JetDissipation.markRunning(pos);
@@ -135,5 +140,19 @@ public final class Flow2JetClientEffects {
         WAS_ACTIVE.remove(pos);
         Flow2JetDissipation.clear(pos);
         SoundLoopManager.stopAll(pos);
+    }
+
+    /** Client-only debug overlay toggle — never call from the dedicated server. */
+    public static void toggleDebugOverlay(BlockPos pos) {
+        if (TheatricalClient.DEBUG_BLOCKS.contains(pos)) {
+            TheatricalClient.DEBUG_BLOCKS.remove(pos);
+        } else {
+            TheatricalClient.DEBUG_BLOCKS.add(pos);
+        }
+    }
+
+    public static void onBlockRemoved(BlockPos pos) {
+        TheatricalClient.DEBUG_BLOCKS.remove(pos);
+        stop(pos);
     }
 }

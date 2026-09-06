@@ -2,7 +2,6 @@ package com.github.dumann089.theatricalextralights.client;
 
 import com.github.dumann089.theatricalextralights.client.blockentities.ConfettiCannonRenderer;
 import com.github.dumann089.theatricalextralights.client.model.ConfettiCannonModel;
-import com.github.dumann089.theatricalextralights.pyro.ConfettiCannonOrientation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.model.geom.EntityModelSet;
@@ -33,7 +32,7 @@ public class ConfettiCannonItemRenderer extends BlockEntityWithoutLevelRenderer 
         } else {
             poseStack.translate(0.5F, 0.5F, 0.5F);
         }
-        ConfettiCannonOrientation.applyBlockbenchEntityTransform(poseStack);
+        ConfettiCannonRenderTransforms.applyBlockbenchEntityTransform(poseStack);
         model.renderToBuffer(
                 poseStack,
                 buffer.getBuffer(RenderType.entityCutoutNoCull(ConfettiCannonRenderer.TEXTURE)),
