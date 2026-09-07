@@ -27,76 +27,75 @@ public class ExtraLightsClientScreens {
             return;
         }
 
-        BlockEntity be = mc.level.getBlockEntity(pos);
+        BlockEntity blockEntity = mc.level.getBlockEntity(pos);
 
-        if (be == null) {
+        if (blockEntity == null) {
             return;
         }
-        if (screenType == TheatricalExtraLightsScreens.FOLLOWSPOT_CONSOLE) {
-            if (be instanceof FollowspotConsoleBlockEntity console) {
-                mc.setScreen(new FollowspotConsoleScreen(console, pos));
+
+        switch (screenType) {
+            case FOLLOWSPOT_CONSOLE -> {
+                if (blockEntity instanceof FollowspotConsoleBlockEntity console) {
+                    mc.setScreen(new FollowspotConsoleScreen(console, pos));
+                }
+                return;
             }
 
-            return;
-        }
-        if (screenType == TheatricalExtraLightsScreens.MOUNT_WRENCH) {
-            if (be instanceof ExtraLightsLightBlockEntity mountable) {
-                mc.setScreen(new FixtureMountScreen(mountable, pos));
+            case MOUNT_WRENCH -> {
+                if (blockEntity instanceof ExtraLightsLightBlockEntity mountable) {
+                    mc.setScreen(new FixtureMountScreen(mountable, pos));
+                }
+                return;
             }
 
-            return;
-        }
-        if (screenType == TheatricalExtraLightsScreens.LED_FACADE) {
-            if (be instanceof LedFacadeBlockEntity facade) {
-                mc.setScreen(new LedFacadeScreen(facade, pos));
+            case LED_FACADE -> {
+                if (blockEntity instanceof LedFacadeBlockEntity facade) {
+                    mc.setScreen(new LedFacadeScreen(facade, pos));
+                }
+                return;
             }
+        }
+
+        if (!(blockEntity instanceof BaseDMXConsumerLightBlockEntity lightBE)) {
             return;
         }
-        if (!(be instanceof BaseDMXConsumerLightBlockEntity lightBE)) {
-            return;
-        }
-        Screen gui = switch (screenType) {
-            case WATER_GENERIC ->
-                    new WaterJetConfigScreen(
-                            lightBE,
-                            pos,
-                            lightBE.getTranslationKey(),
-                            WaterJetConfigScreen.Mode.GENERIC
-                    );
-            case WATER_MANUAL ->
-                    new WaterJetConfigScreen(
-                            lightBE,
-                            pos,
-                            lightBE.getTranslationKey(),
-                            WaterJetConfigScreen.Mode.MANUAL
-                    );
-            case WATER_CONE ->
-                    new WaterJetConfigScreen(
-                            lightBE,
-                            pos,
-                            lightBE.getTranslationKey(),
-                            WaterJetConfigScreen.Mode.CONE
-                    );
-            case CHANNEL_MENU ->
-                    new ExtraLightsConfigScreen(
-                            lightBE,
-                            pos,
-                            lightBE.getTranslationKey(),
-                            false
-                    );
-            case CHANNEL_PANTILT ->
-                    new ExtraLightsConfigScreen(
-                            lightBE,
-                            pos,
-                            lightBE.getTranslationKey(),
-                            true
-                    );
-            case MOUNT_WRENCH,
-                 FOLLOWSPOT_CONSOLE,
-                 LED_FACADE -> null;
+
+        Screen screen = switch (screenType) {
+            case WATER_GENERIC, WATER_MANUAL, WATER_CONE -> {
+                WaterJetConfigScreen.Mode mode = switch (screenType) {
+                    case WATER_GENERIC -> WaterJetConfigScreen.Mode.GENERIC;
+                    case WATER_MANUAL -> WaterJetConfigScreen.Mode.MANUAL;
+                    case WATER_CONE -> WaterJetConfigScreen.Mode.CONE;
+                    default -> throw new IllegalStateException("Unexpected screen type: " + screenType);
+                };
+
+                yield new WaterJetConfigScreen(
+                        lightBE,
+                        pos,
+                        lightBE.getTranslationKey(),
+                        mode
+                );
+            }
+
+            case CHANNEL_MENU -> new ExtraLightsConfigScreen(
+                    lightBE,
+                    pos,
+                    lightBE.getTranslationKey(),
+                    false
+            );
+
+            case CHANNEL_PANTILT -> new ExtraLightsConfigScreen(
+                    lightBE,
+                    pos,
+                    lightBE.getTranslationKey(),
+                    true
+            );
+
+            case MOUNT_WRENCH, FOLLOWSPOT_CONSOLE, LED_FACADE -> null;
         };
-        if (gui != null) {
-            mc.setScreen(gui);
+
+        if (screen != null) {
+            mc.setScreen(screen);
         }
     }
 }

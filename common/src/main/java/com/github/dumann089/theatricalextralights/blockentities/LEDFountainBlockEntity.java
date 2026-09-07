@@ -1,5 +1,6 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import net.minecraft.core.BlockPos;
@@ -25,6 +26,13 @@ public class LEDFountainBlockEntity extends ExtraLightsLightBlockEntity implemen
     @Override
     public GoboLibrary getGoboLibrary() {
         return GoboLibrary.WASH;
+    }
+
+    private final GoboWheelAnimator goboAnimator = new GoboWheelAnimator();
+
+    @Override
+    public GoboWheelAnimator getGoboAnimator() {
+        return this.goboAnimator;
     }
 
     @Override

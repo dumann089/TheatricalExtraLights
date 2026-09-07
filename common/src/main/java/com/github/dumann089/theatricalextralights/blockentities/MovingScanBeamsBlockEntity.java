@@ -3,6 +3,7 @@ package com.github.dumann089.theatricalextralights.blockentities;
 import com.github.dumann089.theatricalextralights.blocks.MovingScanBeamsBlock;
 import com.github.dumann089.theatricalextralights.blocks.MovingVL2CBlock;
 import com.github.dumann089.theatricalextralights.client.blockentities.ExtraLightsFixtureRenderer;
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
@@ -45,6 +46,13 @@ public class MovingScanBeamsBlockEntity extends ExtraLightsLightBlockEntity
 
     public MovingScanBeamsBlockEntity(BlockPos pos, BlockState state) {
         this(BlockEntities.MOVING_SCAN_BEAMS.get(), pos, state);
+    }
+
+    private final GoboWheelAnimator goboAnimator = new GoboWheelAnimator();
+
+    @Override
+    public GoboWheelAnimator getGoboAnimator() {
+        return this.goboAnimator;
     }
 
     public int getGobo() { return gobo; }

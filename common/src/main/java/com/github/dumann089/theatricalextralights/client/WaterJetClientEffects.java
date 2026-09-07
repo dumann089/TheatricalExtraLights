@@ -226,16 +226,36 @@ public final class WaterJetClientEffects {
         Direction facing = blockState.hasProperty(HangableBlock.FACING)
                 ? blockState.getValue(HangableBlock.FACING)
                 : Direction.NORTH;
-        boolean isHanging = blockState.hasProperty(HangableBlock.HANGING) && blockState.getValue(HangableBlock.HANGING);
 
-        float pan = blockEntity.getPrevPan() + (blockEntity.getPan() - blockEntity.getPrevPan()) * partialTick;
-        float tilt = blockEntity.getPrevTilt() + (blockEntity.getTilt() - blockEntity.getPrevTilt()) * partialTick;
+        boolean isHanging = blockState.hasProperty(HangableBlock.HANGING)
+                && blockState.getValue(HangableBlock.HANGING);
 
+        float pan = blockEntity.getPrevPan()
+                + (blockEntity.getPan() - blockEntity.getPrevPan()) * partialTick;
+
+        float tilt = blockEntity.getPrevTilt()
+                + (blockEntity.getTilt() - blockEntity.getPrevTilt()) * partialTick;
+
+        /*
+         * IMPORTANTE:
+         * El renderer aplica FixtureMountTransform ANTES de facing/hanging.
+         * Las partículas tienen que usar exactamente el mismo orden.
+         */
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
+        // ---------------------------------------------------------
+        // Base fixture transform
+        // ---------------------------------------------------------
         poseStack.translate(0.5F, 0.0F, 0.5F);
 
+        // ---------------------------------------------------------
+        // Hanging transform
+        // ---------------------------------------------------------
         if (isHanging && blockState.hasProperty(HangableBlock.HANG_DIRECTION)) {
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
+
             poseStack.translate(0.0, 0.5, 0.0);
+
             if (hangDirection.getAxis() != Direction.Axis.Y) {
                 if (hangDirection.getAxis() == Direction.Axis.Z) {
                     if (hangDirection == Direction.SOUTH) {
@@ -251,24 +271,37 @@ public final class WaterJetClientEffects {
                     }
                 }
             }
+
             poseStack.translate(0.0, -0.5, 0.0);
         }
 
+        // ---------------------------------------------------------
+        // Facing
+        // ---------------------------------------------------------
         if (facing.getAxis() == Direction.Axis.X) {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
 
-        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(-0.5F, 0.0F, -0.5F);
 
+        // ---------------------------------------------------------
+        // Hanging support transform
+        // ---------------------------------------------------------
         if (isHanging) {
             if (blockEntity instanceof ExtraLightsLightBlockEntity extra) {
                 Optional<BlockState> optionalSupport = extra.getSupportingStructure();
+
                 if (optionalSupport != null && optionalSupport.isPresent()) {
-                    float[] transforms = extra.getFixture().getTransforms(blockState, optionalSupport.get());
-                    poseStack.translate(transforms[0], transforms[1], transforms[2]);
+                    float[] transforms =
+                            extra.getFixture().getTransforms(blockState, optionalSupport.get());
+
+                    poseStack.translate(
+                            transforms[0],
+                            transforms[1],
+                            transforms[2]
+                    );
                 } else {
                     poseStack.translate(0.0F, 0.19F, 0.0F);
                 }
@@ -277,12 +310,20 @@ public final class WaterJetClientEffects {
             }
         }
 
+        // ---------------------------------------------------------
+        // Pan
+        // ---------------------------------------------------------
         float[] pans = blockEntity.getFixture().getPanRotationPosition();
+
         poseStack.translate(pans[0], pans[1], pans[2]);
         poseStack.mulPose(Axis.YN.rotationDegrees(pan));
         poseStack.translate(-pans[0], -pans[1], -pans[2]);
 
+        // ---------------------------------------------------------
+        // Tilt
+        // ---------------------------------------------------------
         float[] tilts = blockEntity.getFixture().getTiltRotationPosition();
+
         poseStack.translate(tilts[0], tilts[1], tilts[2]);
         poseStack.mulPose(Axis.XP.rotationDegrees(tilt));
         poseStack.translate(-tilts[0], -tilts[1], -tilts[2]);

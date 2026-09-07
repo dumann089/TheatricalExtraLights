@@ -71,9 +71,6 @@ public class x8par_magentaRenderer extends ExtraLightsRenderer<x8par_magentaBloc
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -145,6 +142,7 @@ public class x8par_magentaRenderer extends ExtraLightsRenderer<x8par_magentaBloc
     @Override
     public void preparePoseStack(x8par_magentaBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
         //#region Fixture Hanging
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -174,9 +172,6 @@ public class x8par_magentaRenderer extends ExtraLightsRenderer<x8par_magentaBloc
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

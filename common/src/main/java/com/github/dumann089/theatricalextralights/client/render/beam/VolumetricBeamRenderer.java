@@ -77,12 +77,15 @@ public class VolumetricBeamRenderer extends LazyRenderers.LazyRenderer {
                 slot.color,
                 slot.intensity,
                 slot.goboTexture,
+                slot.nextGoboTexture, // <-- AÑADIDO
                 slot.goboRotation,
+                slot.wheelTransition, // <-- AÑADIDO
                 null,
                 slot.widthScale,
                 slot.heightScale,
                 slot.baseRadius
         );
+
         FALLBACK_ONE_SHOT.activeBeamCount = 0;
         FALLBACK_ONE_SHOT.enqueueStacked(data, false);
         FALLBACK_ONE_SHOT.render(bufferSource, poseStack, camera, 0.0f);

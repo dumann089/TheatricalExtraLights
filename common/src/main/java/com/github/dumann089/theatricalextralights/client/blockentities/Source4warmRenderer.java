@@ -71,9 +71,6 @@ public class Source4warmRenderer extends ExtraLightsFixtureRenderer<Source4warmB
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
@@ -181,11 +178,11 @@ public class Source4warmRenderer extends ExtraLightsFixtureRenderer<Source4warmB
 
                 poseStack.pushPose();
                 poseStack.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
-                renderLensGlow(builder, poseStack, color, 0.12f);
+                renderLensGlow(builder, poseStack, color, 0.09f);
                 poseStack.popPose();
 
                 renderLens(bufferSource, poseStack, alpha, color,
-                        0.58f, (float) LENS_OFFSET.x, (float) LENS_OFFSET.y, (float) LENS_OFFSET.z);
+                        0.68f, (float) LENS_OFFSET.x, (float) LENS_OFFSET.y, (float) LENS_OFFSET.z);
 
                 poseStack.popPose();
             }
@@ -199,6 +196,7 @@ public class Source4warmRenderer extends ExtraLightsFixtureRenderer<Source4warmB
 
     @Override
     public void preparePoseStack(Source4warmBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if (isHanging) {
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -221,9 +219,6 @@ public class Source4warmRenderer extends ExtraLightsFixtureRenderer<Source4warmB
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {

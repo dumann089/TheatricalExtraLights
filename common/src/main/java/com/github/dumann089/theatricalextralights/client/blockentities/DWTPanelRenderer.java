@@ -50,9 +50,6 @@ public class DWTPanelRenderer extends ExtraLightsRenderer<DWTPanelBlockEntity> {
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
 
@@ -267,6 +264,7 @@ public class DWTPanelRenderer extends ExtraLightsRenderer<DWTPanelBlockEntity> {
 
     @Override
     public void preparePoseStack(DWTPanelBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if (isHanging) {
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -281,9 +279,6 @@ public class DWTPanelRenderer extends ExtraLightsRenderer<DWTPanelBlockEntity> {
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
 

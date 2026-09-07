@@ -117,9 +117,6 @@ public class MiniScanGobosRenderer extends ExtraLightsFixtureRenderer<MiniScanGo
         }
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -244,29 +241,43 @@ public class MiniScanGobosRenderer extends ExtraLightsFixtureRenderer<MiniScanGo
                 float coneHalfAngle = 1.0f + zoomNorm * (19.0f - 1.0f);
                 float tanHalfAngle  = (float) Math.tan(Math.toRadians(coneHalfAngle));
 
+                // --- NUEVO: Obtener datos de transición de la rueda ---
+                animator.updateTarget(blockEntity.getGoboLibrary(), blockEntity.getGobo());
+                float virtualSlot = animator.snapshotVirtualSlot();
+
+                int outgoingSlot = animator.getOutgoingSlot(blockEntity.getGoboLibrary(), virtualSlot);
+                int incomingSlot = animator.getIncomingSlot(blockEntity.getGoboLibrary(), virtualSlot);
+                float wheelTransition = animator.getShaderProgress(blockEntity.getGoboLibrary(), virtualSlot);
+
+                // 🛡️ Obtención segura de textura principal (Gobo A - outgoing)
                 ResourceLocation goboTex = null;
+                String customFileNameOut = GlobalGoboManager.getCustomGobo(blockEntity.getGoboLibrary(), outgoingSlot);
 
-                String customFileName = GlobalGoboManager.getCustomGobo(
-                        blockEntity.getGoboLibrary(),
-                        blockEntity.getGobo()
-                );
-
-                if (customFileName != null) {
-                    goboTex = CustomGoboLoader.getOrCreateCustomGobo(customFileName);
+                if (customFileNameOut != null) {
+                    goboTex = CustomGoboLoader.getOrCreateCustomGobo(customFileNameOut);
                 }
-
                 if (goboTex == null) {
-                    goboTex = blockEntity.getGoboLibrary().getTexture(blockEntity.getGobo());
+                    goboTex = blockEntity.getGoboLibrary().getTexture(outgoingSlot);
                 }
-
                 if (goboTex == null) {
-                    goboTex = new ResourceLocation(
-                            "theatricalextralights",
-                            "textures/empty_fallback.png"
-                    );
+                    goboTex = new ResourceLocation("theatricalextralights", "textures/empty_fallback.png");
                 }
 
-                // Reemplaza tu vieja creación de BeamRenderData por esto:
+                // 🛡️ Obtención segura de textura secundaria (Gobo B - incoming)
+                ResourceLocation nextGoboTex = null;
+                String customFileNameIn = GlobalGoboManager.getCustomGobo(blockEntity.getGoboLibrary(), incomingSlot);
+
+                if (customFileNameIn != null) {
+                    nextGoboTex = CustomGoboLoader.getOrCreateCustomGobo(customFileNameIn);
+                }
+                if (nextGoboTex == null) {
+                    nextGoboTex = blockEntity.getGoboLibrary().getTexture(incomingSlot);
+                }
+                if (nextGoboTex == null) {
+                    nextGoboTex = goboTex; // Fallback al gobo principal
+                }
+
+                // NUEVO: Instancia corregida con nextGoboTex y wheelTransition
                 BeamRenderData renderData = new BeamRenderData(
                         blockEntity.getBlockPos(),
                         origin,
@@ -279,11 +290,13 @@ public class MiniScanGobosRenderer extends ExtraLightsFixtureRenderer<MiniScanGo
                         blockEntity.getColour(),
                         blockEntity.getIntensity() / 255.0f,
                         goboTex,
+                        nextGoboTex,     // Añadido
                         (float) blockEntity.getGoboRotation(),
+                        wheelTransition, // Añadido
                         blockEntity.getLevel(),
-                        1.0f, // widthScale
                         1.0f,
-                        0.15f
+                        1.0f,
+                        0.12f
                 );
 
                 // Cone pilote par le zoom (1 a 19 deg) : la tache doit suivre.
@@ -293,6 +306,7 @@ public class MiniScanGobosRenderer extends ExtraLightsFixtureRenderer<MiniScanGo
                         .render(renderData, poseStack);
             }
         }
+
         // ==========================================================================================
 
 
@@ -422,6 +436,7 @@ public class MiniScanGobosRenderer extends ExtraLightsFixtureRenderer<MiniScanGo
 
     @Override
     public void preparePoseStack(MiniScanGobosBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -449,9 +464,6 @@ public class MiniScanGobosRenderer extends ExtraLightsFixtureRenderer<MiniScanGo
         }
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

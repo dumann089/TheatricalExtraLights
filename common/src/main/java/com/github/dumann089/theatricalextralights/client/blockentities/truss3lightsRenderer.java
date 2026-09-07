@@ -72,8 +72,6 @@ public class truss3lightsRenderer extends ExtraLightsRenderer<truss3lightsBlockE
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
 
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -145,6 +143,7 @@ public class truss3lightsRenderer extends ExtraLightsRenderer<truss3lightsBlockE
     @Override
     public void preparePoseStack(truss3lightsBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
         //#region Fixture Hanging
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -174,9 +173,6 @@ public class truss3lightsRenderer extends ExtraLightsRenderer<truss3lightsBlockE
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

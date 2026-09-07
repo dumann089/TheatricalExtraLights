@@ -69,9 +69,6 @@ public class RobitspotRenderer extends ExtraLightsFixtureRenderer<RobitspotBlock
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
@@ -195,6 +192,7 @@ public class RobitspotRenderer extends ExtraLightsFixtureRenderer<RobitspotBlock
 
     @Override
     public void preparePoseStack(RobitspotBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if (isHanging) {
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -218,9 +216,6 @@ public class RobitspotRenderer extends ExtraLightsFixtureRenderer<RobitspotBlock
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {

@@ -67,9 +67,6 @@ public class AtomicStrobeRenderer extends ExtraLightsRenderer<AtomicStrobeBlockE
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
@@ -215,9 +212,6 @@ public class AtomicStrobeRenderer extends ExtraLightsRenderer<AtomicStrobeBlockE
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {

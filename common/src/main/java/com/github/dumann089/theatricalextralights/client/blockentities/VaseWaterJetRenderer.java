@@ -40,9 +40,6 @@ public class VaseWaterJetRenderer extends ExtraLightsRenderer<VaseWaterJetBlockE
         if (cachedTiltModel == null){
             cachedTiltModel = TheatricalExpectPlatform.getBakedModel(blockEntity.getFixture().getTiltModel());
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         //#region Fixture Hanging
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
@@ -107,7 +104,7 @@ public class VaseWaterJetRenderer extends ExtraLightsRenderer<VaseWaterJetBlockE
 
         @Override
     public void preparePoseStack(VaseWaterJetBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        //#region Fixture Hanging
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -137,9 +134,6 @@ public class VaseWaterJetRenderer extends ExtraLightsRenderer<VaseWaterJetBlockE
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

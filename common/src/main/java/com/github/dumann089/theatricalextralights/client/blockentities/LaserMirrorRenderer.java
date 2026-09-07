@@ -68,9 +68,6 @@ public class LaserMirrorRenderer extends ExtraLightsRenderer<LaserMirrorBlockEnt
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);

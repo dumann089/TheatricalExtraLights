@@ -71,9 +71,6 @@ public class Par1000WhiteRenderer extends ExtraLightsFixtureRenderer<Par1000Whit
             poseStack.translate(0, -0.5, 0F);
         }
 
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
-
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
@@ -198,6 +195,7 @@ public class Par1000WhiteRenderer extends ExtraLightsFixtureRenderer<Par1000Whit
 
     @Override
     public void preparePoseStack(Par1000WhiteBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if (isHanging) {
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -220,8 +218,6 @@ public class Par1000WhiteRenderer extends ExtraLightsFixtureRenderer<Par1000Whit
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
 
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);

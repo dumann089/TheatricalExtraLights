@@ -70,9 +70,6 @@ public class WaterJetCentralRenderer extends ExtraLightsRenderer<WaterJetCentral
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
 
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
-
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -107,7 +104,8 @@ public class WaterJetCentralRenderer extends ExtraLightsRenderer<WaterJetCentral
     }
         @Override
     public void preparePoseStack(WaterJetCentralBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        //#region Fixture Hanging
+        FixtureMountTransform.apply(poseStack, blockEntity);
+
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -137,9 +135,6 @@ public class WaterJetCentralRenderer extends ExtraLightsRenderer<WaterJetCentral
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

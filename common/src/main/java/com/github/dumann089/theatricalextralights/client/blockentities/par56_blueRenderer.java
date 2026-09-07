@@ -84,9 +84,6 @@ public class par56_blueRenderer extends ExtraLightsFixtureRenderer<par56_blueBlo
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -187,10 +184,24 @@ public class par56_blueRenderer extends ExtraLightsFixtureRenderer<par56_blueBlo
             }
 
             BeamRenderData renderData = new BeamRenderData(
-                    blockEntity.getBlockPos(), origin, beamDir, axisU, axisV, zoomNorm,
-                    (float) blockEntity.getDistance(), tanHalfAngle, blockEntity.getColour(),
-                    blockEntity.getIntensity() / 255.0f, goboTex, (float) blockEntity.getGoboRotation(),
-                    blockEntity.getLevel(), 0.0f, 0.0f, 0.02f
+                    blockEntity.getBlockPos(),
+                    origin,
+                    beamDir,
+                    axisU,
+                    axisV,
+                    zoomNorm,
+                    (float) blockEntity.getDistance(),
+                    tanHalfAngle,
+                    blockEntity.getColour(),
+                    blockEntity.getIntensity() / 255.0f,
+                    goboTex,
+                    goboTex,
+                    (float) blockEntity.getGoboRotation(),
+                    0.0f,
+                    blockEntity.getLevel(),
+                    0.0f,
+                    0.0f,
+                    0.02f
             );
 
             volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())
@@ -277,7 +288,7 @@ public class par56_blueRenderer extends ExtraLightsFixtureRenderer<par56_blueBlo
 
     @Override
     public void preparePoseStack(par56_blueBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
-        //#region Fixture Hanging
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -307,8 +318,6 @@ public class par56_blueRenderer extends ExtraLightsFixtureRenderer<par56_blueBlo
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
 
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {

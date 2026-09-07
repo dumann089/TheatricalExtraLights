@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.blocks.MovingVL2CBlock;
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
@@ -45,6 +46,15 @@ public class MovingVL2CBeamsBlockEntity extends ExtraLightsLightBlockEntity impl
 
     public MovingVL2CBeamsBlockEntity(BlockPos pos, BlockState state) {
         this(BlockEntities.MOVING_VL2C_BEAMS.get(), pos, state);
+    }
+
+    // Dentro de MovingVL2CBeamsBlockEntity.java
+
+    private final GoboWheelAnimator goboAnimator = new GoboWheelAnimator();
+
+    @Override
+    public GoboWheelAnimator getGoboAnimator() {
+        return this.goboAnimator;
     }
 
     public int getGobo() { return gobo; }

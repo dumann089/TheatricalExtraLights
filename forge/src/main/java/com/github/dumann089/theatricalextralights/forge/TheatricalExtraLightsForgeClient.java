@@ -9,8 +9,8 @@ import com.github.dumann089.theatricalextralights.client.forge.ModParticleClient
 import com.github.dumann089.theatricalextralights.client.render.beam.raymarch.SceneDepthCopy;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.github.dumann089.theatricalextralights.entities.ModEntities;
-import dev.imabad.theatrical.compat.ModCompat;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import dev.imabad.theatrical.compat.ModCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
@@ -32,61 +32,77 @@ import java.io.IOException;
         bus = Mod.EventBusSubscriber.Bus.MOD
 )
 public final class TheatricalExtraLightsForgeClient {
+
     private TheatricalExtraLightsForgeClient() {
     }
 
     @SubscribeEvent
     public static void clientSetup(final FMLClientSetupEvent event) {
         TheatricalExtraLightsClient.init();
-        MinecraftForge.EVENT_BUS.addListener(TheatricalExtraLightsForgeClient::onRenderLevelStage);
+        MinecraftForge.EVENT_BUS.addListener(
+                TheatricalExtraLightsForgeClient::onRenderLevelStage
+        );
     }
 
     /**
-     * Capture la profondeur juste après les block entities, AVANT le rendu
-     * translucide et les particules : sinon chaque particule (quad carré qui
-     * écrit dans le depth buffer) découpe un trou carré dans les faisceaux,
-     * et les vitres coupent le faisceau au lieu de le laisser passer.
+     * Captura la profundidad justo después de las block entities,
+     * antes del renderizado translúcido y partículas.
      */
     private static void onRenderLevelStage(final RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
             return;
         }
-        if (!TheatricalExtraLightsConfig.isRaymarchEngine() || !ModShaders.canUseRaymarch()) {
+
+        if (!TheatricalExtraLightsConfig.isRaymarchEngine()
+                || !ModShaders.canUseRaymarch()) {
             return;
         }
-        // Flush les batches en attente pour que leur profondeur soit incluse.
-        Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
+
+        // Flush de los batches pendientes para incluir su profundidad.
+        Minecraft.getInstance()
+                .renderBuffers()
+                .bufferSource()
+                .endBatch();
+
         SceneDepthCopy.capture();
     }
 
     @SubscribeEvent
-    public static void registerParticleProviders(final RegisterParticleProvidersEvent event) {
+    public static void registerParticleProviders(
+            final RegisterParticleProvidersEvent event
+    ) {
         ModParticleClientImpl.registerForgeProviders(event);
     }
 
     @SubscribeEvent
-    public static void registerLayerDefinitions(final EntityRenderersEvent.RegisterLayerDefinitions event) {
-        ConfettiCannonClientSetup.registerModelLayer(event::registerLayerDefinition);
+    public static void registerLayerDefinitions(
+            final EntityRenderersEvent.RegisterLayerDefinitions event
+    ) {
+        ConfettiCannonClientSetup.registerModelLayer(
+                event::registerLayerDefinition
+        );
     }
 
     @SubscribeEvent
-    public static void registerEntityRenderers(final EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(ModEntities.FIREWORK_ROCKET.get(), FireworkRocketRenderer::new);
+    public static void registerEntityRenderers(
+            final EntityRenderersEvent.RegisterRenderers event
+    ) {
+        event.registerEntityRenderer(
+                ModEntities.FIREWORK_ROCKET.get(),
+                FireworkRocketRenderer::new
+        );
     }
 
     @SubscribeEvent
     public static void registerShaders(final RegisterShadersEvent event) {
-        // Shimmer 0.2.4 intercepte le reload global des shaders vanilla (particle, etc.)
-        // et plante sur fog_distance ; on utilise les fallbacks beacon beam à la place.
-        if (ModCompat.SHIMMER) {
-            return;
-        }
-
         try {
             event.registerShader(
                     new ShaderInstance(
                             event.getResourceProvider(),
-                            new ResourceLocation("theatricalextralights", "gobo_projector"),
+                            new ResourceLocation(
+                                    "theatricalextralights",
+                                    "gobo_projector"
+                            ),
                             DefaultVertexFormat.POSITION_COLOR_TEX
                     ),
                     shader -> ModShaders.goboProjectorShader = shader
@@ -95,7 +111,10 @@ public final class TheatricalExtraLightsForgeClient {
             event.registerShader(
                     new ShaderInstance(
                             event.getResourceProvider(),
-                            new ResourceLocation("theatricalextralights", "volumetric_beam"),
+                            new ResourceLocation(
+                                    "theatricalextralights",
+                                    "volumetric_beam"
+                            ),
                             DefaultVertexFormat.POSITION_COLOR_TEX
                     ),
                     shader -> ModShaders.volumetricBeamShader = shader
@@ -104,13 +123,20 @@ public final class TheatricalExtraLightsForgeClient {
             event.registerShader(
                     new ShaderInstance(
                             event.getResourceProvider(),
-                            new ResourceLocation("theatricalextralights", "beam_raymarch"),
+                            new ResourceLocation(
+                                    "theatricalextralights",
+                                    "beam_raymarch"
+                            ),
                             DefaultVertexFormat.POSITION_COLOR_TEX
                     ),
                     shader -> ModShaders.beamRaymarchShader = shader
             );
+
         } catch (IOException e) {
-            throw new RuntimeException("Error Loading Shader Theatrical Extra Lights", e);
+            throw new RuntimeException(
+                    "Error Loading Shader Theatrical Extra Lights",
+                    e
+            );
         }
     }
 }

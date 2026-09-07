@@ -141,9 +141,24 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
         ResourceLocation goboTexture = (goboLibrary != null) ? goboLibrary.getTexture(goboSlot) : new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
 
         BeamRenderData renderData = new BeamRenderData(
-                blockEntity.getBlockPos(), origin, beamDir, axisU, axisV, focusNorm,
-                (float) blockEntity.getDistance(), tanHalfAngle, customColor,
-                customIntensity, goboTexture, 0.0f, blockEntity.getLevel(), widthScale, heightScale, baseRadius
+                blockEntity.getBlockPos(),
+                origin,
+                beamDir,
+                axisU,
+                axisV,
+                focusNorm,
+                (float) blockEntity.getDistance(),
+                tanHalfAngle,
+                customColor,
+                customIntensity,
+                goboTexture,
+                goboTexture, // <-- AÑADIDO: nextGoboTexture (misma textura)
+                0.0f,        // goboRotation original
+                0.0f,        // <-- AÑADIDO: wheelTransition (sin desplazamiento)
+                blockEntity.getLevel(),
+                widthScale,
+                heightScale,
+                baseRadius
         );
 
         // Cone variable = lyre a focus. Un PAR a minAngleDeg == maxAngleDeg et ne publie rien.

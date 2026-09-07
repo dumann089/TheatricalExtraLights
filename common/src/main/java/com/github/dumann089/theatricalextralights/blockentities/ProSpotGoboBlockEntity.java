@@ -3,6 +3,7 @@ package com.github.dumann089.theatricalextralights.blockentities;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGobo;
 import com.github.dumann089.theatricalextralights.blocks.ProSpotGoboBlock;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import net.minecraft.core.BlockPos;
@@ -64,6 +65,15 @@ public class ProSpotGoboBlockEntity extends ExtraLightsLightBlockEntity
             }
         }
     }
+
+
+    private final GoboWheelAnimator goboAnimator = new GoboWheelAnimator();
+
+    @Override
+    public GoboWheelAnimator getGoboAnimator() {
+        return this.goboAnimator;
+    }
+
 
     @Override
     public void consume(byte[] dmxValues) {

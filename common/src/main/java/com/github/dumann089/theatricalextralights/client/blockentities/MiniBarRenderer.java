@@ -70,8 +70,6 @@ public class MiniBarRenderer extends ExtraLightsRenderer<MiniBarBlockEntity> {
             poseStack.translate(0, -0.5, 0F);
         }
 
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
@@ -215,6 +213,7 @@ public class MiniBarRenderer extends ExtraLightsRenderer<MiniBarBlockEntity> {
 
     @Override
     public void preparePoseStack(MiniBarBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -239,9 +238,6 @@ public class MiniBarRenderer extends ExtraLightsRenderer<MiniBarBlockEntity> {
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         //#endregion
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);

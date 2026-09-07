@@ -23,12 +23,9 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-/**
- * Screen-space cone raymarcher: one immediate proxy AABB draw per beam so uniforms never collide.
- */
 public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
 
-    public static final int MAX_BEAMS = 256;
+    public static final int MAX_BEAMS = 512;
     private static final RaymarchBeamRenderer INSTANCE = new RaymarchBeamRenderer();
     private static final ResourceLocation OPEN_GOBO =
             new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
@@ -100,7 +97,9 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         s.color = data.color();
         s.intensity = data.intensity();
         s.goboTexture = data.goboTexture() != null ? data.goboTexture() : OPEN_GOBO;
+        s.nextGoboTexture = data.nextGoboTexture() != null ? data.nextGoboTexture() : OPEN_GOBO;
         s.goboRotation = data.goboRotation();
+        s.wheelTransition = data.wheelTransition();
         s.hitBlock = hitBlock;
         s.fixturePos = data.fixturePos();
         s.localOriginX = (float) data.origin().x;
@@ -207,6 +206,7 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 shader.safeGetUniform("FadeLength").set(s.hitBlock ? 0.0f : fadeLen);
                 shader.safeGetUniform("DustAmount").set(dust);
                 shader.safeGetUniform("GoboRotation").set(s.goboRotation);
+                shader.safeGetUniform("WheelTransition").set(s.wheelTransition);
                 shader.safeGetUniform("Time").set(time);
                 shader.safeGetUniform("Ambient").set(daylight);
                 shader.safeGetUniform("ScreenSize").set(screenW, screenH);
@@ -219,13 +219,16 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
 
                 RenderSystem.setShader(() -> shader);
 
-// GOBO -> Sampler0
                 RenderSystem.setShaderTexture(0, s.goboTexture);
                 int goboTex = RenderSystem.getShaderTexture(0);
                 shader.setSampler("Sampler0", goboTex);
-// DEPTH -> Sampler1
+
                 RenderSystem.setShaderTexture(1, depthTex);
                 shader.setSampler("Sampler1", depthTex);
+
+                RenderSystem.setShaderTexture(2, s.nextGoboTexture);
+                int nextGoboTex = RenderSystem.getShaderTexture(2);
+                shader.setSampler("Sampler2", nextGoboTex);
 
                 shader.apply();
 
@@ -342,7 +345,9 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         public int color;
         public float intensity;
         public ResourceLocation goboTexture;
+        public ResourceLocation nextGoboTexture;
         public float goboRotation;
+        public float wheelTransition;
         public boolean hitBlock;
         public net.minecraft.core.BlockPos fixturePos;
         public float localOriginX, localOriginY, localOriginZ;

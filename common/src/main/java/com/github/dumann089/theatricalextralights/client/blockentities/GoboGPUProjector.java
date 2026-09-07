@@ -1,9 +1,12 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
+import com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGobo;
 import com.github.dumann089.theatricalextralights.client.CustomGoboLoader;
 import com.github.dumann089.theatricalextralights.client.ModShaders;
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.util.GlobalGoboManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -13,6 +16,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
+import dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity;
 import dev.imabad.theatrical.blocks.HangableBlock;
 import dev.imabad.theatrical.client.LazyRenderers;
 import net.minecraft.client.Camera;
@@ -41,10 +45,25 @@ public class GoboGPUProjector {
         if (be.getLevel() == null) return;
         float intensity = be.getPartialIntensity(partialTicks) / 255.0f;
         if (intensity <= 0.0f) return;
-        int goboSlot = be.getGobo();
-        if (goboSlot < 0) return;
-        ResourceLocation texture = resolveGoboTexture(be, goboSlot);
+
+        int targetSlot = be.getGobo();
+        if (targetSlot < 0) return;
+
+        // Actualización e integración del Animator
+        GoboWheelAnimator animator = be.getGoboAnimator();
+        animator.updateTarget(be.getGoboLibrary(), targetSlot);
+        float virtualSlot = animator.snapshotVirtualSlot();
+
+        int outgoingSlot = animator.getOutgoingSlot(be.getGoboLibrary(), virtualSlot);
+        int incomingSlot = animator.getIncomingSlot(be.getGoboLibrary(), virtualSlot);
+        float wheelTransition = animator.getShaderProgress(be.getGoboLibrary(), virtualSlot);
+
+        ResourceLocation texture = resolveGoboTexture(be, outgoingSlot);
+        ResourceLocation nextTexture = resolveGoboTexture(be, incomingSlot);
+
         if (texture == null) return;
+        if (nextTexture == null) nextTexture = texture; // Fallback seguro
+
         float zoomNorm = be.getPartialZoom(partialTicks) / 255.0f;
         float coneHalfAngle = minAngle + zoomNorm * (maxAngle - minAngle);
         float tanHalfAngle = (float)Math.tan(Math.toRadians(coneHalfAngle));
@@ -52,7 +71,20 @@ public class GoboGPUProjector {
         final float finalBaseRadius = baseRadius;
 
         PoseStack fixtureStack = new PoseStack();
-        applyFixtureOrientation(fixtureStack, facing, isFlipped, blockState, isHanging, smoothPan, smoothTilt, panPivot, tiltPivot, structuralTransform);
+        applyFixtureOrientation(
+                fixtureStack,
+                (BaseLightBlockEntity) be,
+                facing,
+                isFlipped,
+                blockState,
+                isHanging,
+                smoothPan,
+                smoothTilt,
+                panPivot,
+                tiltPivot,
+                structuralTransform
+        );
+
         fixtureStack.translate(localLensOffset.x, localLensOffset.y, localLensOffset.z);
         Matrix4f fixtureMatrix = new Matrix4f(fixtureStack.last().pose());
 
@@ -73,7 +105,6 @@ public class GoboGPUProjector {
         final Vec3 axisU = new Vec3(tmpU.x(), tmpU.y(), tmpU.z()).normalize();
         final Vec3 axisV = new Vec3(tmpV.x(), tmpV.y(), tmpV.z()).normalize();
 
-        // Raycast: detecta la obstrucción, pero NO recorta MaxLen.
         Vec3 rayStart = origin.add(beamDir.scale(0.35f));
         Vec3 rayEnd = origin.add(beamDir.scale(maxDistance));
         BlockHitResult hitResult = be.getLevel().clip(new ClipContext(rayStart, rayEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
@@ -90,6 +121,9 @@ public class GoboGPUProjector {
         final float finalMaxDistance = maxDistance;
         final float finalRotation = be.getGoboRotation();
         final ResourceLocation finalTexture = texture;
+        final ResourceLocation finalNextTexture = nextTexture;
+        final float finalWheelTransition = wheelTransition;
+
         final BlockPos finalBlockPos = be.getBlockPos();
         final int finalColor = be.getColour() == 0 ? 0xFFFFFF : be.getColour();
 
@@ -126,11 +160,11 @@ public class GoboGPUProjector {
                 shader.safeGetUniform("MaxLen").set(finalMaxDistance);
                 shader.safeGetUniform("MaxGoboDist").set(finalMaxDistance);
                 shader.safeGetUniform("GoboRotation").set(finalRotation);
+                shader.safeGetUniform("WheelTransition").set(finalWheelTransition);
                 shader.safeGetUniform("Intensity").set(finalIntensity);
                 shader.safeGetUniform("Focus").set(finalFocus);
                 shader.safeGetUniform("BaseRadius").set(finalBaseRadius);
 
-                // Posición del obstáculo en view-space.
                 if (hasOcclusion) {
                     tmpPos.set((float)(finalOcclusionPos.x - cameraPos.x), (float)(finalOcclusionPos.y - cameraPos.y), (float)(finalOcclusionPos.z - cameraPos.z), 1.0f);
                     viewMatrix.transform(tmpPos);
@@ -170,6 +204,11 @@ public class GoboGPUProjector {
                 int depthTexture = mc.getMainRenderTarget().getDepthTextureId();
                 RenderSystem.setShaderTexture(1, depthTexture);
                 shader.setSampler("Sampler1", depthTexture);
+
+                int nextGoboTextureId = mc.getTextureManager().getTexture(finalNextTexture).getId();
+                RenderSystem.setShaderTexture(2, nextGoboTextureId);
+                shader.setSampler("Sampler2", nextGoboTextureId);
+
                 shader.apply();
 
                 Tesselator tess = Tesselator.getInstance();
@@ -204,40 +243,114 @@ public class GoboGPUProjector {
         return new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
     }
 
-    private static void applyFixtureOrientation(PoseStack ps, Direction facing, boolean isFlipped, BlockState blockState, boolean isHanging, float panDeg, float tiltDeg, float[] pans, float[] tilts, float[] structuralTransform) {
+    private static void applyFixtureOrientation(
+            PoseStack ps,
+            BaseLightBlockEntity be,
+            Direction facing,
+            boolean isFlipped,
+            BlockState blockState,
+            boolean isHanging,
+            float panDeg,
+            float tiltDeg,
+            float[] pans,
+            float[] tilts,
+            float[] structuralTransform
+    ) {
         ps.translate(0.5f, 0f, 0.5f);
+
         if (isHanging) {
             Direction hangDir = Direction.UP;
+
             try {
                 hangDir = blockState.getValue(HangableBlock.HANG_DIRECTION);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
+
             ps.translate(0, 0.5, 0);
+
             if (hangDir.getAxis() != Direction.Axis.Y) {
                 if (hangDir.getAxis() == Direction.Axis.Z) {
                     ps.mulPose(Axis.ZP.rotationDegrees(90));
-                    ps.mulPose(hangDir == Direction.SOUTH ? Axis.XP.rotationDegrees(-90) : Axis.XP.rotationDegrees(90));
+                    ps.mulPose(
+                            hangDir == Direction.SOUTH
+                                    ? Axis.XP.rotationDegrees(-90)
+                                    : Axis.XP.rotationDegrees(90)
+                    );
                 } else {
-                    ps.mulPose(Axis.ZN.rotationDegrees(-90));
+                    ps.mulPose(Axis.ZN.rotationDegrees(
+                            hangDir == Direction.EAST ? -90 : 90
+                    ));
                 }
             }
+
             ps.translate(0, -0.5, 0);
         }
+
         ps.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         ps.translate(-0.5f, 0f, -0.5f);
+
         if (isHanging) {
-            ps.translate(structuralTransform[0], structuralTransform[1], structuralTransform[2]);
+            ps.translate(
+                    structuralTransform[0],
+                    structuralTransform[1],
+                    structuralTransform[2]
+            );
             ps.translate(0, -0.08, 0);
         }
+
         if (isFlipped) {
             ps.translate(0.5f, 0.5f, 0.5f);
             ps.mulPose(Axis.ZP.rotationDegrees(180));
             ps.translate(-0.5f, -0.5f, -0.5f);
         }
+
+        if (be instanceof ExtraLightsLightBlockEntity mountable
+                && mountable.hasMountTransform()) {
+
+            ps.translate(0.5f, 0.5f, 0.5f);
+
+            float yaw = mountable.getMountYaw();
+            float pitch = mountable.getMountPitch();
+            float roll = mountable.getMountRoll();
+
+            if (pitch != 0.0f) {
+                ps.mulPose(
+                        Axis.ZP.rotationDegrees(pitch)
+                );
+            }
+
+            if (yaw != 0.0f) {
+                ps.mulPose(
+                        Axis.YP.rotationDegrees(-yaw)
+                );
+            }
+
+            if (roll != 0.0f) {
+                ps.mulPose(
+                        Axis.XP.rotationDegrees(roll)
+                );
+            }
+            ps.translate(
+                    mountable.getMountOffsetZ(),
+                    mountable.getMountOffsetY(),
+                    mountable.getMountOffsetX()
+            );
+
+            ps.translate(-0.5f, -0.5f, -0.5f);
+        }
+
         ps.translate(pans[0], pans[1], pans[2]);
         ps.mulPose(Axis.YP.rotationDegrees(panDeg));
         ps.translate(-pans[0], -pans[1], -pans[2]);
+
         ps.translate(tilts[0], tilts[1], tilts[2]);
-        ps.mulPose(isFlipped ? Axis.XP.rotationDegrees(-180) : Axis.XP.rotationDegrees(180));
+
+        ps.mulPose(
+                isFlipped
+                        ? Axis.XP.rotationDegrees(-180)
+                        : Axis.XP.rotationDegrees(180)
+        );
+
         ps.mulPose(Axis.XP.rotationDegrees(tiltDeg));
         ps.translate(-tilts[0], -tilts[1], -tilts[2]);
     }

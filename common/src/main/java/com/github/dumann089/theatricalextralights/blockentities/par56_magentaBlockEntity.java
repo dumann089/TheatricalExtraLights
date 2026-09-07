@@ -1,5 +1,6 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import net.minecraft.core.BlockPos;
@@ -19,6 +20,13 @@ public class par56_magentaBlockEntity extends ExtraLightsLightBlockEntity implem
     public par56_magentaBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.PAR56_MAGENTA.get(), pos, state);
         setChannelCount(1);
+    }
+
+    private final GoboWheelAnimator goboAnimator = new GoboWheelAnimator();
+
+    @Override
+    public GoboWheelAnimator getGoboAnimator() {
+        return this.goboAnimator;
     }
 
     @Override

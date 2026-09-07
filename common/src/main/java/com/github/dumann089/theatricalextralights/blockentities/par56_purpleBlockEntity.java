@@ -1,5 +1,6 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import net.minecraft.core.BlockPos;
@@ -40,6 +41,13 @@ public class par56_purpleBlockEntity extends ExtraLightsLightBlockEntity impleme
     public int getGoboSpin() { return 0; }
 
     public float getGoboRotation() { return fixedGoboRotation; }
+
+    private final GoboWheelAnimator goboAnimator = new GoboWheelAnimator();
+
+    @Override
+    public GoboWheelAnimator getGoboAnimator() {
+        return this.goboAnimator;
+    }
 
     @Override
     public Fixture getFixture() {

@@ -2,6 +2,7 @@
 package com.github.dumann089.theatricalextralights.blockentities.interfaces;
 
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 
 public interface HasGobo extends HasExtendedBeamChannels {
 
@@ -18,6 +19,8 @@ public interface HasGobo extends HasExtendedBeamChannels {
 
     /** Rotación acumulada del gobo en grados (animada en lightTick). */
     float getGoboRotation();
+
+    GoboWheelAnimator getGoboAnimator();
 
     /** Zoom DMX 0-255 → apertura del cono. */
     int getZoom();

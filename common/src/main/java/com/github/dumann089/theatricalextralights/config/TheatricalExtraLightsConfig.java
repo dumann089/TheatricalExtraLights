@@ -241,7 +241,7 @@ public class TheatricalExtraLightsConfig {
 
     public static int getRaymarchMaxBeamsPerFrame() {
         int value = INSTANCE.raymarchMaxBeamsPerFrame != null ? INSTANCE.raymarchMaxBeamsPerFrame : 128;
-        return Math.max(1, Math.min(128, value));
+        return Math.max(1, Math.min(512, value));
     }
     public static float getLaserBeamLength() { return INSTANCE.laserBeamLength; }
     public static float getRgbBarBeamLength() { return INSTANCE.rgbBarBeamLength; }

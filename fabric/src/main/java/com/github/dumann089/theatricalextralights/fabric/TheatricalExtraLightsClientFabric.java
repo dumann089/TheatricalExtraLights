@@ -1,15 +1,15 @@
 package com.github.dumann089.theatricalextralights.fabric;
 
 import com.github.dumann089.theatricalextralights.TheatricalExtraLightsClient;
+import com.github.dumann089.theatricalextralights.client.ConfettiCannonClientSetup;
+import com.github.dumann089.theatricalextralights.client.ConfettiCannonItemRenderer;
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
 import com.github.dumann089.theatricalextralights.client.ModShaders;
 import com.github.dumann089.theatricalextralights.client.firework.DetachedPyroSparks;
-import dev.imabad.theatrical.compat.ModCompat;
-import com.github.dumann089.theatricalextralights.client.ConfettiCannonClientSetup;
-import com.github.dumann089.theatricalextralights.client.ConfettiCannonItemRenderer;
 import com.github.dumann089.theatricalextralights.client.model.ConfettiCannonModel;
 import com.github.dumann089.theatricalextralights.items.Items;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import dev.imabad.theatrical.compat.ModCompat;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
@@ -19,80 +19,110 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
 public class TheatricalExtraLightsClientFabric implements ClientModInitializer {
+
     @Override
     public void onInitializeClient() {
-        // Inicialización original
         EntityModelLayerRegistry.registerModelLayer(
                 ConfettiCannonModel.LAYER_LOCATION,
                 ConfettiCannonModel::createBodyLayer
         );
+
         TheatricalExtraLightsClient.init();
         registerConfettiCannonItemRenderer();
 
-        com.github.dumann089.theatricalextralights.fabric.FollowspotCameraFabric.init();
+        FollowspotCameraFabric.init();
         SettingsCommandFabric.init();
 
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             Minecraft minecraft = Minecraft.getInstance();
+
             if (minecraft.level == null) {
                 return;
             }
+
             var buffers = minecraft.renderBuffers().bufferSource();
-            DetachedPyroSparks.render(context.matrixStack(), buffers, context.camera(), context.tickDelta());
+
+            DetachedPyroSparks.render(
+                    context.matrixStack(),
+                    buffers,
+                    context.camera(),
+                    context.tickDelta()
+            );
+
             buffers.endBatch(LensRenderTypes.LENS);
         });
 
-        // Capture la profondeur après les block entities mais avant le rendu
-        // translucide et les particules, pour que ni les particules ni les
-        // vitres ne découpent les faisceaux raymarch.
         WorldRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, hitResult) -> {
             if (com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.isRaymarchEngine()
                     && ModShaders.canUseRaymarch()) {
-                Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
+                Minecraft.getInstance()
+                        .renderBuffers()
+                        .bufferSource()
+                        .endBatch();
+
                 com.github.dumann089.theatricalextralights.client.render.beam.raymarch.SceneDepthCopy.capture();
             }
+
             return true;
         });
 
-        if (!ModCompat.SHIMMER) {
-            CoreShaderRegistrationCallback.EVENT.register(context -> {
-                context.register(
-                        new ResourceLocation("theatricalextralights", "gobo_projector"),
-                        DefaultVertexFormat.POSITION_COLOR,
-                        shader -> ModShaders.goboProjectorShader = shader
-                );
-                context.register(
-                        new ResourceLocation("theatricalextralights", "volumetric_beam"),
-                        DefaultVertexFormat.POSITION_COLOR_TEX,
-                        shader -> ModShaders.volumetricBeamShader = shader
-                );
-                context.register(
-                        new ResourceLocation("theatricalextralights", "beam_raymarch"),
-                        DefaultVertexFormat.POSITION_COLOR_TEX,
-                        shader -> ModShaders.beamRaymarchShader = shader
-                );
-            });
-        }
+        CoreShaderRegistrationCallback.EVENT.register(context -> {
+            context.register(
+                    new ResourceLocation(
+                            "theatricalextralights",
+                            "gobo_projector"
+                    ),
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    shader -> ModShaders.goboProjectorShader = shader
+            );
+
+            context.register(
+                    new ResourceLocation(
+                            "theatricalextralights",
+                            "volumetric_beam"
+                    ),
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    shader -> ModShaders.volumetricBeamShader = shader
+            );
+
+            context.register(
+                    new ResourceLocation(
+                            "theatricalextralights",
+                            "beam_raymarch"
+                    ),
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    shader -> ModShaders.beamRaymarchShader = shader
+            );
+        });
     }
 
-    private static void registerConfettiCannonItemRenderer() {
+    private void registerConfettiCannonItemRenderer() {
         BuiltinItemRendererRegistry.INSTANCE.register(
                 Items.CONFETTI_CANNON.get(),
-                (stack, displayContext, poseStack, buffer, packedLight, packedOverlay) -> getConfettiCannonItemRenderer()
-                        .renderByItem(stack, displayContext, poseStack, buffer, packedLight, packedOverlay)
+                (stack, displayContext, poseStack, buffer, packedLight, packedOverlay) ->
+                        getConfettiCannonItemRenderer().renderByItem(
+                                stack,
+                                displayContext,
+                                poseStack,
+                                buffer,
+                                packedLight,
+                                packedOverlay
+                        )
         );
     }
 
-    private static ConfettiCannonItemRenderer confettiCannonItemRenderer;
+    private ConfettiCannonItemRenderer confettiCannonItemRenderer;
 
-    private static ConfettiCannonItemRenderer getConfettiCannonItemRenderer() {
+    private ConfettiCannonItemRenderer getConfettiCannonItemRenderer() {
         if (confettiCannonItemRenderer == null) {
             Minecraft minecraft = Minecraft.getInstance();
+
             confettiCannonItemRenderer = new ConfettiCannonItemRenderer(
                     minecraft.getBlockEntityRenderDispatcher(),
                     minecraft.getEntityModels()
             );
         }
+
         return confettiCannonItemRenderer;
     }
 }

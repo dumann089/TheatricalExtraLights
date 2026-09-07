@@ -83,9 +83,6 @@ public class SpinnerRenderer extends ExtraLightsRenderer<SpinnerBlockEntity> {
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.translate(-0.5F, 0, -.5F);
 
         if (isHanging) {

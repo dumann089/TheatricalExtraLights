@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.blocks.MiniSpotGobosBlock;
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
@@ -43,6 +44,13 @@ public class MiniSpotGobosBlockEntity extends ExtraLightsLightBlockEntity
 
     public MiniSpotGobosBlockEntity(BlockPos pos, BlockState state) {
         this(BlockEntities.MINI_SPOT_GOBO.get(), pos, state);
+    }
+
+    private final GoboWheelAnimator goboAnimator = new GoboWheelAnimator();
+
+    @Override
+    public GoboWheelAnimator getGoboAnimator() {
+        return this.goboAnimator;
     }
 
     public int getGobo() { return gobo; }

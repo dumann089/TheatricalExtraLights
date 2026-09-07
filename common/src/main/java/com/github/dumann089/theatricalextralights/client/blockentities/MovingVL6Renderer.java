@@ -69,9 +69,6 @@ public class MovingVL6Renderer extends ExtraLightsFixtureRenderer<MovingVL6Block
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
@@ -195,6 +192,7 @@ public class MovingVL6Renderer extends ExtraLightsFixtureRenderer<MovingVL6Block
 
     @Override
     public void preparePoseStack(MovingVL6BlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if (isHanging) {
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -218,8 +216,6 @@ public class MovingVL6Renderer extends ExtraLightsFixtureRenderer<MovingVL6Block
             }
             poseStack.translate(0, -0.5, 0F);
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
 
         poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
         poseStack.translate(-0.5F, 0, -.5F);

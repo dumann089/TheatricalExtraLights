@@ -72,8 +72,6 @@ public class horizontalscrollerRenderer extends ExtraLightsRenderer<horizontalsc
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
 
-        FixtureMountTransform.apply(poseStack, blockEntity);
-
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -164,6 +162,7 @@ public void beforeRenderBeam(horizontalscrollerBlockEntity blockEntity, PoseStac
     @Override
     public void preparePoseStack(horizontalscrollerBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
         //#region Fixture Hanging
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);
@@ -193,8 +192,6 @@ public void beforeRenderBeam(horizontalscrollerBlockEntity blockEntity, PoseStac
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
-
-        FixtureMountTransform.apply(poseStack, blockEntity);
 
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {

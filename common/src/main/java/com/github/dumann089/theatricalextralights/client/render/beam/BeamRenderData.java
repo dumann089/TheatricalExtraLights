@@ -17,11 +17,13 @@ public record BeamRenderData(
         int color,
         float intensity,
         ResourceLocation goboTexture,
+        ResourceLocation nextGoboTexture,
         float goboRotation,
+        float wheelTransition,
         Level level,
         float widthScale,
         float heightScale,
-        float baseRadius // Añadida la coma arriba y esto aquí
+        float baseRadius
 ) {
     /** Constructor de compatibilidad actualizado */
     public BeamRenderData(
@@ -43,7 +45,7 @@ public record BeamRenderData(
     ) {
         this(fixturePos, origin, beamDir, axisU, axisV,
                 zoomNorm, scanLen, tanHalfAngle,
-                color, intensity, goboTexture, goboRotation, level,
+                color, intensity, goboTexture, goboTexture, goboRotation, 0.0f, level,
                 widthScale, heightScale, 0.05f);
     }
 
@@ -62,11 +64,13 @@ public record BeamRenderData(
         hash = 31 * hash + color;
         hash = 31 * hash + Float.floatToIntBits(intensity);
         hash = 31 * hash + (goboTexture != null ? goboTexture.hashCode() : 0);
+        hash = 31 * hash + (nextGoboTexture != null ? nextGoboTexture.hashCode() : 0);
         hash = 31 * hash + Float.floatToIntBits(goboRotation);
+        hash = 31 * hash + Float.floatToIntBits(wheelTransition);
         hash = 31 * hash + slices;
         hash = 31 * hash + Float.floatToIntBits(widthScale);
         hash = 31 * hash + Float.floatToIntBits(heightScale);
-        hash = 31 * hash + Float.floatToIntBits(baseRadius); // Añadido al hash
+        hash = 31 * hash + Float.floatToIntBits(baseRadius);
         return hash;
     }
 }

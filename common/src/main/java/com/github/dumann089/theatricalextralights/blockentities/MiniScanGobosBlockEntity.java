@@ -3,6 +3,7 @@ package com.github.dumann089.theatricalextralights.blockentities;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGobo;
 import com.github.dumann089.theatricalextralights.blocks.MiniScanGobosBlock;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import net.minecraft.core.BlockPos;
@@ -41,6 +42,13 @@ public class MiniScanGobosBlockEntity extends ExtraLightsLightBlockEntity
 
     public MiniScanGobosBlockEntity(BlockPos pos, BlockState state) {
         this(BlockEntities.MINI_SCAN_GOBO.get(), pos, state);
+    }
+
+    private final GoboWheelAnimator goboAnimator = new GoboWheelAnimator();
+
+    @Override
+    public GoboWheelAnimator getGoboAnimator() {
+        return this.goboAnimator;
     }
 
     public int getGobo() { return gobo; }

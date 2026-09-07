@@ -4,6 +4,7 @@ import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGo
 import com.github.dumann089.theatricalextralights.blocks.MovingVL2CBlock;
 import com.github.dumann089.theatricalextralights.blocks.SpotXtremeGoboBlock;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
+import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
@@ -66,6 +67,13 @@ public class SpotXtremeGoboBlockEntity extends ExtraLightsLightBlockEntity
                 goboRotation = (goboRotation + speed) % 360f;
             }
         }
+    }
+
+    private final GoboWheelAnimator goboAnimator = new GoboWheelAnimator();
+
+    @Override
+    public GoboWheelAnimator getGoboAnimator() {
+        return this.goboAnimator;
     }
 
     @Override

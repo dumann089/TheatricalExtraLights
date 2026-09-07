@@ -10,15 +10,14 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-import net.minecraft.world.phys.Vec3;
 
 /**
  * Applies user-configurable mount offsets before fixture facing / pan / tilt transforms.
  */
 public final class FixtureMountTransform {
 
-    public static final float MAX_OFFSET = 1.5F;
-    public static final float MAX_ANGLE = 180.0F;
+    public static final float MAX_OFFSET = 2.5f;
+    public static final float MAX_ANGLE = 180f;
 
     private FixtureMountTransform() {
     }
@@ -32,8 +31,7 @@ public final class FixtureMountTransform {
     }
 
     public static void apply(PoseStack poseStack, BaseLightBlockEntity blockEntity) {
-        if (!(blockEntity instanceof ExtraLightsLightBlockEntity mountable)
-                || !mountable.hasMountTransform()) {
+        if (!(blockEntity instanceof ExtraLightsLightBlockEntity mountable) || !mountable.hasMountTransform()) {
             return;
         }
 
@@ -44,17 +42,7 @@ public final class FixtureMountTransform {
         float pitch = mountable.getMountPitch();
         float roll = mountable.getMountRoll();
 
-        /*
-         * Position offset.
-         *
-         * At this point the fixture has already been oriented by its
-         * own renderer, so the offset belongs to the fixture transform.
-         */
-        poseStack.translate(offsetX, offsetY, offsetZ);
-
-        /*
-         * Mount rotation around the fixture origin.
-         */
+        poseStack.translate(0.5F, 0.5F, 0.5F);
         if (yaw != 0.0F) {
             poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
         }
@@ -67,12 +55,6 @@ public final class FixtureMountTransform {
         poseStack.translate(offsetX, offsetY, offsetZ);
         poseStack.translate(-0.5F, -0.5F, -0.5F);
     }
-
-    public static Vec3 applyToPoint(BaseLightBlockEntity blockEntity, Vec3 point) {
-        if (!(blockEntity instanceof ExtraLightsLightBlockEntity mountable)
-                || !mountable.hasMountTransform()) {
-            return point;
-        }
 
     /** World-space point after the same mount transform used for rendering. */
     public static Vec3 transformWorldPoint(ExtraLightsLightBlockEntity mountable, BlockPos pos, Vec3 worldPoint) {
@@ -121,41 +103,5 @@ public final class FixtureMountTransform {
         m.translate(mountable.getMountOffsetX(), mountable.getMountOffsetY(), mountable.getMountOffsetZ());
         m.translate(-0.5f, -0.5f, -0.5f);
         return m;
-    }
-
-        double x = point.x - 0.5;
-        double y = point.y - 0.5;
-        double z = point.z - 0.5;
-
-        float yaw = mountable.getMountYaw();
-        float pitch = mountable.getMountPitch();
-        float roll = mountable.getMountRoll();
-
-        double r;
-
-        // CORRECCIÓN: Signos invertidos en Yaw para coincidir con la matriz JOML de Minecraft (Axis.YP)
-        r = Math.toRadians(yaw);
-        double nx = x * Math.cos(r) + z * Math.sin(r);
-        double nz = -x * Math.sin(r) + z * Math.cos(r);
-        x = nx;
-        z = nz;
-
-        r = Math.toRadians(pitch);
-        double ny = y * Math.cos(r) - z * Math.sin(r);
-        nz = y * Math.sin(r) + z * Math.cos(r);
-        y = ny;
-        z = nz;
-
-        r = Math.toRadians(roll);
-        nx = x * Math.cos(r) - y * Math.sin(r);
-        ny = x * Math.sin(r) + y * Math.cos(r);
-        x = nx;
-        y = ny;
-
-        return new Vec3(
-                x + 0.5 + mountable.getMountOffsetX(),
-                y + 0.5 + mountable.getMountOffsetY(),
-                z + 0.5 + mountable.getMountOffsetZ()
-        );
     }
 }
