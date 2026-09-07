@@ -2,7 +2,7 @@ package com.github.dumann089.theatricalextralights.client;
 
 import com.github.dumann089.theatricalextralights.blockentities.FlameThrowerBlockEntity;
 import com.github.dumann089.theatricalextralights.client.particle.FlameThrowerParticleSpawner;
-import com.github.dumann089.theatricalextralights.client.sfx.SoundLoopManager;
+import com.github.dumann089.theatricalextralights.client.sfx.FixtureLoopSfx;
 import com.github.dumann089.theatricalextralights.sounds.ModSounds;
 import dev.imabad.theatrical.blocks.light.BaseLightBlock;
 import net.fabricmc.api.EnvType;
@@ -35,16 +35,15 @@ public final class FlameThrowerClientEffects {
         boolean shouldPlaySound = active && playerCanHear;
 
         if (shouldPlaySound) {
-            SoundLoopManager.play(
+            FixtureLoopSfx.sustain(
                     blockEntity.getLevel(),
                     pos,
-                    null,
                     ModSounds.FLAME_THROWER_LOOP.get(),
                     LOOP_VOLUME,
                     1.0f
             );
         } else {
-            SoundLoopManager.stopLoop(pos);
+            FixtureLoopSfx.release(pos);
         }
 
         if (!active) {
@@ -74,6 +73,6 @@ public final class FlameThrowerClientEffects {
     }
 
     public static void stop(BlockPos pos) {
-        SoundLoopManager.stopAll(pos);
+        FixtureLoopSfx.release(pos);
     }
 }

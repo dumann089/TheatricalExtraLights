@@ -3,7 +3,7 @@ package com.github.dumann089.theatricalextralights.client;
 import com.github.dumann089.theatricalextralights.blockentities.Flow2JetBlockEntity;
 import com.github.dumann089.theatricalextralights.client.particle.Flow2JetDissipation;
 import com.github.dumann089.theatricalextralights.client.particle.Flow2JetParticleSpawner;
-import com.github.dumann089.theatricalextralights.client.sfx.SoundLoopManager;
+import com.github.dumann089.theatricalextralights.client.sfx.FixtureLoopSfx;
 import com.github.dumann089.theatricalextralights.firework.FireworkRenderDistances;
 import com.github.dumann089.theatricalextralights.fixtures.Flow2JetFixture;
 import com.github.dumann089.theatricalextralights.sounds.ModSounds;
@@ -49,16 +49,15 @@ public final class Flow2JetClientEffects {
         boolean shouldPlaySound = active && playerCanHear;
 
         if (shouldPlaySound) {
-            SoundLoopManager.play(
+            FixtureLoopSfx.sustain(
                     blockEntity.getLevel(),
                     pos,
-                    null,
                     ModSounds.FLOW2JET_LOOP.get(),
                     volume,
                     1.0f
             );
         } else {
-            SoundLoopManager.stopLoop(pos);
+            FixtureLoopSfx.release(pos);
         }
 
         if (!(blockEntity.getLevel() instanceof ClientLevel level)) {
@@ -139,7 +138,7 @@ public final class Flow2JetClientEffects {
     public static void stop(BlockPos pos) {
         WAS_ACTIVE.remove(pos);
         Flow2JetDissipation.clear(pos);
-        SoundLoopManager.stopAll(pos);
+        FixtureLoopSfx.release(pos);
     }
 
     /** Client-only debug overlay toggle — never call from the dedicated server. */
