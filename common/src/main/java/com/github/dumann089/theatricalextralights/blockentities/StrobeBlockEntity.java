@@ -247,6 +247,15 @@ public class StrobeBlockEntity extends ExtraLightsLightBlockEntity implements Ha
                 || (usesStrobeChannel() && DmxShutterStrobeHelper.isStrobing(strobe));
     }
 
+    /**
+     * Theatrical's DmxFrame omits pan/tilt/focus unless channelCount >= 7.
+     * Strobe is 3–6ch, so zoom (focus) and the ground spot stay stale until an NBT Save.
+     */
+    @Override
+    protected boolean hasExtraDmxChannelsBeyondBatch() {
+        return true;
+    }
+
     @Override
     public void applyDmxFramePanTiltFocus(int pan, int tilt, int focusValue,
                                           int prevPan, int prevTilt, int prevFocusValue) {
