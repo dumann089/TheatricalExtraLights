@@ -7,7 +7,6 @@ import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import com.github.dumann089.theatricalextralights.util.DmxFrameAtomictiltSync;
 import com.github.dumann089.theatricalextralights.util.DmxShutterStrobeHelper;
 import com.github.dumann089.theatricalextralights.util.DmxStrobeFixture;
-import com.github.dumann089.theatricalextralights.util.TheatricalDmxFrameBridge;
 import dev.imabad.theatrical.api.Fixture;
 import dev.imabad.theatrical.api.dmx.DMXPersonality;
 import net.minecraft.core.BlockPos;
@@ -202,7 +201,9 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
     @Override
     public void applyDmxFramePanTiltFocus(int pan, int tiltValue, int focusValue,
                                           int prevPan, int prevTiltValue, int prevFocusValue) {
-        super.applyDmxFramePanTiltFocus(pan, tiltValue, focusValue, prevPan, prevTiltValue, prevFocusValue);
+        // Keep our mapped tilt. The standard 7ch layout treats ch5 as pan / ch6 as tilt,
+        // which is wrong for both Atomic personalities and snaps the head to 0.
+        super.applyDmxFramePanTiltFocus(this.pan, this.tilt, focusValue, this.prevPan, this.prevTilt, prevFocusValue);
         markAtomicTiltFrameApplied();
     }
 
@@ -215,21 +216,12 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
     }
 
     /**
-     * Comme l'ancienne version : toujours pousser le packet block entity (tilt en NBT),
-     * en plus du batch DMX si activé.
+     * 6ch omits pan/tilt/focus from the DmxFrame batch; 7ch maps strobe onto the pan slot.
+     * Dual batch+NBT was fighting (jitter) and snapping tilt back to 0.
      */
     @Override
-    protected void finishDmxUpdate(boolean valuesChanged, boolean prevAdvanced) {
-        if (level == null || level.isClientSide) {
-            return;
-        }
-        if (valuesChanged || prevAdvanced) {
-            TheatricalDmxFrameBridge.markDirtyIfBatchEnabled(getBlockPos());
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-        }
-        if (valuesChanged) {
-            setChanged();
-        }
+    protected boolean hasExtraDmxChannelsBeyondBatch() {
+        return true;
     }
 
     @Override
@@ -258,9 +250,7 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
             newRawTilt = convertByteToInt(ourValues[5]);
         }
 
-        if (newRawTilt != rawTiltDmx) {
-            prevRawTiltDmx = rawTiltDmx;
-        }
+        prevRawTiltDmx = rawTiltDmx;
         rawTiltDmx = newRawTilt;
         tilt = mapTiltDmx(rawTiltDmx);
 
