@@ -15,7 +15,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
-import java.util.Arrays;
 import java.util.List;
 
 public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity implements HasPersonality, DmxStrobeFixture, DmxFrameStrobeSync {
@@ -173,22 +172,26 @@ public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity
 
     @Override
     public void consume(byte[] dmxValues) {
-        int channelCount = getPersonalityChannelCount();
+        if (dmxValues == null) {
+            return;
+        }
         int start = getChannelStart() > 0 ? getChannelStart() - 1 : 0;
-        byte[] ourValues = Arrays.copyOfRange(dmxValues, start, start + channelCount);
-        if (ourValues.length < channelCount) {
+        if (start < 0 || start + 4 > dmxValues.length) {
             return;
         }
 
         boolean prevAdvanced = beginDmxUpdate();
         int _pi = intensity, _pr = red, _pg = green, _pb = blue, _ps = strobe;
 
-        intensity = convertByteToInt(ourValues[0]);
-        red = convertByteToInt(ourValues[1]);
-        green = convertByteToInt(ourValues[2]);
-        blue = convertByteToInt(ourValues[3]);
-        strobe = convertByteToInt(ourValues[4]);
-        focus = strobe;
+        intensity = convertByteToInt(dmxValues[start]);
+        red = convertByteToInt(dmxValues[start + 1]);
+        green = convertByteToInt(dmxValues[start + 2]);
+        blue = convertByteToInt(dmxValues[start + 3]);
+        // Personality is 4ch iRGB. Strobe is only present on a 5ch footprint.
+        if (start + 5 <= dmxValues.length && getPersonalityChannelCount() > 4) {
+            strobe = convertByteToInt(dmxValues[start + 4]);
+            focus = strobe;
+        }
 
         boolean changed = intensity != _pi || red != _pr || green != _pg || blue != _pb || strobe != _ps;
         finishDmxUpdate(changed, prevAdvanced);

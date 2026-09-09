@@ -25,6 +25,9 @@ public final class ExtraLightsMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.contains("BlockEntityTheatricalDmxExtendedMixin")) {
             return isClassPresent("dev.imabad.theatrical.api.dmx.DmxFrameExtendedFixture");
         }
+        if (mixinClassName.contains("ServerDmxBrokerMixin")) {
+            return isClassPresent("dev.imabad.theatrical.networks.ServerDmxBroker");
+        }
         return true;
     }
 

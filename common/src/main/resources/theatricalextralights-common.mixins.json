@@ -11,6 +11,7 @@
     "client.shimmer.ReloadShaderManagerMixin"
   ],
   "mixins": [
-    "compat.BlockEntityTheatricalDmxExtendedMixin"
+    "compat.BlockEntityTheatricalDmxExtendedMixin",
+    "compat.ServerDmxBrokerMixin"
   ]
 }
