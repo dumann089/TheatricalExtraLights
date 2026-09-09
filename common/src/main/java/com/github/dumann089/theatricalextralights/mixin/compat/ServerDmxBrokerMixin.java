@@ -2,16 +2,17 @@ package com.github.dumann089.theatricalextralights.mixin.compat;
 
 import com.github.dumann089.theatricalextralights.TheatricalExtraLights;
 import dev.imabad.theatrical.api.dmx.DMXConsumer;
-import dev.imabad.theatrical.networks.ServerDmxBroker;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 /**
- * One broken fixture must not take down the dedicated server.
- * Theatrical's {@code ServerDmxBroker.flush} calls {@code consume} unsafely on the server tick.
+ * Soft target: {@code ServerDmxBroker} exists on recent Theatrical builds only
+ * ({@code alpha.28.9999}+), not on the published Maven {@code alpha.28.120} API.
+ * {@link com.github.dumann089.theatricalextralights.mixin.ExtraLightsMixinPlugin}
+ * skips this mixin when the class is absent.
  */
-@Mixin(value = ServerDmxBroker.class, remap = false)
+@Mixin(targets = "dev.imabad.theatrical.networks.ServerDmxBroker", remap = false)
 public class ServerDmxBrokerMixin {
 
     @Redirect(
