@@ -22,7 +22,38 @@ uniform vec3 LightColor;
 uniform vec2 ScreenSize;
 uniform float OcclusionEnabled;
 
+// Module de couteaux (framing shutters) : 4 lames haut / droite / bas / gauche.
+uniform float ShutterEnabled;
+uniform vec4 BladeInsert;    // insertion 0 (sortie) .. 1 (rentree a fond)
+uniform vec4 BladeAngle;     // swivel de chaque lame, radians
+uniform float FrameRotation; // rotation du module complet, radians
+
 const float GOBO_BRIGHTNESS=0.55;
+
+float bladeMask(vec2 p, vec2 n, float insertion, float angle, float soft){
+    if(insertion<=0.0005)return 1.0;
+    float edgeDist=1.15-2.3*insertion;
+    vec2 pivot=n*edgeDist;
+    float ca=cos(angle);
+    float sa=sin(angle);
+    vec2 nRot=vec2(n.x*ca-n.y*sa,n.x*sa+n.y*ca);
+    float sd=dot(p-pivot,nRot);
+    return 1.0-smoothstep(-soft,soft,sd);
+}
+
+float shutterMask(float u,float v,float radius,float soft){
+    if(ShutterEnabled<0.5)return 1.0;
+    vec2 p=vec2(u,v)/max(radius,0.0001);
+    float cr=cos(-FrameRotation);
+    float sr=sin(-FrameRotation);
+    vec2 q=vec2(p.x*cr-p.y*sr,p.x*sr+p.y*cr);
+    float m=1.0;
+    m*=bladeMask(q,vec2(0.0,1.0),BladeInsert.x,BladeAngle.x,soft);
+    m*=bladeMask(q,vec2(1.0,0.0),BladeInsert.y,BladeAngle.y,soft);
+    m*=bladeMask(q,vec2(0.0,-1.0),BladeInsert.z,BladeAngle.z,soft);
+    m*=bladeMask(q,vec2(-1.0,0.0),BladeInsert.w,BladeAngle.w,soft);
+    return m;
+}
 
 in vec4 VertexColor;
 out vec4 fragColor;
@@ -141,6 +172,10 @@ void main(){
     }
 
     float goboAlpha=goboAlphaA+goboAlphaB;
+
+    // Couteaux : le bord est net au point (focus 0) et s'adoucit avec le defocus, comme un vrai profile.
+    float shutterSoft=0.012+focusNorm*0.06;
+    goboAlpha*=shutterMask(u,v,radius,shutterSoft);
     if(goboAlpha<=0.001)discard;
 
     // Mezcla de interpolación física

@@ -14,11 +14,17 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFramingShutters;
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasPersonality;
+import com.github.dumann089.theatricalextralights.fixtures.FramingShutterChannels;
+import com.github.dumann089.theatricalextralights.util.FramingShutterState;
+import dev.imabad.theatrical.api.dmx.DMXPersonality;
+import java.util.List;
 
 import java.util.Arrays;
 
 public class VL6CGoboBlockEntity extends ExtraLightsLightBlockEntity
-        implements HasGobo {
+        implements HasGobo, HasPersonality, HasFramingShutters {
 
 
     @Override
@@ -60,6 +66,7 @@ public class VL6CGoboBlockEntity extends ExtraLightsLightBlockEntity
         if (this.level != null && this.level.isClientSide) {
             this.prevGobo = this.gobo;
             this.prevZoom = this.zoom;
+            framingShutters.tickClient();
 
             if (goboSpin > 0) {
                 float speed = (goboSpin / 255f) * 12f; // máximo 5° por tick
@@ -114,6 +121,7 @@ public class VL6CGoboBlockEntity extends ExtraLightsLightBlockEntity
         }
         boolean changed = intensity != _pi || red != _pr || green != _pg || blue != _pb
                 || focus != _pf || pan != _pp || tilt != _pt || customChanged;
+        changed |= consumeFramingShutters(ourValues);
         finishDmxUpdate(changed, prevAdvanced);
     }
 
@@ -123,6 +131,8 @@ public class VL6CGoboBlockEntity extends ExtraLightsLightBlockEntity
         compoundTag.putInt("gobo", gobo);
         compoundTag.putInt("zoom", zoom);
         compoundTag.putInt("goboSpin", goboSpin);
+        compoundTag.putInt("activePersonality", activePersonalityIndex);
+        framingShutters.write(compoundTag);
     }
 
     @Override
@@ -131,6 +141,8 @@ public class VL6CGoboBlockEntity extends ExtraLightsLightBlockEntity
         this.gobo = compoundTag.getInt("gobo");
         this.zoom = compoundTag.getInt("zoom");
         goboSpin = compoundTag.getInt("goboSpin");
+        if (compoundTag.contains("activePersonality")) applyPersonality(compoundTag.getInt("activePersonality"));
+        framingShutters.read(compoundTag);
         this.prevGobo = this.gobo;
         this.prevZoom = this.zoom;
     }
@@ -147,8 +159,40 @@ public class VL6CGoboBlockEntity extends ExtraLightsLightBlockEntity
     @Override
     public String getModelName() { return "VL6C GOBO"; }
 
+    // ── Personnalite DMX + module de couteaux ────────────────────────────────
+    private int activePersonalityIndex = 0;
+    private final FramingShutterState framingShutters = new FramingShutterState();
+
     @Override
-    public int getActivePersonality() { return 0; }
+    public int getActivePersonality() { return activePersonalityIndex; }
+
+    @Override
+    public void setActivePersonality(int index) {
+        if (!applyPersonality(index)) return;
+        setChanged();
+        if (level != null)
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
+
+    private boolean applyPersonality(int index) {
+        List<DMXPersonality> p = getFixture().getDMXPersonalities();
+        if (index < 0 || index >= p.size()) return false;
+        activePersonalityIndex = index;
+        setChannelCount(p.get(index).getChannelCount());
+        return true;
+    }
+
+    @Override
+    public FramingShutterState getFramingShutters() { return framingShutters; }
+
+    /** Canaux 11-19 en mode 19ch ; en mode 10ch les lames restent sorties. */
+    private boolean consumeFramingShutters(byte[] ourValues) {
+        if (getChannelCount() >= FramingShutterChannels.TOTAL_CHANNELS
+                && ourValues.length >= FramingShutterChannels.TOTAL_CHANNELS) {
+            return framingShutters.consume(ourValues, FramingShutterChannels.BASE_CHANNELS);
+        }
+        return framingShutters.reset();
+    }
 
     @Override
     public String getTranslationKey() { return "block.theatricalextralights.vl6c_gobo"; }

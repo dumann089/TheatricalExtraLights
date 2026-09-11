@@ -30,6 +30,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import com.github.dumann089.theatricalextralights.client.render.beam.FramingShutterRender;
 
 import java.util.Map;
 import java.util.Optional;
@@ -296,6 +297,7 @@ public class VL6CGoboRenderer extends ExtraLightsFixtureRenderer<VL6CGoboBlockEn
                 );
 
                 // Cone pilote par le zoom (1 a 19 deg) : la tache doit suivre.
+                renderData = FramingShutterRender.attach(renderData, blockEntity, partialTicks);
                 publishCone(blockEntity, renderData);
 
                 volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())

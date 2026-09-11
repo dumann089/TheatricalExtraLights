@@ -196,6 +196,30 @@
       "type": "int",
       "count": 1,
       "values": [16]
+    },
+    {
+      "name": "ShutterEnabled",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "BladeInsert",
+      "type": "float",
+      "count": 4,
+      "values": [0.0, 0.0, 0.0, 0.0]
+    },
+    {
+      "name": "BladeAngle",
+      "type": "float",
+      "count": 4,
+      "values": [0.0, 0.0, 0.0, 0.0]
+    },
+    {
+      "name": "FrameRotation",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
     }
   ]
 }

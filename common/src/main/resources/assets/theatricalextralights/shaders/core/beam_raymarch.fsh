@@ -36,6 +36,12 @@ uniform float Ambient;
 uniform vec2 ScreenSize;
 uniform int StepCount;
 
+// Module de couteaux (framing shutters) : 4 lames haut / droite / bas / gauche.
+uniform float ShutterEnabled;
+uniform vec4 BladeInsert;   // insertion 0 (sortie) .. 1 (rentree a fond), par lame
+uniform vec4 BladeAngle;    // swivel de chaque lame, radians
+uniform float FrameRotation; // rotation du module complet, radians
+
 in vec4 vertexColor;
 in vec2 texCoord0;
 
@@ -241,6 +247,42 @@ bool intersectBounds(
     tExit = q1;
 
     return true;
+}
+
+// Une lame : demi-plan dont le bord pivote (swivel) autour de son point central.
+// n = normale de base de la lame (vers l'exterieur du faisceau), p = point dans le
+// disque unite du faisceau (deja ramene dans le repere du module).
+float bladeMask(vec2 p, vec2 n, float insertion, float angle, float soft) {
+    if (insertion <= 0.0005) {
+        return 1.0;
+    }
+    // A insertion 0 le bord est hors du cercle (1.15) meme incline ; a 1 il couvre tout.
+    float edgeDist = 1.15 - 2.3 * insertion;
+    vec2 pivot = n * edgeDist;
+    float ca = cos(angle);
+    float sa = sin(angle);
+    vec2 nRot = vec2(n.x * ca - n.y * sa, n.x * sa + n.y * ca);
+    float sd = dot(p - pivot, nRot);
+    // sd > 0 : derriere la lame (occulte). Bord legerement doux comme un couteau reel.
+    return 1.0 - smoothstep(-soft, soft, sd);
+}
+
+// Masque combine des 4 couteaux pour un point (u,v) a un rayon de faisceau donne.
+float shutterMask(float u, float v, float radius, float soft) {
+    if (ShutterEnabled < 0.5) {
+        return 1.0;
+    }
+    vec2 p = vec2(u, v) / max(radius, 1.0e-4);
+    float cr = cos(-FrameRotation);
+    float sr = sin(-FrameRotation);
+    vec2 q = vec2(p.x * cr - p.y * sr, p.x * sr + p.y * cr);
+
+    float m = 1.0;
+    m *= bladeMask(q, vec2(0.0, 1.0),  BladeInsert.x, BladeAngle.x, soft);
+    m *= bladeMask(q, vec2(1.0, 0.0),  BladeInsert.y, BladeAngle.y, soft);
+    m *= bladeMask(q, vec2(0.0, -1.0), BladeInsert.z, BladeAngle.z, soft);
+    m *= bladeMask(q, vec2(-1.0, 0.0), BladeInsert.w, BladeAngle.w, soft);
+    return m;
 }
 
 // Tu sistema de proyección de Gobo.
@@ -474,6 +516,9 @@ void main() {
             toPos,
             zDist
         );
+
+        // Couteaux : coupe nette du volume, dans le meme repere (u,v) que le gobo.
+        gobo *= shutterMask(u, v, radius, 0.035);
 
         if (gobo < 0.01) {
             t += dt;
