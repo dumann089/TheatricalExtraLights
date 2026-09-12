@@ -104,7 +104,7 @@ public class MovingScanBlock extends ExtraLightsLightBlock {
                 return InteractionResult.SUCCESS;
             }
             if (!level.isClientSide) {
-                new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.CHANNEL_PANTILT)
+                new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.CHANNEL_MENU)
                         .sendTo((ServerPlayer) player);
             }
         }

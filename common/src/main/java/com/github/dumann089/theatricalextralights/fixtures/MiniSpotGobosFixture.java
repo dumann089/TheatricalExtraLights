@@ -10,12 +10,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.Collections;
 import java.util.List;
 
 public class MiniSpotGobosFixture extends Fixture {
 
-    private static final List<DMXPersonality> PERSONALITIES = Collections.singletonList(
+    private static final List<DMXPersonality> PERSONALITIES = List.of(
             new DMXPersonality(10, "10-Channel Mode")
                     .addSlot(SharedSlots.INTENSITY)
                     .addSlot(SharedSlots.RED)
@@ -26,7 +25,8 @@ public class MiniSpotGobosFixture extends Fixture {
                     .addSlot(SharedSlots.TILT)
                     .addSlot(SharedSlots.FOCUS) // Prism Beams
                     .addSlot(SharedSlots.FOCUS) // Prism Zoom
-                    .addSlot(SharedSlots.FOCUS) // Prism Rotation
+                    .addSlot(SharedSlots.FOCUS), // Prism Rotation
+            FramingShutterChannels.PERSONALITY_19CH
     );
 
     private static final ResourceLocation TILT_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/minispot/minispot_tilt");

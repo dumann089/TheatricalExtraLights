@@ -134,6 +134,30 @@
       "type": "float",
       "count": 2,
       "values": [1920.0, 1080.0]
+    },
+    {
+      "name": "ShutterEnabled",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "BladeA",
+      "type": "float",
+      "count": 4,
+      "values": [0.0, 0.0, 0.0, 0.0]
+    },
+    {
+      "name": "BladeB",
+      "type": "float",
+      "count": 4,
+      "values": [0.0, 0.0, 0.0, 0.0]
+    },
+    {
+      "name": "FrameRotation",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
     }
   ]
 }

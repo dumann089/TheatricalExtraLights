@@ -30,6 +30,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import com.github.dumann089.theatricalextralights.client.render.beam.FramingShutterRender;
 
 import java.util.Optional;
 import java.util.Map;
@@ -296,6 +297,7 @@ public class MiniSpotGobosRenderer extends ExtraLightsFixtureRenderer<MiniSpotGo
                 );
 
                 // Cone pilote par le zoom (1 a 19 deg) : la tache doit suivre.
+                renderData = FramingShutterRender.attach(renderData, blockEntity, partialTicks);
                 publishCone(blockEntity, renderData);
 
                 volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())
@@ -327,7 +329,7 @@ public class MiniSpotGobosRenderer extends ExtraLightsFixtureRenderer<MiniSpotGo
                 VertexConsumer builder  = multiBufferSource.getBuffer(Beam2DRenderTypes.getBeam());
                 int            goboSlot = blockEntity.getGobo();
 
-                if (goboSlot == 0) {
+                if (goboSlot == 0 && !FramingShutterRender.isActive(blockEntity)) {
                     poseStack.pushPose();
                     poseStack.translate(0.5f, 0.406F, 0.312F);
                     if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {

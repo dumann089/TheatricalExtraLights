@@ -22,7 +22,41 @@ uniform vec3 LightColor;
 uniform vec2 ScreenSize;
 uniform float OcclusionEnabled;
 
+// Module de couteaux (framing shutters) : 4 lames haut / droite / bas / gauche.
+uniform float ShutterEnabled;
+uniform vec4 BladeA;         // insertion du coin A de chaque lame, 0 (sorti) .. 1 (rentre a fond)
+uniform vec4 BladeB;         // insertion du coin B de chaque lame
+uniform float FrameRotation; // rotation du module complet, radians
+
 const float GOBO_BRIGHTNESS=0.55;
+
+// Convention A/B (grandMA) : le bord de la lame relie les deux coins A et B.
+float bladeMask(vec2 p, vec2 n, float insA, float insB, float soft){
+    if(insA<=0.0005&&insB<=0.0005)return 1.0;
+    vec2 t=vec2(n.y,-n.x);
+    const float R=1.15;
+    vec2 cornerA=n*(R-2.0*R*insA)-t*R;
+    vec2 cornerB=n*(R-2.0*R*insB)+t*R;
+    vec2 edge=cornerB-cornerA;
+    vec2 m=normalize(vec2(edge.y,-edge.x));
+    if(dot(m,n)<0.0)m=-m;
+    float sd=dot(p-cornerA,m);
+    return 1.0-smoothstep(-soft,soft,sd);
+}
+
+float shutterMask(float u,float v,float radius,float soft){
+    if(ShutterEnabled<0.5)return 1.0;
+    vec2 p=vec2(u,v)/max(radius,0.0001);
+    float cr=cos(-FrameRotation);
+    float sr=sin(-FrameRotation);
+    vec2 q=vec2(p.x*cr-p.y*sr,p.x*sr+p.y*cr);
+    float m=1.0;
+    m*=bladeMask(q,vec2(0.0,1.0),BladeA.x,BladeB.x,soft);
+    m*=bladeMask(q,vec2(1.0,0.0),BladeA.y,BladeB.y,soft);
+    m*=bladeMask(q,vec2(0.0,-1.0),BladeA.z,BladeB.z,soft);
+    m*=bladeMask(q,vec2(-1.0,0.0),BladeA.w,BladeB.w,soft);
+    return m;
+}
 
 in vec4 VertexColor;
 out vec4 fragColor;
@@ -84,7 +118,11 @@ void main(){
 
             if(abs(denominator)>0.00001){
                 float hitT=dot(OcclusionPos-LightPos,OcclusionNormal)/denominator;
-                if(hitT>0.001&&hitT<surfaceDistance-0.001)discard;
+                // Tolerance proportionnelle a la distance : la profondeur reconstruite depuis le
+                // depth buffer n'est precise qu'a quelques cm a 10 blocs, une marge fixe de 1 mm
+                // faisait clignoter des pixels de la surface eclairee elle-meme (z-fighting).
+                float occlusionBias=max(0.08,surfaceDistance*0.03);
+                if(hitT>0.001&&hitT<surfaceDistance-occlusionBias)discard;
             }
         }
     }
@@ -141,6 +179,10 @@ void main(){
     }
 
     float goboAlpha=goboAlphaA+goboAlphaB;
+
+    // Couteaux : le bord est net au point (focus 0) et s'adoucit avec le defocus, comme un vrai profile.
+    float shutterSoft=0.012+focusNorm*0.06;
+    goboAlpha*=shutterMask(u,v,radius,shutterSoft);
     if(goboAlpha<=0.001)discard;
 
     // Mezcla de interpolación física

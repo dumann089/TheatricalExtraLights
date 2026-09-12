@@ -59,11 +59,11 @@ public class WaterJetConfigScreen extends ExtraLightsConfigScreen {
     @Override
     protected int buildExtraWidgets(int y) {
         jetSectionY = y;
-        y += LABEL_GAP;
+        y += LABEL_GAP + 3;
 
         heightLabelY = y;
         y += LABEL_GAP;
-        heightField = new EditBox(font, contentLeft, y, contentWidth, WIDGET_HEIGHT,
+        heightField = createField(contentLeft, y, contentWidth, WIDGET_HEIGHT,
                 Component.translatable("screen.waterjet.height"));
         heightField.setFilter(value -> value.isEmpty() || value.matches("\\d*(\\.\\d*)?"));
         if (blockEntity instanceof HasJetHeight jet) {
@@ -71,7 +71,6 @@ public class WaterJetConfigScreen extends ExtraLightsConfigScreen {
         } else {
             heightField.setValue("20.0");
         }
-        addRenderableWidget(heightField);
         y += WIDGET_HEIGHT + ROW_GAP;
 
         thicknessLabelY = y;
@@ -96,13 +95,12 @@ public class WaterJetConfigScreen extends ExtraLightsConfigScreen {
             coneAngleSlider = null;
         }
 
-        return y;
+        return y + SECTION_GAP - ROW_GAP;
     }
 
     @Override
     protected void renderExtraLabels(GuiGraphics guiGraphics) {
-        guiGraphics.drawCenteredString(font, Component.translatable("screen.waterjet.section"),
-                panelLeft + PANEL_WIDTH / 2, jetSectionY, 0x606060);
+        drawSectionLabel(guiGraphics, Component.translatable("screen.waterjet.section"), jetSectionY);
         drawFieldLabel(guiGraphics, Component.translatable("screen.waterjet.height"), heightLabelY);
         drawFieldLabel(guiGraphics, Component.translatable("screen.waterjet.thickness"), thicknessLabelY);
         if (mode.coneAngle) {
@@ -131,16 +129,15 @@ public class WaterJetConfigScreen extends ExtraLightsConfigScreen {
         }
     }
 
-    private static class JetFloatSlider extends AbstractSliderButton {
+    private static class JetFloatSlider extends TelUi.FlatSlider {
 
         private final float minValue;
         private final float maxValue;
 
         private JetFloatSlider(int x, int y, int width, float minValue, float maxValue, float value) {
-            super(x, y, width, WIDGET_HEIGHT, Component.empty(), 0.0D);
+            super(x, y, width, WIDGET_HEIGHT, (value - minValue) / (double) (maxValue - minValue));
             this.minValue = minValue;
             this.maxValue = maxValue;
-            this.value = Mth.clamp((value - minValue) / (maxValue - minValue), 0.0D, 1.0D);
             updateMessage();
         }
 

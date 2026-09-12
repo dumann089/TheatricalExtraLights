@@ -31,6 +31,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import com.github.dumann089.theatricalextralights.client.render.beam.FramingShutterRender;
 
 import java.util.Map;
 import java.util.Optional;
@@ -303,6 +304,7 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
                 );
 
                 // Cone pilote par le zoom (1 a 19 deg) : la tache doit suivre.
+                renderData = FramingShutterRender.attach(renderData, blockEntity, partialTicks);
                 publishCone(blockEntity, renderData);
 
                 volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())
@@ -335,7 +337,7 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
                 int            goboSlot = blockEntity.getGobo();
 
                 // ── Beam principal (gobo 0 = open) ──────────────────────────────
-                if (goboSlot == 0) {
+                if (goboSlot == 0 && !FramingShutterRender.isActive(blockEntity)) {
                     poseStack.pushPose();
                     poseStack.translate(0.5f, 1.25f, 0.418f);
                     if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {
