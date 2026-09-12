@@ -16,7 +16,6 @@ import dev.imabad.theatrical.util.UUIDUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -31,7 +30,7 @@ import java.util.UUID;
  * reglages), champs et boutons plats. Les sous-classes ajoutent leurs widgets via
  * {@link #buildExtraWidgets(int)} / {@link #renderExtraLabels(GuiGraphics)}.
  */
-public class ExtraLightsConfigScreen extends Screen {
+public class ExtraLightsConfigScreen extends TelScaledScreen {
 
     protected static final int PANEL_WIDTH = 320;
     protected static final int PANEL_PADDING = 14;
@@ -108,13 +107,17 @@ public class ExtraLightsConfigScreen extends Screen {
 
         setupState();
 
-        // Premiere passe pour mesurer, seconde pour centrer.
-        panelLeft = (width - PANEL_WIDTH) / 2;
+        // Premiere passe pour mesurer, puis echelle si l'ecran est trop petit, puis centrage.
+        resetScale();
+        panelLeft = (vw - PANEL_WIDTH) / 2;
         panelTop = 0;
         contentLeft = panelLeft + PANEL_PADDING;
         contentWidth = PANEL_WIDTH - PANEL_PADDING * 2;
         panelHeight = buildWidgets();
-        panelTop = Math.max(8, (height - panelHeight) / 2);
+        fitToScreen(PANEL_WIDTH, panelHeight);
+        panelLeft = (vw - PANEL_WIDTH) / 2;
+        contentLeft = panelLeft + PANEL_PADDING;
+        panelTop = Math.max(4, (vh - panelHeight) / 2);
         panelHeight = buildWidgets();
     }
 
@@ -512,9 +515,7 @@ public class ExtraLightsConfigScreen extends Screen {
     // ── Rendu ────────────────────────────────────────────────────────────────
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        renderBackground(g);
-
+    protected void renderScaled(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         TelUi.panel(g, panelLeft, panelTop, PANEL_WIDTH, panelHeight);
 
         // En-tete : titre + pastille de canaux

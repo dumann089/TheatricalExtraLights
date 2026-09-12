@@ -25,8 +25,10 @@ import java.util.Locale;
  * Gobos personnalises : a gauche la grille des PNG locaux, a droite la roue du projecteur
  * (un emplacement par slot) avec l'apercu du slot choisi.
  */
-public class CustomGoboScreen extends Screen {
+public class CustomGoboScreen extends TelScaledScreen {
 
+    private static final int PANEL_W = 560;
+    private static final int PANEL_H = 330;
     private static final int PAD = 14;
     private static final int GAP = 10;
     private static final int HEADER_H = 26;
@@ -73,15 +75,16 @@ public class CustomGoboScreen extends Screen {
     protected void init() {
         super.init();
         loadAvailableFiles();
+        fitToScreen(PANEL_W, PANEL_H);
         layout();
         buildWidgets();
     }
 
     private void layout() {
-        panelW = Math.min(width - 20, 560);
-        panelH = Math.min(height - 20, 330);
-        panelX = (width - panelW) / 2;
-        panelY = (height - panelH) / 2;
+        panelW = Math.min(vw - 16, PANEL_W);
+        panelH = Math.min(vh - 16, PANEL_H);
+        panelX = (vw - panelW) / 2;
+        panelY = (vh - panelH) / 2;
 
         int innerTop = panelY + HEADER_H + PAD;
         int innerH = panelH - HEADER_H - PAD * 2;
@@ -189,7 +192,7 @@ public class CustomGoboScreen extends Screen {
     // ── Souris ───────────────────────────────────────────────────────────────
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    protected boolean scaledMouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
             int tile = tileAt(mouseX, mouseY);
             if (tile >= 0) {
@@ -208,11 +211,11 @@ public class CustomGoboScreen extends Screen {
                 return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.scaledMouseClicked(mouseX, mouseY, button);
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    protected boolean scaledMouseScrolled(double mouseX, double mouseY, double delta) {
         if (mouseX >= leftX && mouseX < leftX + leftW && mouseY >= leftY && mouseY < leftY + leftH) {
             int target = currentPage + (delta < 0 ? 1 : -1);
             if (target >= 0 && target < totalPages()) {
@@ -221,7 +224,7 @@ public class CustomGoboScreen extends Screen {
             }
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.scaledMouseScrolled(mouseX, mouseY, delta);
     }
 
     @Override
@@ -263,9 +266,7 @@ public class CustomGoboScreen extends Screen {
     // ── Rendu ────────────────────────────────────────────────────────────────
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        renderBackground(g);
-
+    protected void renderScaled(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         TelUi.panel(g, panelX, panelY, panelW, panelH);
         g.fill(panelX, panelY + 2, panelX + panelW, panelY + HEADER_H, TelUi.HEADER);
         TelUi.hairline(g, panelX, panelY + HEADER_H, panelW);
