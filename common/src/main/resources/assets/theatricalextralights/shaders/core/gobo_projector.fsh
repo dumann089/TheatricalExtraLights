@@ -24,20 +24,23 @@ uniform float OcclusionEnabled;
 
 // Module de couteaux (framing shutters) : 4 lames haut / droite / bas / gauche.
 uniform float ShutterEnabled;
-uniform vec4 BladeInsert;    // insertion 0 (sortie) .. 1 (rentree a fond)
-uniform vec4 BladeAngle;     // swivel de chaque lame, radians
+uniform vec4 BladeA;         // insertion du coin A de chaque lame, 0 (sorti) .. 1 (rentre a fond)
+uniform vec4 BladeB;         // insertion du coin B de chaque lame
 uniform float FrameRotation; // rotation du module complet, radians
 
 const float GOBO_BRIGHTNESS=0.55;
 
-float bladeMask(vec2 p, vec2 n, float insertion, float angle, float soft){
-    if(insertion<=0.0005)return 1.0;
-    float edgeDist=1.15-2.3*insertion;
-    vec2 pivot=n*edgeDist;
-    float ca=cos(angle);
-    float sa=sin(angle);
-    vec2 nRot=vec2(n.x*ca-n.y*sa,n.x*sa+n.y*ca);
-    float sd=dot(p-pivot,nRot);
+// Convention A/B (grandMA) : le bord de la lame relie les deux coins A et B.
+float bladeMask(vec2 p, vec2 n, float insA, float insB, float soft){
+    if(insA<=0.0005&&insB<=0.0005)return 1.0;
+    vec2 t=vec2(n.y,-n.x);
+    const float R=1.15;
+    vec2 cornerA=n*(R-2.0*R*insA)-t*R;
+    vec2 cornerB=n*(R-2.0*R*insB)+t*R;
+    vec2 edge=cornerB-cornerA;
+    vec2 m=normalize(vec2(edge.y,-edge.x));
+    if(dot(m,n)<0.0)m=-m;
+    float sd=dot(p-cornerA,m);
     return 1.0-smoothstep(-soft,soft,sd);
 }
 
@@ -48,10 +51,10 @@ float shutterMask(float u,float v,float radius,float soft){
     float sr=sin(-FrameRotation);
     vec2 q=vec2(p.x*cr-p.y*sr,p.x*sr+p.y*cr);
     float m=1.0;
-    m*=bladeMask(q,vec2(0.0,1.0),BladeInsert.x,BladeAngle.x,soft);
-    m*=bladeMask(q,vec2(1.0,0.0),BladeInsert.y,BladeAngle.y,soft);
-    m*=bladeMask(q,vec2(0.0,-1.0),BladeInsert.z,BladeAngle.z,soft);
-    m*=bladeMask(q,vec2(-1.0,0.0),BladeInsert.w,BladeAngle.w,soft);
+    m*=bladeMask(q,vec2(0.0,1.0),BladeA.x,BladeB.x,soft);
+    m*=bladeMask(q,vec2(1.0,0.0),BladeA.y,BladeB.y,soft);
+    m*=bladeMask(q,vec2(0.0,-1.0),BladeA.z,BladeB.z,soft);
+    m*=bladeMask(q,vec2(-1.0,0.0),BladeA.w,BladeB.w,soft);
     return m;
 }
 

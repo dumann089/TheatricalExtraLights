@@ -330,7 +330,7 @@ public class Iris700GoboRenderer extends ExtraLightsFixtureRenderer<Iris700GoboB
                 int            goboSlot = blockEntity.getGobo();
 
                 // ── Beam (gobo 0 = open) ──────────────────────────────
-                if (goboSlot == 0) {
+                if (goboSlot == 0 && !FramingShutterRender.isActive(blockEntity)) {
                     poseStack.pushPose();
                     poseStack.translate(0.5f, 1.031f, 0.0f);
                     if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {

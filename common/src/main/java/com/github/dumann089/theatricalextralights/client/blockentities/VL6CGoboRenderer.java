@@ -328,7 +328,7 @@ public class VL6CGoboRenderer extends ExtraLightsFixtureRenderer<VL6CGoboBlockEn
                 int            goboSlot = blockEntity.getGobo();
 
                 // ── Beam (gobo 0 = open) ──────────────────────────────
-                if (goboSlot == 0) {
+                if (goboSlot == 0 && !FramingShutterRender.isActive(blockEntity)) {
                     poseStack.pushPose();
                     poseStack.translate(0.5f, 0.643f, 0.137f);
                     if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {

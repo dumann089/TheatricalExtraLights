@@ -3,18 +3,21 @@ package com.github.dumann089.theatricalextralights.util;
 import net.minecraft.nbt.CompoundTag;
 
 /**
- * Etat DMX d'un module de couteaux (framing shutters) a 4 lames, calque sur les lyres
- * profile reelles (Martin MAC Encore Performance, Robe T1 Profile, Ayrton Diablo) :
+ * Etat DMX d'un module de couteaux (framing shutters) a 4 lames, convention A/B
+ * utilisee par grandMA et par les lyres profile (Ayrton Diablo, Clay Paky, Robe) :
+ * chaque lame a deux coins, A et B, qui s'enfoncent independamment dans le faisceau.
+ * Le bord de la lame est la droite qui relie les deux coins ; des valeurs A != B
+ * inclinent donc la lame.
  *
  * <pre>
- *  canal +0  Lame 1 (haut)   insertion   0 = sortie … 255 = rentree a fond
- *  canal +1  Lame 1          angle       0-126 = -30°…0°, 127-128 = 0°, 129-255 = 0°…+30°
- *  canal +2  Lame 2 (droite) insertion
- *  canal +3  Lame 2          angle
- *  canal +4  Lame 3 (bas)    insertion
- *  canal +5  Lame 3          angle
- *  canal +6  Lame 4 (gauche) insertion
- *  canal +7  Lame 4          angle
+ *  canal +0  Lame 1 (haut)   coin A  0 = sorti … 255 = rentre a fond
+ *  canal +1  Lame 1          coin B
+ *  canal +2  Lame 2 (droite) coin A
+ *  canal +3  Lame 2          coin B
+ *  canal +4  Lame 3 (bas)    coin A
+ *  canal +5  Lame 3          coin B
+ *  canal +6  Lame 4 (gauche) coin A
+ *  canal +7  Lame 4          coin B
  *  canal +8  Rotation du module complet : 0-126 = -55°…0°, 127-128 = 0°, 129-255 = 0°…+55°
  * </pre>
  *
@@ -26,27 +29,20 @@ public final class FramingShutterState {
     public static final int BLADE_COUNT = 4;
     /** Nombre de canaux DMX consommes par le module. */
     public static final int CHANNEL_COUNT = BLADE_COUNT * 2 + 1;
-    /** Course angulaire max d'une lame (swivel), en degres. */
-    public static final float BLADE_ANGLE_MAX_DEG = 30.0f;
     /** Rotation max du module complet, en degres (Martin : +/-55°, Robe : +/-60°). */
     public static final float FRAME_ROTATION_MAX_DEG = 55.0f;
-    /** Valeur DMX neutre pour les canaux bipolaires (127-128 = 0°). */
+    /** Valeur DMX neutre pour le canal bipolaire de rotation (127-128 = 0°). */
     public static final int NEUTRAL_DMX = 127;
 
     private static final String NBT_KEY = "framingShutters";
 
-    private final int[] insertion = new int[BLADE_COUNT];
-    private final int[] angle = new int[BLADE_COUNT];
+    private final int[] insertionA = new int[BLADE_COUNT];
+    private final int[] insertionB = new int[BLADE_COUNT];
     private int frameRotation = NEUTRAL_DMX;
 
-    private final int[] prevInsertion = new int[BLADE_COUNT];
-    private final int[] prevAngle = new int[BLADE_COUNT];
+    private final int[] prevInsertionA = new int[BLADE_COUNT];
+    private final int[] prevInsertionB = new int[BLADE_COUNT];
     private int prevFrameRotation = NEUTRAL_DMX;
-
-    public FramingShutterState() {
-        java.util.Arrays.fill(angle, NEUTRAL_DMX);
-        java.util.Arrays.fill(prevAngle, NEUTRAL_DMX);
-    }
 
     // ── DMX ──────────────────────────────────────────────────────────────────
 
@@ -61,14 +57,14 @@ public final class FramingShutterState {
         }
         boolean changed = false;
         for (int i = 0; i < BLADE_COUNT; i++) {
-            int ins = Byte.toUnsignedInt(values[offset + i * 2]);
-            int ang = Byte.toUnsignedInt(values[offset + i * 2 + 1]);
-            if (ins != insertion[i]) {
-                insertion[i] = ins;
+            int a = Byte.toUnsignedInt(values[offset + i * 2]);
+            int b = Byte.toUnsignedInt(values[offset + i * 2 + 1]);
+            if (a != insertionA[i]) {
+                insertionA[i] = a;
                 changed = true;
             }
-            if (ang != angle[i]) {
-                angle[i] = ang;
+            if (b != insertionB[i]) {
+                insertionB[i] = b;
                 changed = true;
             }
         }
@@ -88,12 +84,12 @@ public final class FramingShutterState {
     public boolean reset() {
         boolean changed = false;
         for (int i = 0; i < BLADE_COUNT; i++) {
-            if (insertion[i] != 0) {
-                insertion[i] = 0;
+            if (insertionA[i] != 0) {
+                insertionA[i] = 0;
                 changed = true;
             }
-            if (angle[i] != NEUTRAL_DMX) {
-                angle[i] = NEUTRAL_DMX;
+            if (insertionB[i] != 0) {
+                insertionB[i] = 0;
                 changed = true;
             }
         }
@@ -106,31 +102,31 @@ public final class FramingShutterState {
 
     /** A appeler chaque tick client : avance les valeurs precedentes pour l'interpolation. */
     public void tickClient() {
-        System.arraycopy(insertion, 0, prevInsertion, 0, BLADE_COUNT);
-        System.arraycopy(angle, 0, prevAngle, 0, BLADE_COUNT);
+        System.arraycopy(insertionA, 0, prevInsertionA, 0, BLADE_COUNT);
+        System.arraycopy(insertionB, 0, prevInsertionB, 0, BLADE_COUNT);
         prevFrameRotation = frameRotation;
     }
 
-    /** Au moins une lame est engagee dans le faisceau. */
+    /** Au moins un coin de lame est engage dans le faisceau. */
     public boolean isActive() {
         for (int i = 0; i < BLADE_COUNT; i++) {
-            if (insertion[i] > 0 || prevInsertion[i] > 0) {
+            if (insertionA[i] > 0 || insertionB[i] > 0 || prevInsertionA[i] > 0 || prevInsertionB[i] > 0) {
                 return true;
             }
         }
         return false;
     }
 
-    public int getInsertion(int blade) { return insertion[blade]; }
-    public int getAngle(int blade) { return angle[blade]; }
+    public int getInsertionA(int blade) { return insertionA[blade]; }
+    public int getInsertionB(int blade) { return insertionB[blade]; }
     public int getFrameRotation() { return frameRotation; }
 
     // ── NBT ──────────────────────────────────────────────────────────────────
 
     public void write(CompoundTag tag) {
         CompoundTag t = new CompoundTag();
-        t.putIntArray("insertion", insertion.clone());
-        t.putIntArray("angle", angle.clone());
+        t.putIntArray("a", insertionA.clone());
+        t.putIntArray("b", insertionB.clone());
         t.putInt("frameRotation", frameRotation);
         tag.put(NBT_KEY, t);
     }
@@ -142,11 +138,11 @@ public final class FramingShutterState {
             return;
         }
         CompoundTag t = tag.getCompound(NBT_KEY);
-        int[] ins = t.getIntArray("insertion");
-        int[] ang = t.getIntArray("angle");
+        int[] a = t.getIntArray("a");
+        int[] b = t.getIntArray("b");
         for (int i = 0; i < BLADE_COUNT; i++) {
-            insertion[i] = i < ins.length ? clampDmx(ins[i]) : 0;
-            angle[i] = i < ang.length ? clampDmx(ang[i]) : NEUTRAL_DMX;
+            insertionA[i] = i < a.length ? clampDmx(a[i]) : 0;
+            insertionB[i] = i < b.length ? clampDmx(b[i]) : 0;
         }
         frameRotation = t.contains("frameRotation") ? clampDmx(t.getInt("frameRotation")) : NEUTRAL_DMX;
         tickClient();
@@ -179,28 +175,26 @@ public final class FramingShutterState {
 
     /** Photo interpolee de l'etat, prete pour le shader. */
     public Snapshot snapshot(float partialTicks) {
-        float[] ins = new float[BLADE_COUNT];
-        float[] ang = new float[BLADE_COUNT];
+        float[] a = new float[BLADE_COUNT];
+        float[] b = new float[BLADE_COUNT];
         for (int i = 0; i < BLADE_COUNT; i++) {
-            float rawIns = prevInsertion[i] + (insertion[i] - prevInsertion[i]) * partialTicks;
-            float rawAng = prevAngle[i] + (angle[i] - prevAngle[i]) * partialTicks;
-            ins[i] = insertion01(rawIns);
-            ang[i] = (float) Math.toRadians(bipolar(rawAng) * BLADE_ANGLE_MAX_DEG);
+            a[i] = insertion01(prevInsertionA[i] + (insertionA[i] - prevInsertionA[i]) * partialTicks);
+            b[i] = insertion01(prevInsertionB[i] + (insertionB[i] - prevInsertionB[i]) * partialTicks);
         }
         float rawRot = prevFrameRotation + (frameRotation - prevFrameRotation) * partialTicks;
         float rot = (float) Math.toRadians(bipolar(rawRot) * FRAME_ROTATION_MAX_DEG);
-        return new Snapshot(ins, ang, rot);
+        return new Snapshot(a, b, rot);
     }
 
     /**
-     * Valeurs decodees et interpolees : insertion 0-1 par lame, angle de lame en radians,
-     * rotation du module en radians. Immuable, sure a capturer dans un LazyRenderer.
+     * Valeurs decodees et interpolees : insertion 0-1 des coins A et B par lame, rotation du
+     * module en radians. Immuable, sure a capturer dans un LazyRenderer.
      */
-    public record Snapshot(float[] insertion, float[] bladeAngle, float frameRotation) {
+    public record Snapshot(float[] insertionA, float[] insertionB, float frameRotation) {
 
         public boolean isActive() {
-            for (float f : insertion) {
-                if (f > 0.0005f) {
+            for (int i = 0; i < BLADE_COUNT; i++) {
+                if (insertionA[i] > 0.0005f || insertionB[i] > 0.0005f) {
                     return true;
                 }
             }
@@ -210,8 +204,8 @@ public final class FramingShutterState {
         public int stateHash() {
             int hash = 7;
             for (int i = 0; i < BLADE_COUNT; i++) {
-                hash = 31 * hash + Float.floatToIntBits(insertion[i]);
-                hash = 31 * hash + Float.floatToIntBits(bladeAngle[i]);
+                hash = 31 * hash + Float.floatToIntBits(insertionA[i]);
+                hash = 31 * hash + Float.floatToIntBits(insertionB[i]);
             }
             hash = 31 * hash + Float.floatToIntBits(frameRotation);
             return hash;

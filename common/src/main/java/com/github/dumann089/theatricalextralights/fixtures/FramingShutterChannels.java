@@ -6,8 +6,8 @@ import dev.imabad.theatrical.fixtures.SharedSlots;
 
 /**
  * Personnalite 19 canaux des lyres a gobos : les 10 canaux standards suivis du module
- * de couteaux a 4 lames, dans l'ordre des protocoles Martin (MAC Encore Performance) et
- * Robe (T1 Profile) : insertion puis angle pour chaque lame, puis rotation du module.
+ * de couteaux a 4 lames en convention A/B (grandMA, Ayrton Diablo, Clay Paky) : coins A
+ * et B de chaque lame, puis rotation du module.
  */
 public final class FramingShutterChannels {
 
@@ -31,17 +31,17 @@ public final class FramingShutterChannels {
     private FramingShutterChannels() {
     }
 
-    /** Ajoute les 9 slots couteaux (4 x insertion + angle, puis rotation du module). */
+    /** Ajoute les 9 slots couteaux (4 x coin A + coin B, puis rotation du module). */
     public static DMXPersonality addFramingSlots(DMXPersonality personality) {
         return personality
-                .addSlot(ExtraLightsSlots.BLADE_1_INSERTION)
-                .addSlot(ExtraLightsSlots.BLADE_1_ANGLE)
-                .addSlot(ExtraLightsSlots.BLADE_2_INSERTION)
-                .addSlot(ExtraLightsSlots.BLADE_2_ANGLE)
-                .addSlot(ExtraLightsSlots.BLADE_3_INSERTION)
-                .addSlot(ExtraLightsSlots.BLADE_3_ANGLE)
-                .addSlot(ExtraLightsSlots.BLADE_4_INSERTION)
-                .addSlot(ExtraLightsSlots.BLADE_4_ANGLE)
+                .addSlot(ExtraLightsSlots.BLADE_1_A)
+                .addSlot(ExtraLightsSlots.BLADE_1_B)
+                .addSlot(ExtraLightsSlots.BLADE_2_A)
+                .addSlot(ExtraLightsSlots.BLADE_2_B)
+                .addSlot(ExtraLightsSlots.BLADE_3_A)
+                .addSlot(ExtraLightsSlots.BLADE_3_B)
+                .addSlot(ExtraLightsSlots.BLADE_4_A)
+                .addSlot(ExtraLightsSlots.BLADE_4_B)
                 .addSlot(ExtraLightsSlots.FRAMING_ROTATION);
     }
 }

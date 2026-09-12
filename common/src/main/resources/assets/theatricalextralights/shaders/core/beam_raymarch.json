@@ -204,13 +204,13 @@
       "values": [0.0]
     },
     {
-      "name": "BladeInsert",
+      "name": "BladeA",
       "type": "float",
       "count": 4,
       "values": [0.0, 0.0, 0.0, 0.0]
     },
     {
-      "name": "BladeAngle",
+      "name": "BladeB",
       "type": "float",
       "count": 4,
       "values": [0.0, 0.0, 0.0, 0.0]

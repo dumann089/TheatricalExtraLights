@@ -24,20 +24,25 @@ public final class FramingShutterRender {
         return snap == null ? data : data.withShutters(snap);
     }
 
-    /** Pousse les uniforms {@code BladeInsert}, {@code BladeAngle}, {@code FrameRotation}, {@code ShutterEnabled}. */
+    /** True si le block entity a des lames engagees (pour couper les faisceaux non compatibles). */
+    public static boolean isActive(Object blockEntity) {
+        return blockEntity instanceof HasFramingShutters hfs && hfs.hasActiveFramingShutters();
+    }
+
+    /** Pousse les uniforms {@code BladeA}, {@code BladeB}, {@code FrameRotation}, {@code ShutterEnabled}. */
     public static void applyUniforms(ShaderInstance shader, FramingShutterState.Snapshot snap) {
         if (snap == null || !snap.isActive()) {
             shader.safeGetUniform("ShutterEnabled").set(0.0f);
-            shader.safeGetUniform("BladeInsert").set(0.0f, 0.0f, 0.0f, 0.0f);
-            shader.safeGetUniform("BladeAngle").set(0.0f, 0.0f, 0.0f, 0.0f);
+            shader.safeGetUniform("BladeA").set(0.0f, 0.0f, 0.0f, 0.0f);
+            shader.safeGetUniform("BladeB").set(0.0f, 0.0f, 0.0f, 0.0f);
             shader.safeGetUniform("FrameRotation").set(0.0f);
             return;
         }
-        float[] ins = snap.insertion();
-        float[] ang = snap.bladeAngle();
+        float[] a = snap.insertionA();
+        float[] b = snap.insertionB();
         shader.safeGetUniform("ShutterEnabled").set(1.0f);
-        shader.safeGetUniform("BladeInsert").set(ins[0], ins[1], ins[2], ins[3]);
-        shader.safeGetUniform("BladeAngle").set(ang[0], ang[1], ang[2], ang[3]);
+        shader.safeGetUniform("BladeA").set(a[0], a[1], a[2], a[3]);
+        shader.safeGetUniform("BladeB").set(b[0], b[1], b[2], b[3]);
         shader.safeGetUniform("FrameRotation").set(snap.frameRotation());
     }
 }

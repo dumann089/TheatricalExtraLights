@@ -336,7 +336,7 @@ public class MiniScanGobosRenderer extends ExtraLightsFixtureRenderer<MiniScanGo
                 int            goboSlot = blockEntity.getGobo();
 
                 // ── Beam principal (gobo 0 = open) ──────────────────────────────
-                if (goboSlot == 0) {
+                if (goboSlot == 0 && !FramingShutterRender.isActive(blockEntity)) {
                     poseStack.pushPose();
                     poseStack.translate(0.5f, 1.25f, 0.421f);
                     if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {

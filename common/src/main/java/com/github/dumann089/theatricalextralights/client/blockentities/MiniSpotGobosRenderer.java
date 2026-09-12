@@ -329,7 +329,7 @@ public class MiniSpotGobosRenderer extends ExtraLightsFixtureRenderer<MiniSpotGo
                 VertexConsumer builder  = multiBufferSource.getBuffer(Beam2DRenderTypes.getBeam());
                 int            goboSlot = blockEntity.getGobo();
 
-                if (goboSlot == 0) {
+                if (goboSlot == 0 && !FramingShutterRender.isActive(blockEntity)) {
                     poseStack.pushPose();
                     poseStack.translate(0.5f, 0.406F, 0.312F);
                     if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {

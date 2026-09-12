@@ -313,7 +313,7 @@ public class MovingVL2CBeamsRenderer extends ExtraLightsFixtureRenderer<MovingVL
                 VertexConsumer builder  = multiBufferSource.getBuffer(Beam2DRenderTypes.getBeam());
                 int            goboSlot = blockEntity.getGobo();
 
-                if (goboSlot == 0) {
+                if (goboSlot == 0 && !FramingShutterRender.isActive(blockEntity)) {
                     poseStack.pushPose();
                     poseStack.translate(0.5f, 0.781f, 0.2f);
                     if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {

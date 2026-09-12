@@ -320,7 +320,7 @@ public class SpotXtremeGoboRenderer extends ExtraLightsFixtureRenderer<SpotXtrem
                 int            goboSlot = blockEntity.getGobo();
 
                 // ── Beam (gobo 0 = open) ──────────────────────────────
-                if (goboSlot == 0) {
+                if (goboSlot == 0 && !FramingShutterRender.isActive(blockEntity)) {
                     poseStack.pushPose();
                     poseStack.translate(0.5f, 0.640f, 0.163f);
                     if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {
