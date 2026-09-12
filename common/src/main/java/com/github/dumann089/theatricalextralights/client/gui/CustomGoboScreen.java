@@ -276,7 +276,7 @@ public class CustomGoboScreen extends TelScaledScreen {
         renderFileGrid(g, mouseX, mouseY);
         renderWheel(g, mouseX, mouseY);
 
-        super.render(g, mouseX, mouseY, partialTick);
+        renderWidgets(g, mouseX, mouseY, partialTick);
     }
 
     private void renderFileGrid(GuiGraphics g, int mouseX, int mouseY) {

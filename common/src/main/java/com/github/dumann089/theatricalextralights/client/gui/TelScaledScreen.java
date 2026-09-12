@@ -1,6 +1,8 @@
 package com.github.dumann089.theatricalextralights.client.gui;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -42,6 +44,15 @@ public abstract class TelScaledScreen extends Screen {
     }
 
     protected abstract void renderScaled(GuiGraphics g, int mouseX, int mouseY, float partialTick);
+
+    /** Dessine les widgets en coordonnees virtuelles (remplace super.render, qui rebouclerait sur renderScaled). */
+    protected void renderWidgets(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        for (GuiEventListener child : children()) {
+            if (child instanceof Renderable renderable) {
+                renderable.render(g, mouseX, mouseY, partialTick);
+            }
+        }
+    }
 
     /** Clic en coordonnees virtuelles ; par defaut transmet aux widgets. */
     protected boolean scaledMouseClicked(double mouseX, double mouseY, int button) {
