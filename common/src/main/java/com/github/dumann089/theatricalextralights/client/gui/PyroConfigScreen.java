@@ -29,9 +29,14 @@ public class PyroConfigScreen extends ExtraLightsConfigScreen {
     private int statusCardY;
 
     public <T extends BaseDMXConsumerLightBlockEntity & HasSafetyArm> PyroConfigScreen(T fixture, BlockPos pos) {
+        this(fixture, fixture, pos);
+    }
+
+    /** Variante sans generique pour le dispatch : {@code fixture} et {@code safety} sont le meme objet. */
+    public PyroConfigScreen(BaseDMXConsumerLightBlockEntity fixture, HasSafetyArm safety, BlockPos pos) {
         super(fixture, pos, fixture.getTranslationKey(), false);
         this.fixture = fixture;
-        this.safety = fixture;
+        this.safety = safety;
     }
 
     // ── Construction ─────────────────────────────────────────────────────────
@@ -116,7 +121,10 @@ public class PyroConfigScreen extends ExtraLightsConfigScreen {
             line2 = Component.translatable("screen.pyro.flame_length",
                     Integer.toString(Math.round(projector.getFlameLengthRaw() / 2.55f)));
         } else {
-            line2 = Component.empty();
+            var personalities = fixture.getFixture().getDMXPersonalities();
+            line2 = personalities != null && !personalities.isEmpty()
+                    ? Component.literal(personalities.get(0).getDescription())
+                    : Component.empty();
         }
         TelUi.text(g, font, line2, x + 6, y + 22, TelUi.TEXT);
 

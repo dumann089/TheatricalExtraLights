@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasExtendedBeamChannels;
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.util.FollowspotDmxHelper;
@@ -28,8 +29,33 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
     private float mountPitch;
     private float mountRoll;
 
+    /**
+     * Cle d'armement des effets pyro (voir {@link HasSafetyArm}) : desarmee, le DMX est lu
+     * mais l'intensite est forcee a zero. Armee par defaut pour ne rien changer aux mondes
+     * existants. Persistee uniquement pour les block entities qui implementent l'interface.
+     */
+    protected boolean safetyArmed = true;
+
     protected ExtraLightsLightBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+    }
+
+    /** Applique l'armement : serveur = persiste + sync ; client = mise a jour locale. */
+    protected void applySafetyArm(boolean armed) {
+        if (safetyArmed == armed) {
+            return;
+        }
+        safetyArmed = armed;
+        if (!armed) {
+            intensity = 0;
+            prevIntensity = 0;
+        }
+        if (level != null && !level.isClientSide) {
+            setChanged();
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        } else if (level != null) {
+            StrobeRenderHelper.markSectionDirty(getBlockPos());
+        }
     }
 
     public float getMountOffsetX() {
@@ -320,6 +346,9 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         tag.putInt("prevTilt", prevTilt);
         tag.putInt("prevFocus", prevFocus);
         writeMountTransform(tag);
+        if (this instanceof HasSafetyArm) {
+            tag.putBoolean("Armed", safetyArmed);
+        }
     }
 
     @Override
@@ -371,5 +400,8 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         prevBlue = savedPrevBlue;
 
         readMountTransform(tag);
+        if (this instanceof HasSafetyArm) {
+            safetyArmed = !tag.contains("Armed") || tag.getBoolean("Armed");
+        }
     }
 }

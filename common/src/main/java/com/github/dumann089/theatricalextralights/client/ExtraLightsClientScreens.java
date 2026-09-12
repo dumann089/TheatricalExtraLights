@@ -2,9 +2,8 @@ package com.github.dumann089.theatricalextralights.client;
 
 import com.github.dumann089.theatricalextralights.TheatricalExtraLightsScreens;
 import com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity;
-import com.github.dumann089.theatricalextralights.blockentities.FlameProjectorBlockEntity;
-import com.github.dumann089.theatricalextralights.blockentities.FlameThrowerBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.FollowspotConsoleBlockEntity;
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.blockentities.LaserBlockEntity;
 import com.github.dumann089.theatricalextralights.client.gui.PyroConfigScreen;
 import com.github.dumann089.theatricalextralights.blockentities.LedFacadeBlockEntity;
@@ -100,15 +99,9 @@ public class ExtraLightsClientScreens {
                     ? new LaserConfigScreen(laser, pos)
                     : new ExtraLightsConfigScreen(lightBE, pos, lightBE.getTranslationKey(), false);
 
-            case PYRO -> {
-                if (lightBE instanceof FlameThrowerBlockEntity thrower) {
-                    yield new PyroConfigScreen(thrower, pos);
-                }
-                if (lightBE instanceof FlameProjectorBlockEntity projector) {
-                    yield new PyroConfigScreen(projector, pos);
-                }
-                yield new ExtraLightsConfigScreen(lightBE, pos, lightBE.getTranslationKey(), false);
-            }
+            case PYRO -> lightBE instanceof HasSafetyArm safety
+                    ? new PyroConfigScreen(lightBE, safety, pos)
+                    : new ExtraLightsConfigScreen(lightBE, pos, lightBE.getTranslationKey(), false);
 
             case MOUNT_WRENCH, FOLLOWSPOT_CONSOLE, LED_FACADE -> null;
         };

@@ -61,7 +61,7 @@ public class RgbFireworkLauncherBlockEntity extends FireworkLauncherBlockEntity 
             level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
 
-        int newIntensity = Byte.toUnsignedInt(ourValues[0]);
+        int newIntensity = safetyArmed ? Byte.toUnsignedInt(ourValues[0]) : 0;
         if (prevIntensity == 0 && newIntensity > 0) {
             pendingOneShot = true;
         }
