@@ -89,7 +89,7 @@ public class ExtraLightsConfigScreen extends TelScaledScreen {
     private int shuttersSectionY;
     private int shuttersCardY;
 
-    private static final int SHUTTER_CARD_H = 76;
+    private static final int SHUTTER_CARD_H = 90;
 
     public ExtraLightsConfigScreen(BaseDMXConsumerLightBlockEntity blockEntity, BlockPos pos, String title) {
         this(blockEntity, pos, title, true);
@@ -605,11 +605,33 @@ public class ExtraLightsConfigScreen extends TelScaledScreen {
         FramingShutterState state = shutters.getFramingShutters();
         FramingShutterState.Snapshot snap = modeHasShutters && state != null ? state.snapshot(1.0f) : null;
 
+        // Gobo courant (personnalise si present) et sa rotation
+        net.minecraft.resources.ResourceLocation goboTex = null;
+        float goboRot = 0f;
+        int goboSlot = -1;
+        if (blockEntity instanceof HasGobo hg && hg.getGoboLibrary() != null) {
+            goboSlot = hg.getGobo();
+            String custom = com.github.dumann089.theatricalextralights.util.GlobalGoboManager
+                    .getCustomGobo(hg.getGoboLibrary(), goboSlot);
+            if (custom != null) {
+                goboTex = com.github.dumann089.theatricalextralights.client.CustomGoboLoader.getOrCreateCustomGobo(custom);
+            }
+            if (goboTex == null) {
+                goboTex = hg.getGoboLibrary().getTexture(goboSlot);
+            }
+            goboRot = hg.getGoboRotation();
+        }
+
         int disc = SHUTTER_CARD_H - 12;
-        FramingShutterPreview.draw(g, x + 6, y + 6, disc, snap);
+        FramingShutterPreview.draw(g, x + 6, y + 6, disc, snap, goboTex, goboRot, uiScale);
 
         int tx = x + 6 + disc + 10;
         int ty = y + 7;
+        if (goboSlot >= 0) {
+            TelUi.text(g, font, Component.translatable("screen.shutters.gobo_slot", Integer.toString(goboSlot),
+                    Integer.toString(Math.round(goboRot) % 360)), tx, ty, TelUi.SUB);
+            ty += 13;
+        }
         if (!modeHasShutters) {
             TelUi.text(g, font, Component.translatable("screen.shutters.inactive"), tx, ty, TelUi.SUB);
             TelUi.text(g, font, Component.translatable("screen.shutters.inactive_hint"), tx, ty + 12, TelUi.LABEL);
