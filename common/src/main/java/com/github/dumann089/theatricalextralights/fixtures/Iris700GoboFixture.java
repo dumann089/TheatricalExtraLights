@@ -10,13 +10,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.Collections;
 import java.util.List;
 
 
 public class Iris700GoboFixture extends Fixture {
 
-    private static final List<DMXPersonality> PERSONALITIES = Collections.singletonList(
+    private static final List<DMXPersonality> PERSONALITIES = List.of(
             new DMXPersonality(10, "10-Channel Mode")
                     .addSlot(SharedSlots.INTENSITY)
                     .addSlot(SharedSlots.RED)
@@ -27,7 +26,8 @@ public class Iris700GoboFixture extends Fixture {
                     .addSlot(SharedSlots.TILT)
                     .addSlot(SharedSlots.FOCUS) // Gobo Slots
                     .addSlot(SharedSlots.FOCUS) // Gobo Zoom
-                    .addSlot(SharedSlots.FOCUS) // Gobo Rot
+                    .addSlot(SharedSlots.FOCUS), // Gobo Rot
+            FramingShutterChannels.PERSONALITY_19CH
     );
 
     private static final ResourceLocation TILT_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/iris700/iris700_tilt");

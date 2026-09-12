@@ -83,7 +83,8 @@ public class VolumetricBeamRenderer extends LazyRenderers.LazyRenderer {
                 null,
                 slot.widthScale,
                 slot.heightScale,
-                slot.baseRadius
+                slot.baseRadius,
+                slot.shutters
         );
 
         FALLBACK_ONE_SHOT.activeBeamCount = 0;

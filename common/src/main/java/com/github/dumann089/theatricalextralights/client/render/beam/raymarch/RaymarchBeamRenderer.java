@@ -2,7 +2,9 @@ package com.github.dumann089.theatricalextralights.client.render.beam.raymarch;
 
 import com.github.dumann089.theatricalextralights.client.ModShaders;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData;
+import com.github.dumann089.theatricalextralights.client.render.beam.FramingShutterRender;
 import com.github.dumann089.theatricalextralights.client.render.beam.VolumetricBeamRenderer;
+import com.github.dumann089.theatricalextralights.util.FramingShutterState;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -100,6 +102,7 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         s.nextGoboTexture = data.nextGoboTexture() != null ? data.nextGoboTexture() : OPEN_GOBO;
         s.goboRotation = data.goboRotation();
         s.wheelTransition = data.wheelTransition();
+        s.shutters = data.hasShutters() ? data.shutters() : null;
         s.hitBlock = hitBlock;
         s.fixturePos = data.fixturePos();
         s.localOriginX = (float) data.origin().x;
@@ -207,6 +210,7 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 shader.safeGetUniform("DustAmount").set(dust);
                 shader.safeGetUniform("GoboRotation").set(s.goboRotation);
                 shader.safeGetUniform("WheelTransition").set(s.wheelTransition);
+                FramingShutterRender.applyUniforms(shader, s.shutters);
                 shader.safeGetUniform("Time").set(time);
                 shader.safeGetUniform("Ambient").set(daylight);
                 shader.safeGetUniform("ScreenSize").set(screenW, screenH);
@@ -348,6 +352,7 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         public ResourceLocation nextGoboTexture;
         public float goboRotation;
         public float wheelTransition;
+        public FramingShutterState.Snapshot shutters;
         public boolean hitBlock;
         public net.minecraft.core.BlockPos fixturePos;
         public float localOriginX, localOriginY, localOriginZ;

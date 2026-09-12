@@ -22,7 +22,41 @@ uniform vec3 LightColor;
 uniform vec2 ScreenSize;
 uniform float OcclusionEnabled;
 
+// Module de couteaux (framing shutters) : 4 lames haut / droite / bas / gauche.
+uniform float ShutterEnabled;
+uniform vec4 BladeA;         // insertion du coin A de chaque lame, 0 (sorti) .. 1 (rentre a fond)
+uniform vec4 BladeB;         // insertion du coin B de chaque lame
+uniform float FrameRotation; // rotation du module complet, radians
+
 const float GOBO_BRIGHTNESS=0.55;
+
+// Convention A/B (grandMA) : le bord de la lame relie les deux coins A et B.
+float bladeMask(vec2 p, vec2 n, float insA, float insB, float soft){
+    if(insA<=0.0005&&insB<=0.0005)return 1.0;
+    vec2 t=vec2(n.y,-n.x);
+    const float R=1.15;
+    vec2 cornerA=n*(R-2.0*R*insA)-t*R;
+    vec2 cornerB=n*(R-2.0*R*insB)+t*R;
+    vec2 edge=cornerB-cornerA;
+    vec2 m=normalize(vec2(edge.y,-edge.x));
+    if(dot(m,n)<0.0)m=-m;
+    float sd=dot(p-cornerA,m);
+    return 1.0-smoothstep(-soft,soft,sd);
+}
+
+float shutterMask(float u,float v,float radius,float soft){
+    if(ShutterEnabled<0.5)return 1.0;
+    vec2 p=vec2(u,v)/max(radius,0.0001);
+    float cr=cos(-FrameRotation);
+    float sr=sin(-FrameRotation);
+    vec2 q=vec2(p.x*cr-p.y*sr,p.x*sr+p.y*cr);
+    float m=1.0;
+    m*=bladeMask(q,vec2(0.0,1.0),BladeA.x,BladeB.x,soft);
+    m*=bladeMask(q,vec2(1.0,0.0),BladeA.y,BladeB.y,soft);
+    m*=bladeMask(q,vec2(0.0,-1.0),BladeA.z,BladeB.z,soft);
+    m*=bladeMask(q,vec2(-1.0,0.0),BladeA.w,BladeB.w,soft);
+    return m;
+}
 
 in vec4 VertexColor;
 out vec4 fragColor;
@@ -63,9 +97,7 @@ void main(){
     vec2 screenUV=gl_FragCoord.xy/ScreenSize;
     float depth=texture(Sampler1,screenUV).r;
 
-    // CORRECCIÓN 1: Aumentamos la tolerancia a 0.999999 para evitar que paredes lejanas
-    // se confundan con el cielo (cielo = 1.0) y sean descartadas creando agujeros.
-    if(depth>=0.999999)discard;
+    if(depth>=0.99999)discard;
 
     vec3 surfacePos=reconstructViewPos(screenUV,depth);
     vec3 toSurface=surfacePos-LightPos;
@@ -86,13 +118,11 @@ void main(){
 
             if(abs(denominator)>0.00001){
                 float hitT=dot(OcclusionPos-LightPos,OcclusionNormal)/denominator;
-
-                // CORRECCIÓN 2: Bias dinámico.
-                // Usa un mínimo de 0.02 (2cm en Minecraft), pero aumenta un 0.2% de la distancia total.
-                // Esto absorbe la pérdida de precisión del buffer de profundidad a larga distancia.
-                float precisionBias = max(0.05, surfaceDistance * 0.002);
-
-                if(hitT>0.01 && hitT < surfaceDistance - precisionBias)discard;
+                // Tolerance proportionnelle a la distance : la profondeur reconstruite depuis le
+                // depth buffer n'est precise qu'a quelques cm a 10 blocs, une marge fixe de 1 mm
+                // faisait clignoter des pixels de la surface eclairee elle-meme (z-fighting).
+                float occlusionBias=max(0.08,surfaceDistance*0.03);
+                if(hitT>0.001&&hitT<surfaceDistance-occlusionBias)discard;
             }
         }
     }
@@ -110,6 +140,7 @@ void main(){
     float radius=max(BaseRadius+zDist*max(TanHalfAngle,0.0001),0.0001);
     float slotDistance=radius*2.0;
 
+    // Desplazamiento de rueda a nivel "puerta focal" (Fija en la montura) antes de rotar
     float localU_A=u+WheelTransition*slotDistance;
     float localV_A=v;
     float ruA=localU_A*ca-localV_A*sa;
@@ -122,12 +153,14 @@ void main(){
     float rvB=localU_B*sa+localV_B*ca;
     vec2 goboUVB=vec2(ruB/radius*0.5+0.5,1.0-(rvB/radius*0.5+0.5));
 
+    // Máscara cónica fija física
     float radial=length(vec2(u,v))/radius;
     if(radial>=1.0)discard;
 
     float focusNorm=clamp(Focus,0.0,1.0);
     float blurAmount=focusNorm*focusNorm*0.045;
 
+    // Sampling Gobo A
     float goboAlphaA=0.0;
     vec3 goboColorA=vec3(0.0);
     if(goboUVA.x>=0.0&&goboUVA.x<=1.0&&goboUVA.y>=0.0&&goboUVA.y<=1.0){
@@ -136,6 +169,7 @@ void main(){
         goboAlphaA=sampleA.a*dot(goboColorA,vec3(0.299,0.587,0.114));
     }
 
+    // Sampling Gobo B
     float goboAlphaB=0.0;
     vec3 goboColorB=vec3(0.0);
     if(goboUVB.x>=0.0&&goboUVB.x<=1.0&&goboUVB.y>=0.0&&goboUVB.y<=1.0){
@@ -145,8 +179,13 @@ void main(){
     }
 
     float goboAlpha=goboAlphaA+goboAlphaB;
+
+    // Couteaux : le bord est net au point (focus 0) et s'adoucit avec le defocus, comme un vrai profile.
+    float shutterSoft=0.012+focusNorm*0.06;
+    goboAlpha*=shutterMask(u,v,radius,shutterSoft);
     if(goboAlpha<=0.001)discard;
 
+    // Mezcla de interpolación física
     vec3 goboColor=(goboColorA*goboAlphaA+goboColorB*goboAlphaB)/goboAlpha;
 
     float edgeStart=mix(0.88,0.72,focusNorm);

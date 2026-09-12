@@ -5,7 +5,9 @@ import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGo
 import com.github.dumann089.theatricalextralights.client.CustomGoboLoader;
 import com.github.dumann089.theatricalextralights.client.ModShaders;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
+import com.github.dumann089.theatricalextralights.client.render.beam.FramingShutterRender;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
+import com.github.dumann089.theatricalextralights.util.FramingShutterState;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.util.GlobalGoboManager;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -123,6 +125,7 @@ public class GoboGPUProjector {
         final ResourceLocation finalTexture = texture;
         final ResourceLocation finalNextTexture = nextTexture;
         final float finalWheelTransition = wheelTransition;
+        final FramingShutterState.Snapshot finalShutters = FramingShutterRender.snapshot(be, partialTicks);
 
         final BlockPos finalBlockPos = be.getBlockPos();
         final int finalColor = be.getColour() == 0 ? 0xFFFFFF : be.getColour();
@@ -164,6 +167,7 @@ public class GoboGPUProjector {
                 shader.safeGetUniform("Intensity").set(finalIntensity);
                 shader.safeGetUniform("Focus").set(finalFocus);
                 shader.safeGetUniform("BaseRadius").set(finalBaseRadius);
+                FramingShutterRender.applyUniforms(shader, finalShutters);
 
                 if (hasOcclusion) {
                     tmpPos.set((float)(finalOcclusionPos.x - cameraPos.x), (float)(finalOcclusionPos.y - cameraPos.y), (float)(finalOcclusionPos.z - cameraPos.z), 1.0f);
