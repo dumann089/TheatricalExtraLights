@@ -9,5 +9,6 @@ public enum TheatricalExtraLightsScreens {
     MOUNT_WRENCH,
     FOLLOWSPOT_CONSOLE,
     LED_FACADE,
-    LASER;
+    LASER,
+    PYRO;
 }

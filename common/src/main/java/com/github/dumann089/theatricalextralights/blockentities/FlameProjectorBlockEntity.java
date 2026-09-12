@@ -1,7 +1,9 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
+import net.minecraft.nbt.CompoundTag;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
 import dev.imabad.theatrical.blocks.light.BaseLightBlock;
 import net.minecraft.core.BlockPos;
@@ -17,8 +19,49 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
 
-public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity {
+public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity implements HasSafetyArm {
     private static final int FLAME_HOT_COLOR = 0xFF8434;
+
+    /** Cle d'armement : desarmee, la machine lit le DMX mais ne crache rien. */
+    private boolean armed = true;
+
+    @Override
+    public boolean isArmed() {
+        return armed;
+    }
+
+    @Override
+    public void setArmed(boolean value) {
+        if (armed == value) {
+            return;
+        }
+        armed = value;
+        if (!armed) {
+            intensity = 0;
+            prevIntensity = 0;
+        }
+        if (level != null && !level.isClientSide) {
+            setChanged();
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    @Override
+    public void write(CompoundTag tag) {
+        super.write(tag);
+        tag.putBoolean("Armed", armed);
+    }
+
+    @Override
+    public void read(CompoundTag tag) {
+        super.read(tag);
+        armed = !tag.contains("Armed") || tag.getBoolean("Armed");
+    }
+
+    /** Longueur de flamme 0-255 (canal 2). */
+    public int getFlameLengthRaw() {
+        return tilt;
+    }
     private static final float MIN_LENGTH = 0.4f;
     private static final float MAX_LENGTH = 1.6f;
     private static final float MIN_FLAMES = 4.0f;
@@ -116,7 +159,7 @@ public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity {
             level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
 
-        intensity = Byte.toUnsignedInt(ourValues[0]);
+        intensity = armed ? Byte.toUnsignedInt(ourValues[0]) : 0;
         tilt = Byte.toUnsignedInt(ourValues[1]);
         pan = 0;
         focus = 255;

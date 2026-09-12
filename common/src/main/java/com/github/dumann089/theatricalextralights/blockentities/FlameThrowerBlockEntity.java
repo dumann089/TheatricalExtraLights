@@ -1,7 +1,10 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.client.FlameThrowerClientEffects;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.Block;
 import com.github.dumann089.theatricalextralights.util.DirectionOffset;
 import com.github.dumann089.theatricalextralights.util.DmxFrameFlamePanSync;
 import dev.imabad.theatrical.api.Fixture;
@@ -13,10 +16,45 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
 
-public class FlameThrowerBlockEntity extends ExtraLightsLightBlockEntity implements DmxFrameFlamePanSync {
+public class FlameThrowerBlockEntity extends ExtraLightsLightBlockEntity implements DmxFrameFlamePanSync, HasSafetyArm {
     private static final int FLAME_HOT_COLOR = 0xFF8434;
 
     private boolean clientWasActive;
+    /** Cle d'armement : desarmee, la machine lit le DMX mais ne crache rien. */
+    private boolean armed = true;
+
+    @Override
+    public boolean isArmed() {
+        return armed;
+    }
+
+    @Override
+    public void setArmed(boolean value) {
+        if (armed == value) {
+            return;
+        }
+        armed = value;
+        if (!armed) {
+            intensity = 0;
+            prevIntensity = 0;
+        }
+        if (level != null && !level.isClientSide) {
+            setChanged();
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    @Override
+    public void write(CompoundTag tag) {
+        super.write(tag);
+        tag.putBoolean("Armed", armed);
+    }
+
+    @Override
+    public void read(CompoundTag tag) {
+        super.read(tag);
+        armed = !tag.contains("Armed") || tag.getBoolean("Armed");
+    }
 
     public FlameThrowerBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.FLAME_THROWER.get(), pos, state);
@@ -121,7 +159,7 @@ public class FlameThrowerBlockEntity extends ExtraLightsLightBlockEntity impleme
         }
 
         boolean prevAdvanced = beginDmxUpdate();
-        int newIntensity = Byte.toUnsignedInt(ourValues[0]);
+        int newIntensity = armed ? Byte.toUnsignedInt(ourValues[0]) : 0;
         int newPan = Byte.toUnsignedInt(ourValues[1]);
         boolean valuesChanged = intensity != newIntensity || pan != newPan;
 

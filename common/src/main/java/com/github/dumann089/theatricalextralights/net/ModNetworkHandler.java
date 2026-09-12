@@ -16,6 +16,7 @@ public class ModNetworkHandler {
         CHANNEL.register(SetFixturePositionPacket.class, SetFixturePositionPacket::encode, SetFixturePositionPacket::decode, SetFixturePositionPacket::handle);
         CHANNEL.register(SetPersonalityPacket.class, SetPersonalityPacket::encode, SetPersonalityPacket::decode, SetPersonalityPacket::handle);
         CHANNEL.register(SetLaserSafetyPacket.class, SetLaserSafetyPacket::encode, SetLaserSafetyPacket::decode, SetLaserSafetyPacket::handle);
+        CHANNEL.register(SetFixtureArmedPacket.class, SetFixtureArmedPacket::encode, SetFixtureArmedPacket::decode, SetFixtureArmedPacket::handle);
         CHANNEL.register(FollowspotConsolePatchPacket.class, FollowspotConsolePatchPacket::encode, FollowspotConsolePatchPacket::decode, FollowspotConsolePatchPacket::handle);
         CHANNEL.register(FollowspotConsoleControlPacket.class, FollowspotConsoleControlPacket::encode, FollowspotConsoleControlPacket::decode, FollowspotConsoleControlPacket::handle);
         CHANNEL.register(FollowspotEnterControlPacket.class, FollowspotEnterControlPacket::encode, FollowspotEnterControlPacket::decode, FollowspotEnterControlPacket::handle);
