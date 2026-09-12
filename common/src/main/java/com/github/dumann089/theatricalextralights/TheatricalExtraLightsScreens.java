@@ -8,5 +8,6 @@ public enum TheatricalExtraLightsScreens {
     CHANNEL_PANTILT,
     MOUNT_WRENCH,
     FOLLOWSPOT_CONSOLE,
-    LED_FACADE;
+    LED_FACADE,
+    LASER;
 }

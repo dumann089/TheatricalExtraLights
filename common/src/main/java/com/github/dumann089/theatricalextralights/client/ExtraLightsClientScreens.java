@@ -3,10 +3,12 @@ package com.github.dumann089.theatricalextralights.client;
 import com.github.dumann089.theatricalextralights.TheatricalExtraLightsScreens;
 import com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.FollowspotConsoleBlockEntity;
+import com.github.dumann089.theatricalextralights.blockentities.LaserBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.LedFacadeBlockEntity;
 import com.github.dumann089.theatricalextralights.client.gui.ExtraLightsConfigScreen;
 import com.github.dumann089.theatricalextralights.client.gui.FixtureMountScreen;
 import com.github.dumann089.theatricalextralights.client.gui.FollowspotConsoleScreen;
+import com.github.dumann089.theatricalextralights.client.gui.LaserConfigScreen;
 import com.github.dumann089.theatricalextralights.client.gui.LedFacadeScreen;
 import com.github.dumann089.theatricalextralights.client.gui.WaterJetConfigScreen;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
@@ -90,6 +92,10 @@ public class ExtraLightsClientScreens {
                     lightBE.getTranslationKey(),
                     true
             );
+
+            case LASER -> lightBE instanceof LaserBlockEntity laser
+                    ? new LaserConfigScreen(laser, pos)
+                    : new ExtraLightsConfigScreen(lightBE, pos, lightBE.getTranslationKey(), false);
 
             case MOUNT_WRENCH, FOLLOWSPOT_CONSOLE, LED_FACADE -> null;
         };
