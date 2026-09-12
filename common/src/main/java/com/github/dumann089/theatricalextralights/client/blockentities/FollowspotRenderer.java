@@ -138,7 +138,9 @@ public class FollowspotRenderer extends ExtraLightsFixtureRenderer<FollowspotBlo
                     FollowspotFixtureCameraSession session = FollowspotFixtureCameraSession.getActive();
                     renderPan = session.getPanAngle();
                     renderTilt = session.getTiltAngle();
-                    FollowspotBeamHelper.applyFixtureTransforms(poseStack, blockEntity, blockstate, renderPan, renderTilt);
+                    // Pose a l'origine du faisceau, -Z le long de la direction reelle de la lumiere
+                    // (celle de la camera operateur), et non de la tete du modele.
+                    FollowspotBeamHelper.applyBeamPose(poseStack, blockEntity, renderPan, renderTilt);
                 } else {
                     preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
                 }
@@ -158,7 +160,9 @@ public class FollowspotRenderer extends ExtraLightsFixtureRenderer<FollowspotBlo
 
                 VertexConsumer builder = multiBufferSource.getBuffer(Beam2DRenderTypes.getBeam());
                 poseStack.pushPose();
-                poseStack.translate(beam[0], beam[1], beam[2]);
+                if (!operatorView) {
+                    poseStack.translate(beam[0], beam[1], beam[2]);
+                }
                 if (operatorView) {
                     if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {
                         renderLightBeam2DFixedForward(builder, poseStack, blockEntity, alpha, beamSize, length, color, 0.006f);
