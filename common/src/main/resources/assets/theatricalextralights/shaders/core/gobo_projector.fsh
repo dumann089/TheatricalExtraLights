@@ -63,7 +63,9 @@ void main(){
     vec2 screenUV=gl_FragCoord.xy/ScreenSize;
     float depth=texture(Sampler1,screenUV).r;
 
-    if(depth>=0.99999)discard;
+    // CORRECCIÓN 1: Aumentamos la tolerancia a 0.999999 para evitar que paredes lejanas
+    // se confundan con el cielo (cielo = 1.0) y sean descartadas creando agujeros.
+    if(depth>=0.999999)discard;
 
     vec3 surfacePos=reconstructViewPos(screenUV,depth);
     vec3 toSurface=surfacePos-LightPos;
@@ -84,7 +86,13 @@ void main(){
 
             if(abs(denominator)>0.00001){
                 float hitT=dot(OcclusionPos-LightPos,OcclusionNormal)/denominator;
-                if(hitT>0.001&&hitT<surfaceDistance-0.001)discard;
+
+                // CORRECCIÓN 2: Bias dinámico.
+                // Usa un mínimo de 0.02 (2cm en Minecraft), pero aumenta un 0.2% de la distancia total.
+                // Esto absorbe la pérdida de precisión del buffer de profundidad a larga distancia.
+                float precisionBias = max(0.05, surfaceDistance * 0.002);
+
+                if(hitT>0.01 && hitT < surfaceDistance - precisionBias)discard;
             }
         }
     }
@@ -102,7 +110,6 @@ void main(){
     float radius=max(BaseRadius+zDist*max(TanHalfAngle,0.0001),0.0001);
     float slotDistance=radius*2.0;
 
-    // Desplazamiento de rueda a nivel "puerta focal" (Fija en la montura) antes de rotar
     float localU_A=u+WheelTransition*slotDistance;
     float localV_A=v;
     float ruA=localU_A*ca-localV_A*sa;
@@ -115,14 +122,12 @@ void main(){
     float rvB=localU_B*sa+localV_B*ca;
     vec2 goboUVB=vec2(ruB/radius*0.5+0.5,1.0-(rvB/radius*0.5+0.5));
 
-    // Máscara cónica fija física
     float radial=length(vec2(u,v))/radius;
     if(radial>=1.0)discard;
 
     float focusNorm=clamp(Focus,0.0,1.0);
     float blurAmount=focusNorm*focusNorm*0.045;
 
-    // Sampling Gobo A
     float goboAlphaA=0.0;
     vec3 goboColorA=vec3(0.0);
     if(goboUVA.x>=0.0&&goboUVA.x<=1.0&&goboUVA.y>=0.0&&goboUVA.y<=1.0){
@@ -131,7 +136,6 @@ void main(){
         goboAlphaA=sampleA.a*dot(goboColorA,vec3(0.299,0.587,0.114));
     }
 
-    // Sampling Gobo B
     float goboAlphaB=0.0;
     vec3 goboColorB=vec3(0.0);
     if(goboUVB.x>=0.0&&goboUVB.x<=1.0&&goboUVB.y>=0.0&&goboUVB.y<=1.0){
@@ -143,7 +147,6 @@ void main(){
     float goboAlpha=goboAlphaA+goboAlphaB;
     if(goboAlpha<=0.001)discard;
 
-    // Mezcla de interpolación física
     vec3 goboColor=(goboColorA*goboAlphaA+goboColorB*goboAlphaB)/goboAlpha;
 
     float edgeStart=mix(0.88,0.72,focusNorm);

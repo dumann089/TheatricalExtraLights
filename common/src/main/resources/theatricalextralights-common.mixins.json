@@ -12,6 +12,5 @@
   ],
   "mixins": [
     "compat.BlockEntityTheatricalDmxExtendedMixin",
-    "compat.ServerDmxBrokerMixin"
   ]
 }
