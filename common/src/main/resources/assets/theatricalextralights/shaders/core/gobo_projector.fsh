@@ -118,7 +118,11 @@ void main(){
 
             if(abs(denominator)>0.00001){
                 float hitT=dot(OcclusionPos-LightPos,OcclusionNormal)/denominator;
-                if(hitT>0.001&&hitT<surfaceDistance-0.001)discard;
+                // Tolerance proportionnelle a la distance : la profondeur reconstruite depuis le
+                // depth buffer n'est precise qu'a quelques cm a 10 blocs, une marge fixe de 1 mm
+                // faisait clignoter des pixels de la surface eclairee elle-meme (z-fighting).
+                float occlusionBias=max(0.08,surfaceDistance*0.03);
+                if(hitT>0.001&&hitT<surfaceDistance-occlusionBias)discard;
             }
         }
     }
