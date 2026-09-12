@@ -570,7 +570,7 @@ public class ExtraLightsConfigScreen extends TelScaledScreen {
                     contentLeft + half + COL_GAP, networkLabelY);
         }
 
-        super.render(g, mouseX, mouseY, partialTick);
+        renderWidgets(g, mouseX, mouseY, partialTick);
     }
 
     @Override
