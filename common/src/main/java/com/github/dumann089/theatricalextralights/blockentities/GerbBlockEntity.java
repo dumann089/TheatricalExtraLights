@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.client.particle.FireworkSparkParticleOptions;
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
@@ -17,7 +18,17 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
 
-public class GerbBlockEntity extends ExtraLightsLightBlockEntity {
+public class GerbBlockEntity extends ExtraLightsLightBlockEntity implements HasSafetyArm {
+
+    @Override
+    public boolean isArmed() {
+        return safetyArmed;
+    }
+
+    @Override
+    public void setArmed(boolean armed) {
+        applySafetyArm(armed);
+    }
     private static final int GOLD_CORE_COLOR = 0xFFE9AE;
     private static final int GOLD_HOT_COLOR = 0xFFC451;
     private static final float MIN_SPRAY_HEIGHT = 0.6f;
@@ -116,7 +127,7 @@ public class GerbBlockEntity extends ExtraLightsLightBlockEntity {
             level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
 
-        intensity = Byte.toUnsignedInt(ourValues[0]);
+        intensity = safetyArmed ? Byte.toUnsignedInt(ourValues[0]) : 0;
         tilt = Byte.toUnsignedInt(ourValues[1]);
         pan = 0;
         focus = 255;

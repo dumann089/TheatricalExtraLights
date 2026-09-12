@@ -1,5 +1,6 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import com.github.dumann089.theatricalextralights.pyro.ConfettiCannonEffects;
 import com.github.dumann089.theatricalextralights.pyro.ConfettiCannonOrientation;
@@ -14,7 +15,17 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Arrays;
 
-public class ConfettiCannonBlockEntity extends ExtraLightsLightBlockEntity {
+public class ConfettiCannonBlockEntity extends ExtraLightsLightBlockEntity implements HasSafetyArm {
+
+    @Override
+    public boolean isArmed() {
+        return safetyArmed;
+    }
+
+    @Override
+    public void setArmed(boolean armed) {
+        applySafetyArm(armed);
+    }
     private int prevIntensityDm = 0;
     private int burstCooldown = 0;
 
@@ -89,7 +100,7 @@ public class ConfettiCannonBlockEntity extends ExtraLightsLightBlockEntity {
 
         boolean prevAdvanced = beginDmxUpdate();
         int previous = intensity;
-        intensity = Byte.toUnsignedInt(ourValues[0]);
+        intensity = safetyArmed ? Byte.toUnsignedInt(ourValues[0]) : 0;
         finishDmxUpdate(intensity != previous, prevAdvanced);
     }
 

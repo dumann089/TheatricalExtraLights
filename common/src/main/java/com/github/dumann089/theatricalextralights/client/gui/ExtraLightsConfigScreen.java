@@ -1,7 +1,10 @@
 package com.github.dumann089.theatricalextralights.client.gui;
 
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFramingShutters;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGobo;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasPersonality;
+import com.github.dumann089.theatricalextralights.fixtures.FramingShutterChannels;
+import com.github.dumann089.theatricalextralights.util.FramingShutterState;
 import com.github.dumann089.theatricalextralights.net.ModNetworkHandler;
 import com.github.dumann089.theatricalextralights.net.SetFixturePositionPacket;
 import com.github.dumann089.theatricalextralights.net.SetPersonalityPacket;
@@ -83,6 +86,10 @@ public class ExtraLightsConfigScreen extends TelScaledScreen {
     private int settingsSectionY;
     private int personalityLabelY;
     private int networkLabelY;
+    private int shuttersSectionY;
+    private int shuttersCardY;
+
+    private static final int SHUTTER_CARD_H = 90;
 
     public ExtraLightsConfigScreen(BaseDMXConsumerLightBlockEntity blockEntity, BlockPos pos, String title) {
         this(blockEntity, pos, title, true);
@@ -245,6 +252,14 @@ public class ExtraLightsConfigScreen extends TelScaledScreen {
         }
 
         y = buildExtraWidgets(y);
+
+        // ── Couteaux (lyres gobo avec module de framing) ──
+        if (blockEntity instanceof HasFramingShutters) {
+            shuttersSectionY = y;
+            y += LABEL_GAP + 3;
+            shuttersCardY = y;
+            y += SHUTTER_CARD_H + SECTION_GAP;
+        }
 
         // ── Reglages ──
         settingsSectionY = y;
@@ -559,6 +574,10 @@ public class ExtraLightsConfigScreen extends TelScaledScreen {
 
         renderExtraLabels(g);
 
+        if (blockEntity instanceof HasFramingShutters shutters) {
+            renderShutterCard(g, shutters);
+        }
+
         // Reglages
         drawSectionLabel(g, Component.translatable("screen.extralightsconfig.section_settings"), settingsSectionY);
         if (hasPersonalityOptions()) {
@@ -571,6 +590,65 @@ public class ExtraLightsConfigScreen extends TelScaledScreen {
         }
 
         renderWidgets(g, mouseX, mouseY, partialTick);
+    }
+
+    /** Carte Couteaux : disque avec les 4 lames a gauche, valeurs A/B et rotation a droite. */
+    private void renderShutterCard(GuiGraphics g, HasFramingShutters shutters) {
+        drawSectionLabel(g, Component.translatable("screen.shutters.section"), shuttersSectionY);
+
+        int x = contentLeft;
+        int y = shuttersCardY;
+        int w = contentWidth;
+        TelUi.card(g, x, y, w, SHUTTER_CARD_H);
+
+        boolean modeHasShutters = getSelectedChannelCount() >= FramingShutterChannels.TOTAL_CHANNELS;
+        FramingShutterState state = shutters.getFramingShutters();
+        FramingShutterState.Snapshot snap = modeHasShutters && state != null ? state.snapshot(1.0f) : null;
+
+        // Gobo courant (personnalise si present) et sa rotation
+        net.minecraft.resources.ResourceLocation goboTex = null;
+        float goboRot = 0f;
+        int goboSlot = -1;
+        if (blockEntity instanceof HasGobo hg && hg.getGoboLibrary() != null) {
+            goboSlot = hg.getGobo();
+            String custom = com.github.dumann089.theatricalextralights.util.GlobalGoboManager
+                    .getCustomGobo(hg.getGoboLibrary(), goboSlot);
+            if (custom != null) {
+                goboTex = com.github.dumann089.theatricalextralights.client.CustomGoboLoader.getOrCreateCustomGobo(custom);
+            }
+            if (goboTex == null) {
+                goboTex = hg.getGoboLibrary().getTexture(goboSlot);
+            }
+            goboRot = hg.getGoboRotation();
+        }
+
+        int disc = SHUTTER_CARD_H - 12;
+        FramingShutterPreview.draw(g, x + 6, y + 6, disc, snap, goboTex, goboRot, uiScale);
+
+        int tx = x + 6 + disc + 10;
+        int ty = y + 7;
+        if (goboSlot >= 0) {
+            TelUi.text(g, font, Component.translatable("screen.shutters.gobo_slot", Integer.toString(goboSlot),
+                    Integer.toString(Math.round(goboRot) % 360)), tx, ty, TelUi.SUB);
+            ty += 13;
+        }
+        if (!modeHasShutters) {
+            TelUi.text(g, font, Component.translatable("screen.shutters.inactive"), tx, ty, TelUi.SUB);
+            TelUi.text(g, font, Component.translatable("screen.shutters.inactive_hint"), tx, ty + 12, TelUi.LABEL);
+            return;
+        }
+        for (int i = 0; i < FramingShutterState.BLADE_COUNT; i++) {
+            int a = Math.round(snap.insertionA()[i] * 100f);
+            int b = Math.round(snap.insertionB()[i] * 100f);
+            boolean engaged = a > 0 || b > 0;
+            Component line = Component.translatable("screen.shutters.blade",
+                    Integer.toString(i + 1), Integer.toString(a), Integer.toString(b));
+            TelUi.text(g, font, line, tx, ty + i * 11, engaged ? TelUi.TEXT : TelUi.LABEL);
+        }
+        int rotDeg = Math.round((float) Math.toDegrees(snap.frameRotation()));
+        String signed = (rotDeg > 0 ? "+" : "") + rotDeg;
+        TelUi.text(g, font, Component.translatable("screen.shutters.rotation", signed), tx, ty + 4 * 11 + 2,
+                rotDeg != 0 ? TelUi.ACCENT : TelUi.LABEL);
     }
 
     @Override
