@@ -32,6 +32,8 @@ public final class TelUi {
     public static final int ACCENT_DIM = 0xFF3C6A98;
     public static final int WARN = 0xFFEA9468;
     public static final int OK = 0xFF7FCB8C;
+    public static final int DANGER = 0xFFD9453B;
+    public static final int DANGER_DIM = 0xFF7A2620;
 
     public static final int WIDGET_H = 20;
 
@@ -123,7 +125,7 @@ public final class TelUi {
 
     // ── Boutons ──────────────────────────────────────────────────────────────
 
-    public enum ButtonStyle { NORMAL, PRIMARY, GHOST }
+    public enum ButtonStyle { NORMAL, PRIMARY, GHOST, DANGER }
 
     public static class FlatButton extends AbstractButton {
         private final Consumer<FlatButton> onPress;
@@ -177,6 +179,11 @@ public final class TelUi {
                     bg = selected ? ACCENT_DIM : (hover ? BG_RAISED : BG_SUNKEN);
                     border = selected ? ACCENT : BORDER_SOFT;
                     fg = selected ? TITLE : (hover ? TEXT : SUB);
+                }
+                case DANGER -> {
+                    bg = hover ? 0xFFE85A4F : DANGER;
+                    border = DANGER_DIM;
+                    fg = 0xFFFFF2F0;
                 }
                 default -> {
                     bg = hover ? 0xFF33333B : BG_RAISED;

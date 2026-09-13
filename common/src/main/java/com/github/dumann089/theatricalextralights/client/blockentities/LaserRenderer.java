@@ -120,7 +120,7 @@ public class LaserRenderer extends ExtraLightsRenderer<LaserBlockEntity> {
     public void beforeRenderBeam(LaserBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer,
                                  MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped,
                                  BlockState blockstate, boolean isHanging, int packedLight, int packedOverlay) {
-        if (blockEntity.getIntensity() <= 0) {
+        if (blockEntity.getIntensity() <= 0 || blockEntity.isEmergencyStop()) {
             // Vaciar el rastro cuando el fixture está apagado para que no se quede congelado
             blockEntity.getTrailBuffer().clear();
             return;

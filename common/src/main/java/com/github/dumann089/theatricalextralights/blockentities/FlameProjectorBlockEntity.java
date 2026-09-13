@@ -1,5 +1,6 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
@@ -17,8 +18,23 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
 
-public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity {
+public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity implements HasSafetyArm {
     private static final int FLAME_HOT_COLOR = 0xFF8434;
+
+    @Override
+    public boolean isArmed() {
+        return safetyArmed;
+    }
+
+    @Override
+    public void setArmed(boolean armed) {
+        applySafetyArm(armed);
+    }
+
+    /** Longueur de flamme 0-255 (canal 2). */
+    public int getFlameLengthRaw() {
+        return tilt;
+    }
     private static final float MIN_LENGTH = 0.4f;
     private static final float MAX_LENGTH = 1.6f;
     private static final float MIN_FLAMES = 4.0f;
@@ -116,7 +132,7 @@ public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity {
             level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
 
-        intensity = Byte.toUnsignedInt(ourValues[0]);
+        intensity = safetyArmed ? Byte.toUnsignedInt(ourValues[0]) : 0;
         tilt = Byte.toUnsignedInt(ourValues[1]);
         pan = 0;
         focus = 255;

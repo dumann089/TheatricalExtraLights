@@ -1,5 +1,6 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.client.FlameThrowerClientEffects;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import com.github.dumann089.theatricalextralights.util.DirectionOffset;
@@ -13,10 +14,20 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
 
-public class FlameThrowerBlockEntity extends ExtraLightsLightBlockEntity implements DmxFrameFlamePanSync {
+public class FlameThrowerBlockEntity extends ExtraLightsLightBlockEntity implements DmxFrameFlamePanSync, HasSafetyArm {
     private static final int FLAME_HOT_COLOR = 0xFF8434;
 
     private boolean clientWasActive;
+
+    @Override
+    public boolean isArmed() {
+        return safetyArmed;
+    }
+
+    @Override
+    public void setArmed(boolean armed) {
+        applySafetyArm(armed);
+    }
 
     public FlameThrowerBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.FLAME_THROWER.get(), pos, state);
@@ -121,7 +132,7 @@ public class FlameThrowerBlockEntity extends ExtraLightsLightBlockEntity impleme
         }
 
         boolean prevAdvanced = beginDmxUpdate();
-        int newIntensity = Byte.toUnsignedInt(ourValues[0]);
+        int newIntensity = safetyArmed ? Byte.toUnsignedInt(ourValues[0]) : 0;
         int newPan = Byte.toUnsignedInt(ourValues[1]);
         boolean valuesChanged = intensity != newIntensity || pan != newPan;
 

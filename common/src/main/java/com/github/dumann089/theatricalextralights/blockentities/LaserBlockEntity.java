@@ -35,6 +35,9 @@ public class LaserBlockEntity extends ExtraLightsLightBlockEntity implements Dmx
     private int rotation;
     private int persistence;
 
+    /** Arret d'urgence : coupe la sortie quel que soit le DMX, jusqu'au rearmement manuel. */
+    private boolean emergencyStop;
+
     /**
      * Client-side persistence trail. Each entry holds a snapshot of beam endpoints
      * captured at a render frame; older entries fade and eventually drop.
@@ -225,6 +228,7 @@ public class LaserBlockEntity extends ExtraLightsLightBlockEntity implements Dmx
         tag.putInt("Speed", speed);
         tag.putInt("Rotation", rotation);
         tag.putInt("Persistence", persistence);
+        tag.putBoolean("EmergencyStop", emergencyStop);
         if (saveLogCounter < 5) {
             saveLogCounter++;
             TheatricalExtraLights.LOGGER.info("[LaserBE@{}] write() #{} pattern={} size={} amp={} hasKey={}",
@@ -248,6 +252,7 @@ public class LaserBlockEntity extends ExtraLightsLightBlockEntity implements Dmx
         speed = tag.getInt("Speed");
         rotation = tag.getInt("Rotation");
         persistence = tag.getInt("Persistence");
+        emergencyStop = tag.getBoolean("EmergencyStop");
         if (loadLogCounter < 5) {
             loadLogCounter++;
             TheatricalExtraLights.LOGGER.info("[LaserBE@{}] read() #{} pattern={} size={} amp={} hasKey={} side={}",
@@ -262,7 +267,35 @@ public class LaserBlockEntity extends ExtraLightsLightBlockEntity implements Dmx
 
     @Override
     protected boolean needsContinuousClientRender() {
-        return intensity > 0 || speed > 0;
+        return !emergencyStop && (intensity > 0 || speed > 0);
+    }
+
+    // ----- Emergency stop -----
+
+    public boolean isEmergencyStop() {
+        return emergencyStop;
+    }
+
+    /** True when the laser actually emits: DMX intensity above zero and not stopped. */
+    public boolean isOutputActive() {
+        return !emergencyStop && intensity > 0;
+    }
+
+    /**
+     * Engage or release the emergency stop. On the server this persists and syncs to
+     * clients; on the client it only updates the local copy for instant feedback.
+     */
+    public void setEmergencyStop(boolean stop) {
+        if (emergencyStop == stop) {
+            return;
+        }
+        emergencyStop = stop;
+        if (level != null && !level.isClientSide) {
+            setChanged();
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        } else if (level != null) {
+            StrobeRenderHelper.markSectionDirty(getBlockPos());
+        }
     }
 
     // ----- Getters used by the renderer -----

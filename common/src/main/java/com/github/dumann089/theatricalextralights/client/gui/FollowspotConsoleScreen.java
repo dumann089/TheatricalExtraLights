@@ -6,17 +6,14 @@ import com.github.dumann089.theatricalextralights.client.followspot.FollowspotIn
 import com.github.dumann089.theatricalextralights.net.FollowspotConsoleControlPacket;
 import com.github.dumann089.theatricalextralights.net.FollowspotConsolePatchPacket;
 import com.github.dumann089.theatricalextralights.net.ModNetworkHandler;
+import com.github.dumann089.theatricalextralights.util.FollowspotAimMapper;
 import com.github.dumann089.theatricalextralights.util.FollowspotDmxHelper;
-import com.github.dumann089.theatricalextralights.util.FollowspotOrientationHelper;
 import com.github.dumann089.theatricalextralights.util.FollowspotTargetHelper;
 import dev.imabad.theatrical.TheatricalClient;
 import dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity;
 import dev.imabad.theatrical.util.UUIDUtil;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractSliderButton;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -26,40 +23,39 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.IntConsumer;
 
-public class FollowspotConsoleScreen extends Screen {
+/**
+ * Pupitre followspot : patch de la machine suivie, mode, niveaux et prise de controle.
+ * Meme habillage que les autres ecrans (TelUi), mise a l'echelle automatique.
+ */
+public class FollowspotConsoleScreen extends TelScaledScreen {
 
-    private static final int PANEL_W = 400;
-    private static final int PANEL_H = 368;
+    private static final int PANEL_W = 340;
     private static final int PAD = 14;
-    private static final int ROW_H = 18;
-    private static final int GAP = 6;
-    private static final int LABEL_COL = 72;
-    private static final int HEADER_H = 38;
-
-    private static final int BG = 0xFF222228;
-    private static final int BORDER = 0xFF08080C;
-    private static final int HEADER = 0xFF3A3A44;
-    private static final int TITLE = 0xFFF4F4F8;
-    private static final int SUB = 0xFF9A9AA8;
-    private static final int LABEL = 0xFF80808C;
-    private static final int TEXT = 0xFFE4E4EA;
-    private static final int ACCENT = 0xFF6AAEF0;
-    private static final int WARN = 0xFFEA9468;
+    private static final int HEADER_H = 26;
+    private static final int LABEL_GAP = 11;
+    private static final int ROW_GAP = 8;
+    private static final int SECTION_GAP = 14;
+    private static final int COL_GAP = 10;
+    private static final int WIDGET_H = TelUi.WIDGET_H;
+    private static final int LEVEL_LABEL_W = 58;
 
     private final BlockPos consolePos;
     private final FollowspotConsoleBlockEntity console;
 
     private EditBox universeField;
     private EditBox addressField;
-    private Button networkButton;
-    private Button modeButton;
+    private TelUi.FlatButton networkButton;
+    private final List<TelUi.FlatButton> modeButtons = new ArrayList<>();
+    private TelUi.FlatButton controlButton;
 
-    private ValueSlider focusSlider;
-    private ValueSlider redSlider;
-    private ValueSlider greenSlider;
-    private ValueSlider blueSlider;
-    private ValueSlider intensitySlider;
+    private LevelSlider intensitySlider;
+    private LevelSlider focusSlider;
+    private LevelSlider redSlider;
+    private LevelSlider greenSlider;
+    private LevelSlider blueSlider;
+    private final List<LevelSlider> levelSliders = new ArrayList<>();
 
     private List<UUID> networkIds = List.of(UUIDUtil.NULL);
     private int currentNetworkIndex;
@@ -71,23 +67,35 @@ public class FollowspotConsoleScreen extends Screen {
     private int focus;
     private int pan;
     private int tilt;
-    /** Console aims only; intensity / RGB / focus stay on the desk / Art-Net. */
+    /** La console vise seulement ; intensite / RGB / focus restent sur le pupitre ou le logiciel. */
     private boolean panTiltOnly;
 
     private int panelX;
     private int panelY;
+    private int panelH;
     private int contentX;
     private int contentW;
-    private int patchFieldsY;
-    private int modeButtonY;
-    private int slidersY;
-    private int buttonsY;
+
+    private int patchSectionY;
+    private int patchLabelY;
+    private int statusY;
+    private int modeSectionY;
+    private int modeHintY;
+    private int levelsSectionY;
+    private final int[] levelRowY = new int[5];
+    private int aimSectionY;
+    private int aimTextY;
+
+    private final List<FieldFrame> fieldFrames = new ArrayList<>();
+
+    private record FieldFrame(EditBox box, int x, int y, int w, int h) {
+    }
 
     private int controlSendCooldown;
     private BlockPos linkedFixturePos;
+    private String linkedFixtureName;
     private int networkRefreshCooldown;
 
-    /** Held via keyPressed/keyReleased — more reliable than polling while a Screen is open. */
     private boolean moveUpHeld;
     private boolean moveDownHeld;
     private boolean moveLeftHeld;
@@ -105,68 +113,22 @@ public class FollowspotConsoleScreen extends Screen {
         this.consolePos = consolePos;
     }
 
+    // ── Init / layout ────────────────────────────────────────────────────────
+
     @Override
     protected void init() {
+        super.init();
         loadFromConsole();
         setupNetworks();
 
-        panelX = (width - PANEL_W) / 2;
-        panelY = (height - PANEL_H) / 2;
-        contentX = panelX + PAD;
-        contentW = PANEL_W - PAD * 2;
-
-        patchFieldsY = panelY + HEADER_H + 34;
-        modeButtonY = patchFieldsY + ROW_H + 22;
-        slidersY = panelY + HEADER_H + 150;
-        buttonsY = panelY + PANEL_H - PAD - ROW_H;
-
-        int netW = 98;
-        int fieldW = 50;
-        int uniX = contentX + netW + 10;
-        int addrX = uniX + fieldW + 12;
-
-        networkButton = addRenderableWidget(Button.builder(getNetworkLabel(), b -> {
-            currentNetworkIndex = (currentNetworkIndex + 1) % networkIds.size();
-            b.setMessage(getNetworkLabel());
-            updateLinkPreview();
-        }).bounds(contentX, patchFieldsY, netW, ROW_H).build());
-
-        universeField = new EditBox(font, uniX, patchFieldsY, fieldW, ROW_H, Component.literal("U"));
-        universeField.setFilter(v -> v.isEmpty() || v.matches("\\d+"));
-        universeField.setValue(Integer.toString(console.getUniverse()));
-        addRenderableWidget(universeField);
-
-        addressField = new EditBox(font, addrX, patchFieldsY, fieldW, ROW_H, Component.literal("A"));
-        addressField.setFilter(v -> v.isEmpty() || v.matches("\\d+"));
-        addressField.setValue(Integer.toString(console.getDmxAddress()));
-        addRenderableWidget(addressField);
-
-        modeButton = addRenderableWidget(Button.builder(getModeLabel(), b -> {
-            panTiltOnly = !panTiltOnly;
-            refreshModeUi();
-            sendPatch();
-        }).bounds(contentX, modeButtonY, contentW, ROW_H).build());
-
-        int sliderW = contentW - LABEL_COL - 30;
-        int sx = contentX + LABEL_COL;
-        int y = slidersY;
-        focusSlider = addSlider(sx, y, sliderW, focus, v -> focus = v);
-        y += ROW_H + GAP;
-        redSlider = addSlider(sx, y, sliderW, red, v -> red = v);
-        y += ROW_H + GAP;
-        greenSlider = addSlider(sx, y, sliderW, green, v -> green = v);
-        y += ROW_H + GAP;
-        blueSlider = addSlider(sx, y, sliderW, blue, v -> blue = v);
-        y += ROW_H + GAP;
-        intensitySlider = addSlider(sx, y, sliderW, intensity, v -> intensity = v);
-
-        int btnW = (contentW - 12) / 3;
-        addRenderableWidget(Button.builder(Component.translatable("screen.followspot_console.link"), b -> sendPatch())
-                .bounds(contentX, buttonsY, btnW, ROW_H).build());
-        addRenderableWidget(Button.builder(Component.translatable("screen.followspot_console.control"), b -> enterFixtureControl())
-                .bounds(contentX + btnW + 6, buttonsY, btnW, ROW_H).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose())
-                .bounds(contentX + (btnW + 6) * 2, buttonsY, btnW, ROW_H).build());
+        resetScale();
+        panelX = (vw - PANEL_W) / 2;
+        panelY = 0;
+        panelH = buildWidgets();
+        fitToScreen(PANEL_W, panelH);
+        panelX = (vw - PANEL_W) / 2;
+        panelY = Math.max(4, (vh - panelH) / 2);
+        panelH = buildWidgets();
 
         syncedNetworkId = console.getNetworkId();
         syncedUniverse = console.getUniverse();
@@ -178,9 +140,112 @@ public class FollowspotConsoleScreen extends Screen {
         refreshModeUi();
     }
 
-    private ValueSlider addSlider(int x, int y, int w, int initial, java.util.function.IntConsumer onChange) {
-        return addRenderableWidget(new ValueSlider(x, y, w, initial, onChange));
+    private int buildWidgets() {
+        String universeDraft = universeField != null ? universeField.getValue() : Integer.toString(console.getUniverse());
+        String addressDraft = addressField != null ? addressField.getValue() : Integer.toString(console.getDmxAddress());
+
+        clearWidgets();
+        fieldFrames.clear();
+        modeButtons.clear();
+        levelSliders.clear();
+
+        contentX = panelX + PAD;
+        contentW = PANEL_W - PAD * 2;
+        int y = panelY + HEADER_H + PAD;
+        int half = (contentW - COL_GAP) / 2;
+
+        // ── Patch ──
+        patchSectionY = y;
+        y += LABEL_GAP + 3;
+        patchLabelY = y;
+        y += LABEL_GAP;
+        networkButton = addRenderableWidget(new TelUi.FlatButton(contentX, y, contentW, WIDGET_H, getNetworkLabel(),
+                TelUi.ButtonStyle.NORMAL, b -> {
+                    currentNetworkIndex = (currentNetworkIndex + 1) % networkIds.size();
+                    b.setMessage(getNetworkLabel());
+                    updateLinkPreview();
+                }));
+        y += WIDGET_H + ROW_GAP;
+
+        int fieldLabelY = y;
+        y += LABEL_GAP;
+        universeField = createField(contentX, y, half, WIDGET_H, Component.translatable("artneti.dmxUniverse"));
+        universeField.setFilter(v -> v.isEmpty() || v.matches("\\d+"));
+        universeField.setValue(universeDraft);
+        addressField = createField(contentX + half + COL_GAP, y, half, WIDGET_H, Component.translatable("fixture.dmxStart"));
+        addressField.setFilter(v -> v.isEmpty() || v.matches("\\d+"));
+        addressField.setValue(addressDraft);
+        patchLabelY = fieldLabelY; // le libelle reseau est dessine au-dessus du bouton, ceux des champs ici
+        y += WIDGET_H + ROW_GAP;
+        statusY = y;
+        y += 11 + SECTION_GAP;
+
+        // ── Mode ──
+        modeSectionY = y;
+        y += LABEL_GAP + 3;
+        TelUi.FlatButton full = new TelUi.FlatButton(contentX, y, half, WIDGET_H,
+                Component.translatable("screen.followspot_console.mode_full_short"), TelUi.ButtonStyle.GHOST,
+                b -> setMode(false));
+        TelUi.FlatButton ptOnly = new TelUi.FlatButton(contentX + half + COL_GAP, y, half, WIDGET_H,
+                Component.translatable("screen.followspot_console.mode_pan_tilt_short"), TelUi.ButtonStyle.GHOST,
+                b -> setMode(true));
+        modeButtons.add(addRenderableWidget(full));
+        modeButtons.add(addRenderableWidget(ptOnly));
+        y += WIDGET_H + 4;
+        modeHintY = y;
+        y += 11 + SECTION_GAP;
+
+        // ── Niveaux ──
+        levelsSectionY = y;
+        y += LABEL_GAP + 3;
+        int sliderX = contentX + LEVEL_LABEL_W;
+        int sliderW = contentW - LEVEL_LABEL_W;
+        intensitySlider = addLevel(0, sliderX, y, sliderW, intensity, v -> intensity = v);
+        y += WIDGET_H + 5;
+        focusSlider = addLevel(1, sliderX, y, sliderW, focus, v -> focus = v);
+        y += WIDGET_H + 5;
+        redSlider = addLevel(2, sliderX, y, sliderW, red, v -> red = v);
+        y += WIDGET_H + 5;
+        greenSlider = addLevel(3, sliderX, y, sliderW, green, v -> green = v);
+        y += WIDGET_H + 5;
+        blueSlider = addLevel(4, sliderX, y, sliderW, blue, v -> blue = v);
+        y += WIDGET_H + SECTION_GAP;
+
+        // ── Visee ──
+        aimSectionY = y;
+        y += LABEL_GAP + 3;
+        aimTextY = y;
+        y += 11 * 2 + SECTION_GAP;
+
+        // ── Pied ──
+        int btnW = (contentW - COL_GAP * 2) / 3;
+        addRenderableWidget(new TelUi.FlatButton(contentX, y, btnW, WIDGET_H, Component.translatable("gui.cancel"),
+                TelUi.ButtonStyle.NORMAL, b -> onClose()));
+        addRenderableWidget(new TelUi.FlatButton(contentX + btnW + COL_GAP, y, btnW, WIDGET_H,
+                Component.translatable("screen.followspot_console.link"), TelUi.ButtonStyle.NORMAL, b -> sendPatch()));
+        controlButton = addRenderableWidget(new TelUi.FlatButton(contentX + (btnW + COL_GAP) * 2, y, btnW, WIDGET_H,
+                Component.translatable("screen.followspot_console.take_control"), TelUi.ButtonStyle.PRIMARY,
+                b -> enterFixtureControl()));
+        y += WIDGET_H + PAD;
+
+        return y - panelY;
     }
+
+    private EditBox createField(int x, int y, int w, int h, Component label) {
+        EditBox box = TelUi.field(font, x, y, w, h, label);
+        fieldFrames.add(new FieldFrame(box, x, y, w, h));
+        addRenderableWidget(box);
+        return box;
+    }
+
+    private LevelSlider addLevel(int row, int x, int y, int w, int initial, IntConsumer onChange) {
+        levelRowY[row] = y;
+        LevelSlider slider = addRenderableWidget(new LevelSlider(x, y, w, initial, onChange));
+        levelSliders.add(slider);
+        return slider;
+    }
+
+    // ── Etat ─────────────────────────────────────────────────────────────────
 
     private void loadFromConsole() {
         intensity = console.getIntensity();
@@ -193,23 +258,25 @@ public class FollowspotConsoleScreen extends Screen {
         panTiltOnly = console.isPanTiltOnly();
     }
 
-    private Component getModeLabel() {
-        return Component.translatable(panTiltOnly
-                ? "screen.followspot_console.mode_pan_tilt"
-                : "screen.followspot_console.mode_full");
+    private void setMode(boolean ptOnly) {
+        if (panTiltOnly == ptOnly) {
+            return;
+        }
+        panTiltOnly = ptOnly;
+        refreshModeUi();
+        sendPatch();
     }
 
     private void refreshModeUi() {
-        if (modeButton != null) {
-            modeButton.setMessage(getModeLabel());
+        if (modeButtons.size() == 2) {
+            modeButtons.get(0).setSelected(!panTiltOnly);
+            modeButtons.get(1).setSelected(panTiltOnly);
         }
-        boolean full = !panTiltOnly;
-        if (focusSlider != null) {
-            focusSlider.active = full;
-            redSlider.active = full;
-            greenSlider.active = full;
-            blueSlider.active = full;
-            intensitySlider.active = full;
+        for (LevelSlider slider : levelSliders) {
+            slider.active = !panTiltOnly;
+        }
+        if (controlButton != null) {
+            controlButton.active = linkedFixturePos != null;
         }
     }
 
@@ -223,8 +290,6 @@ public class FollowspotConsoleScreen extends Screen {
                 }
             }
         }
-        // Keep the console's saved network even if ArtNet hasn't advertised it yet —
-        // otherwise indexOf fails, UI resets to "—", and WASD pan/tilt never link.
         UUID saved = console.getNetworkId();
         if (FollowspotTargetHelper.isValidNetwork(saved) && !available.contains(saved)) {
             available.add(saved);
@@ -251,10 +316,7 @@ public class FollowspotConsoleScreen extends Screen {
             return Component.translatable("screen.artnetconfig.network.unknown");
         }
         String name = TheatricalClient.getArtNetManager().getKnownNetworks().get(id);
-        if (name == null) {
-            return Component.literal("?");
-        }
-        return Component.literal(name.length() > 11 ? name.substring(0, 10) + "…" : name);
+        return Component.literal(name != null ? name : "?");
     }
 
     private void sendPatch() {
@@ -276,34 +338,31 @@ public class FollowspotConsoleScreen extends Screen {
             return;
         }
         sendPatch();
-        FollowspotFixtureCameraSession.start(
-                console, consolePos, linkedFixturePos,
+        FollowspotFixtureCameraSession.start(console, consolePos, linkedFixturePos,
                 intensity, red, green, blue, focus,
-                FollowspotDmxHelper.quantizePan(pan),
-                FollowspotDmxHelper.quantizeTilt(tilt)
-        );
+                FollowspotDmxHelper.quantizePan(pan), FollowspotDmxHelper.quantizeTilt(tilt));
     }
 
     private void sendControl() {
         ModNetworkHandler.CHANNEL.sendToServer(new FollowspotConsoleControlPacket(
-                consolePos, intensity, red, green, blue, focus, pan, tilt
-        ));
+                consolePos, intensity, red, green, blue, focus, pan, tilt));
         controlSendCooldown = 2;
     }
 
     private void updateLinkPreview() {
         if (minecraft == null || minecraft.level == null) {
             linkedFixturePos = null;
+            linkedFixtureName = null;
+            refreshModeUi();
             return;
         }
         Optional<FollowspotTargetHelper.TargetMatch> target = FollowspotTargetHelper.findTarget(
-                minecraft.level,
-                networkIds.get(currentNetworkIndex),
+                minecraft.level, networkIds.get(currentNetworkIndex),
                 parseOrDefault(universeField, console.getUniverse()),
-                parseOrDefault(addressField, console.getDmxAddress()),
-                consolePos
-        );
+                parseOrDefault(addressField, console.getDmxAddress()), consolePos);
         linkedFixturePos = target.map(FollowspotTargetHelper.TargetMatch::pos).orElse(null);
+        linkedFixtureName = target.map(t -> Component.translatable(t.translationKey()).getString()).orElse(null);
+        refreshModeUi();
     }
 
     private void syncControlsFromLinkedFixture() {
@@ -311,12 +370,7 @@ public class FollowspotConsoleScreen extends Screen {
             return;
         }
         Optional<FollowspotTargetHelper.TargetMatch> target = FollowspotTargetHelper.findTarget(
-                minecraft.level,
-                console.getNetworkId(),
-                console.getUniverse(),
-                console.getDmxAddress(),
-                consolePos
-        );
+                minecraft.level, console.getNetworkId(), console.getUniverse(), console.getDmxAddress(), consolePos);
         if (target.isEmpty()) {
             return;
         }
@@ -332,11 +386,9 @@ public class FollowspotConsoleScreen extends Screen {
     }
 
     private int computePatchDraftHash() {
-        return Objects.hash(
-                currentNetworkIndex,
+        return Objects.hash(currentNetworkIndex,
                 universeField != null ? universeField.getValue() : "",
-                addressField != null ? addressField.getValue() : ""
-        );
+                addressField != null ? addressField.getValue() : "");
     }
 
     private void syncFromConsoleEntityIfNeeded() {
@@ -370,14 +422,14 @@ public class FollowspotConsoleScreen extends Screen {
     }
 
     private void updateSliders() {
-        if (focusSlider == null) {
+        if (intensitySlider == null) {
             return;
         }
+        intensitySlider.setValue(intensity);
         focusSlider.setValue(focus);
         redSlider.setValue(red);
         greenSlider.setValue(green);
         blueSlider.setValue(blue);
-        intensitySlider.setValue(intensity);
     }
 
     private int parseOrDefault(EditBox field, int fallback) {
@@ -387,6 +439,8 @@ public class FollowspotConsoleScreen extends Screen {
             return fallback;
         }
     }
+
+    // ── Tick / clavier ───────────────────────────────────────────────────────
 
     @Override
     public void tick() {
@@ -411,15 +465,13 @@ public class FollowspotConsoleScreen extends Screen {
 
     private void refreshNetworksIfNeeded() {
         UUID selected = networkIds.get(currentNetworkIndex);
-        int before = networkIds.size();
         setupNetworks();
-        // Prefer keeping the user's current selection when still present
         int idx = networkIds.indexOf(selected);
         if (idx < 0) {
             idx = networkIds.indexOf(console.getNetworkId());
         }
         currentNetworkIndex = Math.max(idx, 0);
-        if (networkButton != null && (before != networkIds.size() || idx >= 0)) {
+        if (networkButton != null) {
             networkButton.setMessage(getNetworkLabel());
         }
     }
@@ -433,47 +485,42 @@ public class FollowspotConsoleScreen extends Screen {
                         || FollowspotInputHelper.isKeyDown(minecraft.options.keyRight)));
     }
 
+    /** ZQSD / WASD dans l'ecran : la tache se deplace dans le sens vu depuis la machine. */
     private void handleMovementKeys() {
         if (minecraft == null || minecraft.level == null || !isMovementHeld()) {
             return;
         }
-        // Don't let universe/address EditBoxes swallow WASD
         setFocused(null);
 
         BaseLightBlockEntity fixture = resolveLinkedFixture();
-        if (fixture == null && linkedFixturePos == null) {
-            // Still allow sending if console already has a valid server-side patch
+        if (fixture == null) {
             updateLinkPreview();
             fixture = resolveLinkedFixture();
         }
-        FollowspotOrientationHelper.InputRemap remap = fixture != null
-                ? FollowspotOrientationHelper.computeInputRemap(fixture, pan, tilt)
-                : new FollowspotOrientationHelper.InputRemap(1f, 1f, 1f, 1f);
+        if (fixture == null) {
+            return;
+        }
 
         boolean up = moveUpHeld || FollowspotInputHelper.isKeyDown(minecraft.options.keyUp);
         boolean down = moveDownHeld || FollowspotInputHelper.isKeyDown(minecraft.options.keyDown);
         boolean left = moveLeftHeld || FollowspotInputHelper.isKeyDown(minecraft.options.keyLeft);
         boolean right = moveRightHeld || FollowspotInputHelper.isKeyDown(minecraft.options.keyRight);
 
-        boolean changed = false;
-        if (up) {
-            tilt = FollowspotDmxHelper.quantizeTilt(tilt + (int) (remap.tiltUp() * FollowspotDmxHelper.PAN_TILT_STEP));
-            changed = true;
+        double step = FollowspotDmxHelper.PAN_TILT_STEP;
+        double dRight = (right ? step : 0) - (left ? step : 0);
+        double dUp = (up ? step : 0) - (down ? step : 0);
+        if (dRight == 0 && dUp == 0) {
+            return;
         }
-        if (down) {
-            tilt = FollowspotDmxHelper.quantizeTilt(tilt + (int) (remap.tiltDown() * FollowspotDmxHelper.PAN_TILT_STEP));
-            changed = true;
-        }
-        if (left) {
-            pan = FollowspotDmxHelper.quantizePan(pan + (int) (remap.panLeft() * FollowspotDmxHelper.PAN_TILT_STEP));
-            changed = true;
-        }
-        if (right) {
-            pan = FollowspotDmxHelper.quantizePan(pan + (int) (remap.panRight() * FollowspotDmxHelper.PAN_TILT_STEP));
-            changed = true;
-        }
-        if (changed && controlSendCooldown <= 0) {
-            sendControl();
+        float[] delta = FollowspotAimMapper.solveDegrees(fixture, pan, tilt, dRight, dUp);
+        int newPan = FollowspotDmxHelper.quantizePan(Math.round(pan + delta[0]));
+        int newTilt = FollowspotDmxHelper.quantizeTilt(Math.round(tilt + delta[1]));
+        if (newPan != pan || newTilt != tilt) {
+            pan = newPan;
+            tilt = newTilt;
+            if (controlSendCooldown <= 0) {
+                sendControl();
+            }
         }
     }
 
@@ -485,36 +532,18 @@ public class FollowspotConsoleScreen extends Screen {
                 && minecraft.level.getBlockEntity(linkedFixturePos) instanceof BaseLightBlockEntity light) {
             return light;
         }
-        // Fallback: server-synced console patch (draft UI may briefly show "—")
-        return FollowspotTargetHelper.findTarget(
-                minecraft.level,
-                console.getNetworkId(),
-                console.getUniverse(),
-                console.getDmxAddress(),
-                consolePos
-        ).map(FollowspotTargetHelper.TargetMatch::fixture).orElse(null);
+        return FollowspotTargetHelper.findTarget(minecraft.level, console.getNetworkId(), console.getUniverse(),
+                console.getDmxAddress(), consolePos).map(FollowspotTargetHelper.TargetMatch::fixture).orElse(null);
     }
 
     private boolean updateMovementHeld(int keyCode, int scanCode, boolean down) {
         if (minecraft == null) {
             return false;
         }
-        if (minecraft.options.keyUp.matches(keyCode, scanCode)) {
-            moveUpHeld = down;
-            return true;
-        }
-        if (minecraft.options.keyDown.matches(keyCode, scanCode)) {
-            moveDownHeld = down;
-            return true;
-        }
-        if (minecraft.options.keyLeft.matches(keyCode, scanCode)) {
-            moveLeftHeld = down;
-            return true;
-        }
-        if (minecraft.options.keyRight.matches(keyCode, scanCode)) {
-            moveRightHeld = down;
-            return true;
-        }
+        if (minecraft.options.keyUp.matches(keyCode, scanCode)) { moveUpHeld = down; return true; }
+        if (minecraft.options.keyDown.matches(keyCode, scanCode)) { moveDownHeld = down; return true; }
+        if (minecraft.options.keyLeft.matches(keyCode, scanCode)) { moveLeftHeld = down; return true; }
+        if (minecraft.options.keyRight.matches(keyCode, scanCode)) { moveRightHeld = down; return true; }
         return false;
     }
 
@@ -538,75 +567,64 @@ public class FollowspotConsoleScreen extends Screen {
         return super.keyReleased(keyCode, scanCode, modifiers);
     }
 
+    // ── Rendu ────────────────────────────────────────────────────────────────
+
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float pt) {
-        renderBackground(g);
+    protected void renderScaled(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        TelUi.panel(g, panelX, panelY, PANEL_W, panelH);
+        g.fill(panelX, panelY + 2, panelX + PANEL_W, panelY + HEADER_H, TelUi.HEADER);
+        TelUi.hairline(g, panelX, panelY + HEADER_H, PANEL_W);
+        g.drawString(font, title, contentX, panelY + 9, TelUi.TITLE, false);
+        TelUi.pill(g, font, Component.literal("7 ch"), contentX + contentW, panelY + 7, TelUi.ACCENT);
 
-        g.fill(panelX - 1, panelY - 1, panelX + PANEL_W + 1, panelY + PANEL_H + 1, BORDER);
-        g.fill(panelX, panelY, panelX + PANEL_W, panelY + PANEL_H, BG);
-        g.fill(panelX, panelY, panelX + PANEL_W, panelY + HEADER_H, HEADER);
-
-        g.drawCenteredString(font, title, panelX + PANEL_W / 2, panelY + 9, TITLE);
-        g.drawCenteredString(font, Component.translatable("screen.followspot_console.subtitle"),
-                panelX + PANEL_W / 2, panelY + 22, SUB);
-
-        int netW = 98;
-        int fieldW = 50;
-        int uniX = contentX + netW + 10;
-        int addrX = uniX + fieldW + 12;
-
-        g.drawString(font, Component.translatable("screen.followspot_console.section_patch"),
-                contentX, panelY + HEADER_H + 8, LABEL, false);
-        g.drawString(font, Component.translatable("screen.artnetconfig.network"), contentX, patchFieldsY - 11, SUB, false);
-        g.drawString(font, Component.translatable("artneti.dmxUniverse"), uniX, patchFieldsY - 11, SUB, false);
-        g.drawString(font, Component.translatable("fixture.dmxStart"), addrX, patchFieldsY - 11, SUB, false);
-
-        int statusColor = linkedFixturePos != null ? ACCENT : WARN;
-        g.drawString(font, getLinkStatus(), contentX, patchFieldsY + ROW_H + 4, statusColor, false);
-
-        if (panTiltOnly) {
-            g.drawString(font, Component.translatable("screen.followspot_console.mode_hint"),
-                    contentX, modeButtonY + ROW_H + 3, SUB, false);
+        for (FieldFrame frame : fieldFrames) {
+            TelUi.fieldFrame(g, frame.box(), frame.x(), frame.y(), frame.w(), frame.h());
         }
 
-        if (minecraft != null && linkedFixturePos != null) {
-            int infoY = panTiltOnly ? modeButtonY + ROW_H + 14 : modeButtonY + ROW_H + 4;
-            g.drawString(font, Component.translatable("screen.followspot_console.pan_tilt",
-                    Integer.toString(pan), Integer.toString(tilt)),
-                    contentX, infoY, TEXT, false);
-            g.drawString(font, Component.translatable("screen.followspot_console.movement_hint",
-                            keyLabel(minecraft.options.keyUp), keyLabel(minecraft.options.keyLeft),
-                            keyLabel(minecraft.options.keyDown), keyLabel(minecraft.options.keyRight)),
-                    contentX, infoY + 12, SUB, false);
+        int half = (contentW - COL_GAP) / 2;
+
+        // Patch
+        TelUi.sectionLabel(g, font, Component.translatable("screen.followspot_console.section_patch"), contentX, patchSectionY, contentW);
+        TelUi.label(g, font, Component.translatable("screen.artnetconfig.network"), contentX, patchSectionY + LABEL_GAP + 3);
+        TelUi.label(g, font, Component.translatable("artneti.dmxUniverse"), contentX, patchLabelY);
+        TelUi.label(g, font, Component.translatable("fixture.dmxStart"), contentX + half + COL_GAP, patchLabelY);
+        boolean linked = linkedFixturePos != null;
+        Component status = getLinkStatus();
+        g.fill(contentX + 1, statusY + 2, contentX + 7, statusY + 8, linked ? TelUi.OK : TelUi.WARN);
+        TelUi.text(g, font, status, contentX + 12, statusY, linked ? TelUi.OK : TelUi.WARN);
+
+        // Mode
+        TelUi.sectionLabel(g, font, Component.translatable("screen.followspot_console.section_mode"), contentX, modeSectionY, contentW);
+        TelUi.text(g, font, Component.translatable(panTiltOnly
+                ? "screen.followspot_console.mode_hint"
+                : "screen.followspot_console.mode_full_hint"), contentX, modeHintY, TelUi.LABEL);
+
+        // Niveaux
+        TelUi.sectionLabel(g, font, Component.translatable("screen.followspot_console.section_levels"), contentX, levelsSectionY, contentW);
+        String[] keys = {"screen.followspot_console.intensity", "screen.followspot_console.focus",
+                "screen.followspot_console.red", "screen.followspot_console.green", "screen.followspot_console.blue"};
+        int[] tints = {TelUi.TEXT, TelUi.TEXT, 0xFFE07070, 0xFF78CC80, 0xFF7AA8F0};
+        for (int i = 0; i < 5; i++) {
+            String label = TelUi.ellipsize(font, Component.translatable(keys[i]).getString(), LEVEL_LABEL_W - 6);
+            g.drawString(font, label, contentX, levelRowY[i] + 6, panTiltOnly ? TelUi.LABEL : tints[i], false);
         }
 
-        g.drawString(font, Component.translatable("screen.followspot_console.section_control"),
-                contentX, slidersY - 11, LABEL, false);
-
-        drawSliderRow(g, "screen.followspot_console.focus", slidersY, focusSlider);
-        drawSliderRow(g, "screen.followspot_console.red", slidersY + ROW_H + GAP, redSlider);
-        drawSliderRow(g, "screen.followspot_console.green", slidersY + (ROW_H + GAP) * 2, greenSlider);
-        drawSliderRow(g, "screen.followspot_console.blue", slidersY + (ROW_H + GAP) * 3, blueSlider);
-        drawSliderRow(g, "screen.followspot_console.intensity", slidersY + (ROW_H + GAP) * 4, intensitySlider);
-
-        super.render(g, mouseX, mouseY, pt);
-    }
-
-    private void drawSliderRow(GuiGraphics g, String labelKey, int y, ValueSlider slider) {
-        Component label = Component.translatable(labelKey);
-        int maxLabelW = LABEL_COL - 4;
-        String labelText = label.getString();
-        if (font.width(labelText) > maxLabelW) {
-            while (labelText.length() > 3 && font.width(labelText + "…") > maxLabelW) {
-                labelText = labelText.substring(0, labelText.length() - 1);
-            }
-            labelText = labelText + "…";
+        // Visee
+        TelUi.sectionLabel(g, font, Component.translatable("screen.followspot_console.section_aim"), contentX, aimSectionY, contentW);
+        Component panTilt = Component.translatable("screen.followspot_console.pan_tilt", Integer.toString(pan), Integer.toString(tilt));
+        TelUi.text(g, font, panTilt, contentX, aimTextY, TelUi.TEXT);
+        if (linkedFixtureName != null) {
+            String name = TelUi.ellipsize(font, linkedFixtureName, contentW / 2);
+            g.drawString(font, name, contentX + contentW - font.width(name), aimTextY, TelUi.SUB, false);
         }
-        g.drawString(font, labelText, contentX, y + 5, TEXT, false);
-        if (slider != null) {
-            String value = Integer.toString(slider.getIntValue());
-            g.drawString(font, value, contentX + contentW - font.width(value), y + 5, SUB, false);
+        if (minecraft != null) {
+            TelUi.text(g, font, Component.translatable("screen.followspot_console.aim_hint",
+                    keyLabel(minecraft.options.keyUp), keyLabel(minecraft.options.keyLeft),
+                    keyLabel(minecraft.options.keyDown), keyLabel(minecraft.options.keyRight)),
+                    contentX, aimTextY + 11, TelUi.LABEL);
         }
+
+        renderWidgets(g, mouseX, mouseY, partialTick);
     }
 
     private Component getLinkStatus() {
@@ -618,11 +636,9 @@ public class FollowspotConsoleScreen extends Screen {
             return Component.translatable("screen.followspot_console.invalid_address", FollowspotDmxHelper.MAX_DMX_ADDRESS);
         }
         if (linkedFixturePos == null) {
-            return Component.translatable("screen.followspot_console.not_found",
-                    parseOrDefault(universeField, 0), address);
+            return Component.translatable("screen.followspot_console.not_found", parseOrDefault(universeField, 0), address);
         }
-        return Component.translatable("screen.followspot_console.linked",
-                parseOrDefault(universeField, 0), address);
+        return Component.translatable("screen.followspot_console.linked", parseOrDefault(universeField, 0), address);
     }
 
     private static String keyLabel(net.minecraft.client.KeyMapping mapping) {
@@ -631,16 +647,13 @@ public class FollowspotConsoleScreen extends Screen {
 
     @Override
     public void onClose() {
-        // Persist patch + last control values even if the player hits Cancel / Esc
-        if (minecraft != null && minecraft.level != null
-                && universeField != null && addressField != null) {
+        if (minecraft != null && minecraft.level != null && universeField != null && addressField != null) {
             UUID networkId = networkIds.get(currentNetworkIndex);
             int address = parseOrDefault(addressField, console.getDmxAddress());
             boolean patchChanged = !networkId.equals(console.getNetworkId())
                     || parseOrDefault(universeField, console.getUniverse()) != console.getUniverse()
                     || address != console.getDmxAddress()
                     || panTiltOnly != console.isPanTiltOnly();
-            // Save whenever address is valid; NULL network is allowed (clears link)
             if (patchChanged && FollowspotDmxHelper.isValidDmxAddress(address)) {
                 sendPatch();
             }
@@ -654,25 +667,28 @@ public class FollowspotConsoleScreen extends Screen {
         return false;
     }
 
-    private class ValueSlider extends AbstractSliderButton {
-        private final java.util.function.IntConsumer onChange;
+    // ── Curseur de niveau ────────────────────────────────────────────────────
 
-        ValueSlider(int x, int y, int w, int initial, java.util.function.IntConsumer onChange) {
-            super(x, y, w, ROW_H, Component.empty(), initial / 255.0);
+    private class LevelSlider extends TelUi.FlatSlider {
+        private final IntConsumer onChange;
+
+        LevelSlider(int x, int y, int w, int initial, IntConsumer onChange) {
+            super(x, y, w, WIDGET_H, initial / 255.0);
             this.onChange = onChange;
+            updateMessage();
         }
 
         void setValue(int value) {
-            this.value = Mth.clamp(value / 255.0, 0.0, 1.0);
+            setRawValue(Mth.clamp(value / 255.0, 0.0, 1.0));
         }
 
         int getIntValue() {
-            return Mth.clamp((int) Math.round(value * 255.0), 0, 255);
+            return Mth.clamp((int) Math.round(getRawValue() * 255.0), 0, 255);
         }
 
         @Override
         protected void updateMessage() {
-            setMessage(Component.empty());
+            setMessage(Component.literal(Math.round(getIntValue() / 2.55f) + "%"));
         }
 
         @Override
@@ -681,6 +697,7 @@ public class FollowspotConsoleScreen extends Screen {
                 return;
             }
             onChange.accept(getIntValue());
+            updateMessage();
             sendControl();
         }
     }

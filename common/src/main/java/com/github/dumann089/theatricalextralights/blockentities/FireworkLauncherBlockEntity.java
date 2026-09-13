@@ -2,6 +2,7 @@ package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.blocks.FireworkLauncherBlock;
 import com.github.dumann089.theatricalextralights.entities.FireworkRocketEntity;
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import com.github.dumann089.theatricalextralights.firework.FireworkPreset;
 import com.github.dumann089.theatricalextralights.firework.FireworkRocketTracker;
@@ -27,7 +28,17 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Arrays;
 import java.util.List;
 
-public class FireworkLauncherBlockEntity extends ExtraLightsLightBlockEntity {
+public class FireworkLauncherBlockEntity extends ExtraLightsLightBlockEntity implements HasSafetyArm {
+
+    @Override
+    public boolean isArmed() {
+        return safetyArmed;
+    }
+
+    @Override
+    public void setArmed(boolean armed) {
+        applySafetyArm(armed);
+    }
     private static final List<DMXPersonality> PERSONALITIES = List.of(
             new DMXPersonality(3, "3-Channel Firework")
                     .addSlot(SharedSlots.INTENSITY)
@@ -224,7 +235,7 @@ public class FireworkLauncherBlockEntity extends ExtraLightsLightBlockEntity {
             level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
 
-        int newIntensity = Byte.toUnsignedInt(ourValues[0]);
+        int newIntensity = safetyArmed ? Byte.toUnsignedInt(ourValues[0]) : 0;
         if (prevIntensity == 0 && newIntensity > 0) {
             pendingOneShot = true;
         }
