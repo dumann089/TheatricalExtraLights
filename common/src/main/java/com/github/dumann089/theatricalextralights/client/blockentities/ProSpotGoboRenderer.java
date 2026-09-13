@@ -184,7 +184,7 @@ public class ProSpotGoboRenderer extends ExtraLightsFixtureRenderer<ProSpotGoboB
         if (blockEntity.getGobo() >= 0) {
             GoboWheelAnimator animator = goboAnimators.computeIfAbsent(blockEntity, k -> new GoboWheelAnimator());
 
-            Vec3 localLensOffset = new Vec3(0.5f, 0.640f, 0.163f);
+            Vec3 localLensOffset = new Vec3(0.5f, 0.578f, 0.226f);
             float[] panPivot = blockEntity.getFixture().getPanRotationPosition();
             float[] tiltPivot = blockEntity.getFixture().getTiltRotationPosition();
             float[] structuralTransform = getThrottledStructuralTransforms(blockEntity, blockstate);
@@ -328,7 +328,7 @@ public class ProSpotGoboRenderer extends ExtraLightsFixtureRenderer<ProSpotGoboB
                 // ── Beam (gobo 0 = open) ──────────────────────────────
                 if (goboSlot == 0 && !FramingShutterRender.isActive(blockEntity)) {
                     poseStack.pushPose();
-                    poseStack.translate(0.5f, 0.640f, 0.163f);
+                    poseStack.translate(0.5f, 0.640f, 0.523f);
                     if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {
                         renderLightBeam2D(builder, poseStack, blockEntity, camera,
                                 alpha, 0.00f, (float) blockEntity.getDistance(), color, 0.007f);
@@ -345,12 +345,12 @@ public class ProSpotGoboRenderer extends ExtraLightsFixtureRenderer<ProSpotGoboB
 
                 // ── Lens glow & lens cap ─────────────────────────────────────────
                 poseStack.pushPose();
-                poseStack.translate(0.5f, 0.640f, 0.163f);
-                renderLensGlow(builder, poseStack, color, 0.055f);
+                poseStack.translate(0.5f, 0.578f, 0.226f);
+                renderLensGlow(builder, poseStack, color, 0.035f);
                 poseStack.popPose();
 
                 renderLens(bufferSource, poseStack, alpha, color,
-                        0.055f, 0.5f, 0.640f, 0.163f);
+                        0.035f, 0.5f, 0.578f, 0.226f);
 
                 poseStack.popPose();
             }
@@ -390,7 +390,7 @@ public class ProSpotGoboRenderer extends ExtraLightsFixtureRenderer<ProSpotGoboB
             int color,
             int goboSlot
     ) {
-        FakeVolumetricBeamPattern pattern = GoboLibrary.SpotXtreme.getPattern(goboSlot);
+        FakeVolumetricBeamPattern pattern = GoboLibrary.PROSPOT.getPattern(goboSlot);
 
         final float LENS_X = 0.5f;
         final float LENS_Y = 0.640f;

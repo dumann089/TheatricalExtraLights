@@ -149,16 +149,16 @@ public class ProSpotGoboBlockEntity extends ExtraLightsLightBlockEntity
     }
 
     @Override
-    public Fixture getFixture() { return Fixtures.SPOT_XTREME_GOBO.get(); }
+    public Fixture getFixture() { return Fixtures.PRO_SPOT_GOBO.get(); }
 
     @Override
-    public ResourceLocation getFixtureId() { return Fixtures.SPOT_XTREME_GOBO.getId(); }
+    public ResourceLocation getFixtureId() { return Fixtures.PRO_SPOT_GOBO.getId(); }
 
     @Override
     public int getDeviceTypeId() { return 0x01; }
 
     @Override
-    public String getModelName() { return "SPOT XTREME GOBO"; }
+    public String getModelName() { return "PRO SPOT GOBO"; }
 
     // ── Personnalite DMX + module de couteaux ────────────────────────────────
     private int activePersonalityIndex = 0;
