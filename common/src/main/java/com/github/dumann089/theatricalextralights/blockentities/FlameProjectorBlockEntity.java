@@ -15,6 +15,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.Arrays;
 
@@ -129,7 +130,7 @@ public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity imple
         }
 
         if (storePrev() && level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
 
         intensity = safetyArmed ? Byte.toUnsignedInt(ourValues[0]) : 0;
@@ -141,7 +142,7 @@ public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity imple
         blue = FLAME_HOT_COLOR & 0xFF;
 
         if (level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
         setChanged();
     }

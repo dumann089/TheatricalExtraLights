@@ -23,6 +23,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -135,7 +136,7 @@ public class LedFacadeBlockEntity extends ExtraLightsLightBlockEntity {
         smoothing = v;
         setChanged();
         if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
     }
 
@@ -157,7 +158,7 @@ public class LedFacadeBlockEntity extends ExtraLightsLightBlockEntity {
         if (!level.isClientSide) {
             rebuildSubConsumers();
             setChanged();
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         } else {
             recomputePixelColors();
         }

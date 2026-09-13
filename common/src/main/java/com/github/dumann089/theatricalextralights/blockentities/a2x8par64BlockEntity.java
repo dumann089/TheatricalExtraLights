@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.List;
 
@@ -65,7 +66,7 @@ public class a2x8par64BlockEntity extends ExtraLightsLightBlockEntity implements
 
         setChanged();
         if (level != null)
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
     }
 
     // ─── COLOR ────────────────────────────────────────────────────────────────

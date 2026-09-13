@@ -17,6 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.Arrays;
 import java.util.List;
@@ -70,7 +71,7 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
         }
         setChanged();
         if (level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
     }
 
@@ -269,7 +270,7 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
         if (level != null && level.isClientSide && usesStrobeChannel()) {
             prevStrobe = strobe;
             if (shouldForceStrobeRepaint()) {
-                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+                BlockEntitySync.sendData(this);
                 StrobeRenderHelper.markSectionDirty(getBlockPos());
             }
         }

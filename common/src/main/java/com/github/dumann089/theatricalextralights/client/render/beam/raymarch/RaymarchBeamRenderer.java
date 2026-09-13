@@ -192,6 +192,11 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 shader.safeGetUniform("BeamDir").set(dirVS.x, dirVS.y, dirVS.z);
                 shader.safeGetUniform("AxisU").set(uVS.x, uVS.y, uVS.z);
                 shader.safeGetUniform("AxisV").set(vVS.x, vVS.y, vVS.z);
+                // Repere monde : la haze est fixe dans la salle, c'est le faisceau qui la traverse.
+                shader.safeGetUniform("BeamOriginW").set((float) s.originX, (float) s.originY, (float) s.originZ);
+                shader.safeGetUniform("BeamDirW").set((float) s.dirX, (float) s.dirY, (float) s.dirZ);
+                shader.safeGetUniform("AxisUW").set((float) s.uX, (float) s.uY, (float) s.uZ);
+                shader.safeGetUniform("AxisVW").set((float) s.vX, (float) s.vY, (float) s.vZ);
                 shader.safeGetUniform("TanHalfAngle").set(s.tanHalfAngle);
                 shader.safeGetUniform("BeamLength").set(s.scanLen);
                 shader.safeGetUniform("BaseRadius").set(s.baseRadius);

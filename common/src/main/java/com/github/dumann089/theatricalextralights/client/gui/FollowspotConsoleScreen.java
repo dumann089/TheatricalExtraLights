@@ -5,6 +5,7 @@ import com.github.dumann089.theatricalextralights.client.followspot.FollowspotFi
 import com.github.dumann089.theatricalextralights.client.followspot.FollowspotInputHelper;
 import com.github.dumann089.theatricalextralights.net.FollowspotConsoleControlPacket;
 import com.github.dumann089.theatricalextralights.net.FollowspotConsolePatchPacket;
+import com.github.dumann089.theatricalextralights.net.FollowspotPresetPacket;
 import com.github.dumann089.theatricalextralights.net.ModNetworkHandler;
 import com.github.dumann089.theatricalextralights.util.FollowspotAimMapper;
 import com.github.dumann089.theatricalextralights.util.FollowspotDmxHelper;
@@ -48,6 +49,8 @@ public class FollowspotConsoleScreen extends TelScaledScreen {
     private EditBox addressField;
     private TelUi.FlatButton networkButton;
     private final List<TelUi.FlatButton> modeButtons = new ArrayList<>();
+    private final List<TelUi.FlatButton> presetButtons = new ArrayList<>();
+    private int presetHintY;
     private TelUi.FlatButton controlButton;
 
     private LevelSlider intensitySlider;
@@ -215,7 +218,23 @@ public class FollowspotConsoleScreen extends TelScaledScreen {
         aimSectionY = y;
         y += LABEL_GAP + 3;
         aimTextY = y;
-        y += 11 * 2 + SECTION_GAP;
+        y += 11 * 2 + ROW_GAP;
+
+        // ── Memoires ──
+        presetButtons.clear();
+        int presetCount = FollowspotConsoleBlockEntity.PRESET_COUNT;
+        int presetGap = 4;
+        int presetW = (contentW - presetGap * (presetCount - 1)) / presetCount;
+        for (int i = 0; i < presetCount; i++) {
+            final int slot = i;
+            TelUi.FlatButton b = new TelUi.FlatButton(contentX + i * (presetW + presetGap), y, presetW, WIDGET_H,
+                    Component.literal(Integer.toString(i + 1)), TelUi.ButtonStyle.GHOST, btn -> onPresetClicked(slot));
+            presetButtons.add(addRenderableWidget(b));
+        }
+        y += WIDGET_H + 3;
+        presetHintY = y;
+        y += 11 + SECTION_GAP;
+        refreshPresetButtons();
 
         // ── Pied ──
         int btnW = (contentW - COL_GAP * 2) / 3;
@@ -256,6 +275,32 @@ public class FollowspotConsoleScreen extends TelScaledScreen {
         pan = console.getPan();
         tilt = console.getTilt();
         panTiltOnly = console.isPanTiltOnly();
+    }
+
+    /** Clic : rappel ; Maj + clic : enregistrement de la position et des niveaux courants. */
+    private void onPresetClicked(int slot) {
+        boolean shift = hasShiftDown();
+        if (shift) {
+            console.setPreset(slot, true, pan, tilt, intensity, focus);
+            ModNetworkHandler.CHANNEL.sendToServer(new FollowspotPresetPacket(consolePos, slot, true, pan, tilt, intensity, focus));
+        } else if (console.hasPreset(slot)) {
+            pan = console.getPresetPan(slot);
+            tilt = console.getPresetTilt(slot);
+            if (!panTiltOnly) {
+                intensity = console.getPresetIntensity(slot);
+                focus = console.getPresetFocus(slot);
+                updateSliders();
+            }
+            sendControl();
+        }
+        refreshPresetButtons();
+    }
+
+    private void refreshPresetButtons() {
+        for (int i = 0; i < presetButtons.size(); i++) {
+            TelUi.FlatButton b = presetButtons.get(i);
+            b.setSelected(console.hasPreset(i));
+        }
     }
 
     private void setMode(boolean ptOnly) {
@@ -623,6 +668,10 @@ public class FollowspotConsoleScreen extends TelScaledScreen {
                     keyLabel(minecraft.options.keyDown), keyLabel(minecraft.options.keyRight)),
                     contentX, aimTextY + 11, TelUi.LABEL);
         }
+
+        // Memoires
+        refreshPresetButtons();
+        TelUi.text(g, font, Component.translatable("screen.followspot_console.preset_hint"), contentX, presetHintY, TelUi.LABEL);
 
         renderWidgets(g, mouseX, mouseY, partialTick);
     }

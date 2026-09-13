@@ -3,6 +3,7 @@ package com.github.dumann089.theatricalextralights.client.followspot;
 import com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.FollowspotConsoleBlockEntity;
 import com.github.dumann089.theatricalextralights.net.FollowspotConsoleControlPacket;
+import com.github.dumann089.theatricalextralights.net.FollowspotPresetPacket;
 import com.github.dumann089.theatricalextralights.net.ModNetworkHandler;
 import com.github.dumann089.theatricalextralights.util.FollowspotAimMapper;
 import com.github.dumann089.theatricalextralights.util.FollowspotBeamHelper;
@@ -265,6 +266,55 @@ public final class FollowspotFixtureCameraSession {
         dirty = true;
         sendControlIfReady();
         return true;
+    }
+
+    // ── Memoires de position ─────────────────────────────────────────────────
+
+    private int lastPreset = -1;
+
+    public int getLastPreset() {
+        return lastPreset;
+    }
+
+    public FollowspotConsoleBlockEntity getConsole() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft == null || minecraft.level == null) {
+            return null;
+        }
+        BlockEntity be = minecraft.level.getBlockEntity(consolePos);
+        return be instanceof FollowspotConsoleBlockEntity console ? console : null;
+    }
+
+    /** Touches 1-8 : rappel d'une memoire (pan, tilt, et niveaux en mode complet). */
+    public void recallPreset(int slot) {
+        FollowspotConsoleBlockEntity console = getConsole();
+        if (console == null || !console.hasPreset(slot)) {
+            return;
+        }
+        panAngle = Mth.clamp(console.getPresetPan(slot), PAN_MIN, PAN_MAX);
+        tiltAngle = Mth.clamp(console.getPresetTilt(slot), TILT_MIN, TILT_MAX);
+        if (!panTiltOnly) {
+            intensity = console.getPresetIntensity(slot);
+            focus = console.getPresetFocus(slot);
+            blackoutRestore = -1;
+        }
+        lastPreset = slot;
+        snapAnglesToDmx();
+        applyLocalFixtureState();
+        sendControlNow();
+    }
+
+    /** Maj + 1-8 : enregistre la position et les niveaux courants dans la memoire. */
+    public void storePreset(int slot) {
+        FollowspotConsoleBlockEntity console = getConsole();
+        if (console == null) {
+            return;
+        }
+        int storedIntensity = blackoutRestore >= 0 ? blackoutRestore : intensity;
+        console.setPreset(slot, true, getPan(), getTilt(), storedIntensity, focus);
+        ModNetworkHandler.CHANNEL.sendToServer(new FollowspotPresetPacket(
+                consolePos, slot, true, getPan(), getTilt(), storedIntensity, focus));
+        lastPreset = slot;
     }
 
     /** Espace : blackout (intensite a 0, memorisee) ou retour. */

@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.Arrays;
 
@@ -52,7 +53,7 @@ public class MovingJetBlockEntity extends ExtraLightsLightBlockEntity
         this.jetThickness = Mth.clamp(thickness, MIN_THICKNESS, MAX_THICKNESS);
         setChanged();
         if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
     }
 
@@ -66,7 +67,7 @@ public class MovingJetBlockEntity extends ExtraLightsLightBlockEntity
         this.jetHeight = Mth.clamp(h, MIN_JET_HEIGHT, MAX_JET_HEIGHT);
         setChanged();
         if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
     }
 
@@ -85,7 +86,7 @@ public class MovingJetBlockEntity extends ExtraLightsLightBlockEntity
         tilt = (int) ((convertByteToInt(ourValues[2]) / 255f) * 180f - 90f);
 
         if (storePrev()) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
         setChanged();
     }

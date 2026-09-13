@@ -1,6 +1,5 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
-import com.github.dumann089.theatricalextralights.TheatricalExtraLights;
 import com.github.dumann089.theatricalextralights.blocks.LaserBlock;
 import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
@@ -15,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -44,16 +44,9 @@ public class LaserBlockEntity extends ExtraLightsLightBlockEntity implements Dmx
      */
     private final Deque<TrailFrame> trailBuffer = new ArrayDeque<>();
 
-    // DEBUG: limit how many consume()/load()/save() calls we log
-    private int consumeLogCounter = 0;
-    private int loadLogCounter = 0;
-    private int saveLogCounter = 0;
-
     public LaserBlockEntity(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState) {
         super(blockEntityType, blockPos, blockState);
         setChannelCount(CHANNEL_COUNT);
-        TheatricalExtraLights.LOGGER.info("[LaserBE] constructed @{} channelCount={} (NEW 19ch class loaded)",
-                blockPos, CHANNEL_COUNT);
     }
 
     public LaserBlockEntity(BlockPos pos, BlockState state) {
@@ -96,13 +89,6 @@ public class LaserBlockEntity extends ExtraLightsLightBlockEntity implements Dmx
         tilt = -(int) ((u(v[16]) - 127) * 45) / 127;
         focus = u(v[17]);
         persistence = u(v[18]);
-        if (consumeLogCounter < 5) {
-            consumeLogCounter++;
-            TheatricalExtraLights.LOGGER.info(
-                    "[LaserBE@{}] consume() #{} intensity={} pattern={} size={} amp={} pan={} tilt={} channelCount={} channelStart={} v.length={}",
-                    getBlockPos(), consumeLogCounter, intensity, pattern, size, amplitude, pan, tilt,
-                    getChannelCount(), getChannelStart(), v.length);
-        }
         boolean changed = intensity != _pi || red != _pr || green != _pg || blue != _pb || focus != _pf
                 || pan != _pp || tilt != _pt
                 || red2 != _pr2 || green2 != _pg2 || blue2 != _pb2
@@ -229,11 +215,6 @@ public class LaserBlockEntity extends ExtraLightsLightBlockEntity implements Dmx
         tag.putInt("Rotation", rotation);
         tag.putInt("Persistence", persistence);
         tag.putBoolean("EmergencyStop", emergencyStop);
-        if (saveLogCounter < 5) {
-            saveLogCounter++;
-            TheatricalExtraLights.LOGGER.info("[LaserBE@{}] write() #{} pattern={} size={} amp={} hasKey={}",
-                    getBlockPos(), saveLogCounter, pattern, size, amplitude, tag.contains("Pattern"));
-        }
     }
 
     @Override
@@ -253,12 +234,6 @@ public class LaserBlockEntity extends ExtraLightsLightBlockEntity implements Dmx
         rotation = tag.getInt("Rotation");
         persistence = tag.getInt("Persistence");
         emergencyStop = tag.getBoolean("EmergencyStop");
-        if (loadLogCounter < 5) {
-            loadLogCounter++;
-            TheatricalExtraLights.LOGGER.info("[LaserBE@{}] read() #{} pattern={} size={} amp={} hasKey={} side={}",
-                    getBlockPos(), loadLogCounter, pattern, size, amplitude,
-                    tag.contains("Pattern"), level == null ? "?" : (level.isClientSide ? "CLIENT" : "SERVER"));
-        }
     }
 
     private static int u(byte b) {
@@ -292,7 +267,7 @@ public class LaserBlockEntity extends ExtraLightsLightBlockEntity implements Dmx
         emergencyStop = stop;
         if (level != null && !level.isClientSide) {
             setChanged();
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         } else if (level != null) {
             StrobeRenderHelper.markSectionDirty(getBlockPos());
         }

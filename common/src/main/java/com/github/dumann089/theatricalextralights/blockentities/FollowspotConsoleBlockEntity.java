@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -31,8 +32,38 @@ public class FollowspotConsoleBlockEntity extends ClientSyncBlockEntity {
     /** When true, console only writes pan/tilt — intensity/RGB/focus stay on the desk / Art-Net. */
     private boolean panTiltOnly;
 
+    /** Memoires de position (pan, tilt, intensite, focus), comme sur un vrai pupitre de poursuite. */
+    public static final int PRESET_COUNT = 8;
+    private final boolean[] presetSet = new boolean[PRESET_COUNT];
+    private final int[] presetPan = new int[PRESET_COUNT];
+    private final int[] presetTilt = new int[PRESET_COUNT];
+    private final int[] presetIntensity = new int[PRESET_COUNT];
+    private final int[] presetFocus = new int[PRESET_COUNT];
+
     public FollowspotConsoleBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+    }
+
+    public boolean hasPreset(int slot) {
+        return slot >= 0 && slot < PRESET_COUNT && presetSet[slot];
+    }
+
+    public int getPresetPan(int slot) { return presetPan[slot]; }
+    public int getPresetTilt(int slot) { return presetTilt[slot]; }
+    public int getPresetIntensity(int slot) { return presetIntensity[slot]; }
+    public int getPresetFocus(int slot) { return presetFocus[slot]; }
+
+    /** Enregistre ou efface ({@code store == false}) une memoire. Ne synchronise pas. */
+    public void setPreset(int slot, boolean store, int pan, int tilt, int intensity, int focus) {
+        if (slot < 0 || slot >= PRESET_COUNT) {
+            return;
+        }
+        presetSet[slot] = store;
+        presetPan[slot] = FollowspotDmxHelper.quantizePan(pan);
+        presetTilt[slot] = FollowspotDmxHelper.quantizeTilt(tilt);
+        presetIntensity[slot] = clamp(intensity);
+        presetFocus[slot] = clamp(focus);
+        setChanged();
     }
 
     public FollowspotConsoleBlockEntity(BlockPos pos, BlockState state) {
@@ -122,7 +153,7 @@ public class FollowspotConsoleBlockEntity extends ClientSyncBlockEntity {
     public void syncToClients() {
         setChanged();
         if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
     }
 
@@ -213,6 +244,19 @@ public class FollowspotConsoleBlockEntity extends ClientSyncBlockEntity {
         tag.putInt("pan", pan);
         tag.putInt("tilt", tilt);
         tag.putBoolean("panTiltOnly", panTiltOnly);
+        CompoundTag presets = new CompoundTag();
+        for (int i = 0; i < PRESET_COUNT; i++) {
+            if (!presetSet[i]) {
+                continue;
+            }
+            CompoundTag p = new CompoundTag();
+            p.putInt("pan", presetPan[i]);
+            p.putInt("tilt", presetTilt[i]);
+            p.putInt("intensity", presetIntensity[i]);
+            p.putInt("focus", presetFocus[i]);
+            presets.put(Integer.toString(i), p);
+        }
+        tag.put("presets", presets);
     }
 
     @Override
@@ -230,5 +274,17 @@ public class FollowspotConsoleBlockEntity extends ClientSyncBlockEntity {
         pan = tag.getInt("pan");
         tilt = tag.getInt("tilt");
         panTiltOnly = tag.contains("panTiltOnly") && tag.getBoolean("panTiltOnly");
+        CompoundTag presets = tag.getCompound("presets");
+        for (int i = 0; i < PRESET_COUNT; i++) {
+            String key = Integer.toString(i);
+            presetSet[i] = presets.contains(key);
+            if (presetSet[i]) {
+                CompoundTag p = presets.getCompound(key);
+                presetPan[i] = p.getInt("pan");
+                presetTilt[i] = p.getInt("tilt");
+                presetIntensity[i] = p.getInt("intensity");
+                presetFocus[i] = p.getInt("focus");
+            }
+        }
     }
 }

@@ -117,7 +117,8 @@ public class GoboGPUProjector {
         Direction hitDirection = hasOcclusion ? hitResult.getDirection() : Direction.UP;
         final Vec3 finalOcclusionNormal = new Vec3(hitDirection.getStepX(), hitDirection.getStepY(), hitDirection.getStepZ()).normalize();
 
-        final float finalFocus = be.getFocus() / 255.0f;
+        // Le frost adoucit le bord comme un defocus supplementaire.
+        final float finalFocus = Math.min(1.0f, (be.getFocus() + be.getFrost()) / 255.0f);
         final float finalIntensity = intensity;
         final float finalTanHalfAngle = tanHalfAngle;
         final float finalMaxDistance = maxDistance;

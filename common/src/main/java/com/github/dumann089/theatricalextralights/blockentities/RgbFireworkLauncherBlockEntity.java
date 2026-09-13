@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.Arrays;
 
@@ -58,7 +59,7 @@ public class RgbFireworkLauncherBlockEntity extends FireworkLauncherBlockEntity 
         }
 
         if (storePrev() && level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
 
         int newIntensity = safetyArmed ? Byte.toUnsignedInt(ourValues[0]) : 0;
@@ -78,7 +79,7 @@ public class RgbFireworkLauncherBlockEntity extends FireworkLauncherBlockEntity 
         pan = 0;
 
         if (level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
         setChanged();
     }

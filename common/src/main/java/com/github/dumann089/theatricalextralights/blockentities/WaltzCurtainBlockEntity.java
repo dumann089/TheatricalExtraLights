@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 public class WaltzCurtainBlockEntity extends ExtraLightsLightBlockEntity
         implements HasJetHeight, HasJetThickness {
@@ -49,7 +50,7 @@ public class WaltzCurtainBlockEntity extends ExtraLightsLightBlockEntity
         this.jetThickness = Mth.clamp(thickness, MIN_THICKNESS, MAX_THICKNESS);
         setChanged();
         if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
     }
 
@@ -73,7 +74,7 @@ public class WaltzCurtainBlockEntity extends ExtraLightsLightBlockEntity
         this.jetHeight = Mth.clamp(h, MIN_JET_HEIGHT, MAX_JET_HEIGHT);
         setChanged();
         if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
     }
 
@@ -112,7 +113,7 @@ public class WaltzCurtainBlockEntity extends ExtraLightsLightBlockEntity
         // 4. Si CUALQUIER canal cambió (incluyendo el nuestro), forzamos la actualización visual
         if (baseChanged || swingChanged) {
             if (level != null && !level.isClientSide) {
-                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+                BlockEntitySync.sendData(this);
             }
             setChanged();
         }

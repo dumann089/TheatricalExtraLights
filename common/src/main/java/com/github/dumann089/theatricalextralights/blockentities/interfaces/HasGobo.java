@@ -42,4 +42,19 @@ public interface HasGobo extends HasExtendedBeamChannels {
 
     /** Tilt interpolado en grados. */
     float getPartialTiltDeg(float partialTicks);
+
+    /** Frost 0-255 (personnalite Profile), 0 sinon. */
+    default int getFrost() {
+        return 0;
+    }
+
+    /** Nombre de faisceaux du prisme (1 = pas de prisme). */
+    default int getPrismFacets() {
+        return 1;
+    }
+
+    /** Angle du prisme en degres, interpole. */
+    default float getPrismAngleDeg(float partialTicks) {
+        return 0f;
+    }
 }

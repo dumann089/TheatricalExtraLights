@@ -15,6 +15,9 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 /**
  * Base DMX Extra Lights : préserve tous les prev* au sync client et les avance côté client
@@ -52,10 +55,28 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         }
         if (level != null && !level.isClientSide) {
             setChanged();
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         } else if (level != null) {
             StrobeRenderHelper.markSectionDirty(getBlockPos());
         }
+    }
+
+    /**
+     * Luminance dynamique alignee sur {@link #getIntensity()} plutot que sur le champ brut :
+     * un shutter ferme ou une cle desarmee doit aussi eteindre la lumiere Shimmer, sinon
+     * Theatrical enregistre une source sans position d'emission (le raytrace ne tourne que
+     * si getIntensity() > 0) et plante dans getLightPos.
+     */
+    @Override
+    public int getLightLuminance() {
+        return (int) (Math.max(0f, getIntensity()) / 255f * 15f);
+    }
+
+    /** Position d'emission avec repli sur le bloc si aucun raytrace n'a encore ete fait. */
+    @Override
+    public Vector3f getLightPos() {
+        BlockPos emission = getEmissionBlock();
+        return Vec3.atCenterOf(emission != null ? emission : getBlockPos()).toVector3f();
     }
 
     public float getMountOffsetX() {
@@ -110,7 +131,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
             return;
         }
         setChanged();
-        level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        BlockEntitySync.sendData(this);
     }
 
     private void writeMountTransform(CompoundTag tag) {
@@ -139,6 +160,25 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
                 : tag.contains("mountRoll") ? tag.getFloat("mountRoll") : 0.0F;
     }
 
+    /**
+     * Lit la personnalite Profile 16 bit dans {@code state} et pousse le resultat dans les
+     * champs de base (intensite, RGB, focus, pan, tilt). Retourne true si quelque chose a change.
+     */
+    protected boolean consumeProfileHead(byte[] values, com.github.dumann089.theatricalextralights.util.ProfileHeadState state) {
+        int _pi = intensity, _pr = red, _pg = green, _pb = blue, _pf = focus, _pp = pan, _pt = tilt;
+        boolean changed = state.consume(values);
+        intensity = state.intensity8();
+        int colour = state.staticColour();
+        red = (colour >> 16) & 0xFF;
+        green = (colour >> 8) & 0xFF;
+        blue = colour & 0xFF;
+        focus = state.getFocusRaw(values);
+        pan = state.getPanInt();
+        tilt = state.getTiltInt();
+        return changed || intensity != _pi || red != _pr || green != _pg || blue != _pb
+                || focus != _pf || pan != _pp || tilt != _pt;
+    }
+
     /** Capture les prev* serveur avant lecture DMX. Retourne true si prev* étaient en retard. */
     protected boolean beginDmxUpdate() {
         return storePrev();
@@ -165,7 +205,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
             boolean batchQueued = !hasExtraDmxChannelsBeyondBatch()
                     && TheatricalDmxFrameBridge.markDirtyIfBatchEnabled(getBlockPos());
             if (!batchQueued) {
-                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+                BlockEntitySync.sendData(this);
             }
         }
         if (valuesChanged) {
@@ -215,7 +255,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         prevGreen = green;
         prevBlue = blue;
         setChanged();
-        level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        BlockEntitySync.sendData(this);
     }
 
     /**
@@ -253,7 +293,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         prevPan = qi;
         prevTilt = qt;
         setChanged();
-        level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        BlockEntitySync.sendData(this);
     }
 
     @Override
@@ -381,6 +421,13 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         int savedPrevRed = tag.contains("prevRed") ? tag.getInt("prevRed") : prevRed;
         int savedPrevGreen = tag.contains("prevGreen") ? tag.getInt("prevGreen") : prevGreen;
         int savedPrevBlue = tag.contains("prevBlue") ? tag.getInt("prevBlue") : prevBlue;
+
+        // Cote client, la longueur du faisceau vient du raytrace local (chaque tick) : ne pas
+        // la remplacer par celle du serveur a chaque paquet DMX, sinon le faisceau saute
+        // d'une longueur a l'autre a chaque changement de valeur.
+        if (level != null && level.isClientSide && getDistance() > 0 && tag.contains("distance")) {
+            tag.putDouble("distance", getDistance());
+        }
 
         super.read(tag);
 

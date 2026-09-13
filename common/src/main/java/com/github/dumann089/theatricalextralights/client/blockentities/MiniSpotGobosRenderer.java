@@ -31,6 +31,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import com.github.dumann089.theatricalextralights.client.render.beam.FramingShutterRender;
+import com.github.dumann089.theatricalextralights.client.render.beam.ProfileHeadRender;
 
 import java.util.Optional;
 import java.util.Map;
@@ -140,8 +141,8 @@ public class MiniSpotGobosRenderer extends ExtraLightsFixtureRenderer<MiniSpotGo
         state.lastUpdateTime = now;
         deltaTime = Math.min(deltaTime, 0.1f);
 
-        float targetPan = blockEntity.getPrevPan() + (blockEntity.getPan() - blockEntity.getPrevPan()) * partialTicks;
-        float targetTilt = blockEntity.getPrevTilt() + (blockEntity.getTilt() - blockEntity.getPrevTilt()) * partialTicks;
+        float targetPan = blockEntity.getPartialPanDeg(partialTicks);
+        float targetTilt = blockEntity.getPartialTiltDeg(partialTicks);
 
         float alpha = 1f - (float) Math.exp(-SMOOTH_SPEED * deltaTime);
         state.smoothPan = state.smoothPan + (targetPan - state.smoothPan) * alpha;
@@ -300,8 +301,13 @@ public class MiniSpotGobosRenderer extends ExtraLightsFixtureRenderer<MiniSpotGo
                 renderData = FramingShutterRender.attach(renderData, blockEntity, partialTicks);
                 publishCone(blockEntity, renderData);
 
-                volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())
-                        .render(renderData, poseStack);
+                VolumetricBeamRenderer volumetric = volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer());
+
+                for (BeamRenderData prismBeam : ProfileHeadRender.prismBeams(renderData, blockEntity, partialTicks)) {
+
+                    volumetric.render(prismBeam, poseStack);
+
+                }
             }
         }
 

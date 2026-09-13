@@ -12,6 +12,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.Arrays;
 
@@ -56,7 +57,7 @@ public class WhiteStrobeBlockEntity extends ExtraLightsLightBlockEntity implemen
     public void lightTick() {
         super.lightTick();
         if (level != null && level.isClientSide && shouldForceStrobeRepaint()) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
             StrobeRenderHelper.markSectionDirty(getBlockPos());
         }
     }

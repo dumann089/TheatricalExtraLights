@@ -27,7 +27,8 @@ public class MovingVL2CBeamsFixture extends Fixture {
                     .addSlot(SharedSlots.FOCUS) // Prism Beams
                     .addSlot(SharedSlots.FOCUS) // Prism Zoom
                     .addSlot(SharedSlots.FOCUS), // Prism Rotation
-            FramingShutterChannels.PERSONALITY_19CH
+            FramingShutterChannels.PERSONALITY_19CH,
+            ProfileHeadChannels.PERSONALITY_PROFILE
     );
 
     private static final ResourceLocation TILT_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/moving_vl2c/moving_vl2c_tilt");

@@ -24,6 +24,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.Arrays;
 import java.util.List;
@@ -275,7 +276,7 @@ public class PyroFanBlockEntity extends ExtraLightsLightBlockEntity implements H
         byte[] ourValues = Arrays.copyOfRange(dmxValues, start, start + channelFootprint);
 
         if (storePrev() && level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
 
         if (getActivePersonality() == PyroFanFixture.PERSONALITY_3CH) {
@@ -313,7 +314,7 @@ public class PyroFanBlockEntity extends ExtraLightsLightBlockEntity implements H
         }
 
         if (level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
         setChanged();
     }
@@ -347,7 +348,7 @@ public class PyroFanBlockEntity extends ExtraLightsLightBlockEntity implements H
         syncChannelCountFromPersonality();
         setChanged();
         if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
     }
 

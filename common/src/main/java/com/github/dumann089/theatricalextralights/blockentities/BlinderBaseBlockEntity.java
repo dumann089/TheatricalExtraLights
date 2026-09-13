@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.List;
 
@@ -121,7 +122,7 @@ public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity
         setChannelCount(getPersonalityChannelCount());
         setChanged();
         if (level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
     }
 
@@ -235,7 +236,7 @@ public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity
         if (level != null && level.isClientSide) {
             prevStrobe = strobe;
             if (shouldForceStrobeRepaint()) {
-                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+                BlockEntitySync.sendData(this);
                 StrobeRenderHelper.markSectionDirty(getBlockPos());
             }
         }

@@ -3,6 +3,7 @@ package com.github.dumann089.theatricalextralights.client.gui;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFramingShutters;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGobo;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasPersonality;
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasProfileHead;
 import com.github.dumann089.theatricalextralights.fixtures.FramingShutterChannels;
 import com.github.dumann089.theatricalextralights.util.FramingShutterState;
 import com.github.dumann089.theatricalextralights.net.ModNetworkHandler;
@@ -88,8 +89,11 @@ public class ExtraLightsConfigScreen extends TelScaledScreen {
     private int networkLabelY;
     private int shuttersSectionY;
     private int shuttersCardY;
+    private int profileSectionY;
+    private int profileCardY = -1;
 
     private static final int SHUTTER_CARD_H = 90;
+    private static final int PROFILE_CARD_H = 64;
 
     public ExtraLightsConfigScreen(BaseDMXConsumerLightBlockEntity blockEntity, BlockPos pos, String title) {
         this(blockEntity, pos, title, true);
@@ -259,6 +263,16 @@ public class ExtraLightsConfigScreen extends TelScaledScreen {
             y += LABEL_GAP + 3;
             shuttersCardY = y;
             y += SHUTTER_CARD_H + SECTION_GAP;
+        }
+
+        // ── Profile 16 bit : valeurs decodees en direct ──
+        if (blockEntity instanceof HasProfileHead && getSelectedChannelCount() >= com.github.dumann089.theatricalextralights.fixtures.ProfileHeadChannels.TOTAL_CHANNELS) {
+            profileSectionY = y;
+            y += LABEL_GAP + 3;
+            profileCardY = y;
+            y += PROFILE_CARD_H + SECTION_GAP;
+        } else {
+            profileCardY = -1;
         }
 
         // ── Reglages ──
@@ -577,6 +591,9 @@ public class ExtraLightsConfigScreen extends TelScaledScreen {
         if (blockEntity instanceof HasFramingShutters shutters) {
             renderShutterCard(g, shutters);
         }
+        if (profileCardY >= 0 && blockEntity instanceof HasProfileHead profileHead) {
+            renderProfileCard(g, profileHead.getProfileHead());
+        }
 
         // Reglages
         drawSectionLabel(g, Component.translatable("screen.extralightsconfig.section_settings"), settingsSectionY);
@@ -649,6 +666,46 @@ public class ExtraLightsConfigScreen extends TelScaledScreen {
         String signed = (rotDeg > 0 ? "+" : "") + rotDeg;
         TelUi.text(g, font, Component.translatable("screen.shutters.rotation", signed), tx, ty + 4 * 11 + 2,
                 rotDeg != 0 ? TelUi.ACCENT : TelUi.LABEL);
+    }
+
+    /** Carte Profile : ce que le mod decode de la console, canal par canal, plus la sortie effective. */
+
+    private void renderProfileCard(GuiGraphics g, com.github.dumann089.theatricalextralights.util.ProfileHeadState p) {
+        drawSectionLabel(g, Component.translatable("screen.profile.section"), profileSectionY);
+        int x = contentLeft;
+        int y = profileCardY;
+        int w = contentWidth;
+        TelUi.card(g, x, y, w, PROFILE_CARD_H);
+
+        if (!p.isActive()) {
+            TelUi.text(g, font, Component.translatable("screen.profile.waiting"), x + 6, y + 7, TelUi.SUB);
+            return;
+        }
+
+        int half = (w - 12) / 2;
+        int col1 = x + 6;
+        int col2 = x + 6 + half;
+        int shutter = p.getShutter();
+        boolean open = p.isShutterOpen();
+        int outPct = open ? Math.round(p.intensity8() / 2.55f) : 0;
+
+        TelUi.text(g, font, Component.literal("Shutter " + shutter + " · " + (open ? "open" : "closed")), col1, y + 7,
+                open ? TelUi.TEXT : TelUi.WARN);
+        TelUi.text(g, font, Component.literal("Dimmer " + Math.round(p.intensity8() / 2.55f) + "% · out " + outPct + "%"),
+                col2, y + 7, outPct > 0 ? TelUi.OK : TelUi.WARN);
+
+        TelUi.text(g, font, Component.literal("RGB " + p.getRed() + " / " + p.getGreen() + " / " + p.getBlue()),
+                col1, y + 20, TelUi.TEXT);
+        int colour = p.staticColour();
+        g.fill(col2, y + 19, col2 + 24, y + 29, 0xFF000000 | colour);
+        TelUi.outline(g, col2, y + 19, 24, 10, TelUi.BORDER);
+
+        TelUi.text(g, font, Component.literal("Prism " + (p.hasPrism() ? "in" : "out") + " · rot " + p.getPrismRotation()
+                + " · frost " + Math.round(p.getFrost() / 2.55f) + "%"), col1, y + 33, TelUi.TEXT);
+        TelUi.text(g, font, Component.literal("Speed " + p.getSpeed() + (p.getSpeed() <= 2 ? " · tracking" : "")), col2, y + 33, TelUi.TEXT);
+
+        TelUi.text(g, font, Component.literal(String.format(java.util.Locale.ROOT, "Pan %.2f° · Tilt %.2f° (16 bit)",
+                p.getTargetPan(), p.getTargetTilt())), col1, y + 46, TelUi.SUB);
     }
 
     @Override

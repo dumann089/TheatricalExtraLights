@@ -16,6 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.Arrays;
 
@@ -81,7 +82,7 @@ public class DWTPanelBlockEntity extends ExtraLightsLightBlockEntity {
         }
 
         if (level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
         setChanged();
     }
@@ -133,7 +134,7 @@ public class DWTPanelBlockEntity extends ExtraLightsLightBlockEntity {
                 }
             }
             if (isStrobing) {
-                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+                BlockEntitySync.sendData(this);
             }
         }
     }

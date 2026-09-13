@@ -1,5 +1,6 @@
 package com.github.dumann089.theatricalextralights.client.followspot;
 
+import com.github.dumann089.theatricalextralights.blockentities.FollowspotConsoleBlockEntity;
 import com.github.dumann089.theatricalextralights.client.gui.TelUi;
 import dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity;
 import net.minecraft.client.Minecraft;
@@ -113,6 +114,8 @@ public final class FollowspotHud {
         int h = session.isPanTiltOnly() ? 34 : 52;
         int x = (sw - w) / 2;
         int y = sh - h - 26;
+        // Laisse la place au bandeau des memoires au-dessus de la barre
+        y -= 4;
         panel(g, x, y, w, h);
 
         if (session.isPanTiltOnly()) {
@@ -143,8 +146,33 @@ public final class FollowspotHud {
             }
         }
 
+        drawPresetStrip(g, font, session, x, y - 20, w);
+
         Component hint = Component.translatable("screen.followspot_console.hud.hint");
         TelUi.centered(g, font, hint, sw / 2, sh - 20, TelUi.LABEL);
+    }
+
+    /** Huit memoires : case pleine = enregistree, bleue = derniere rappelee. */
+    private static void drawPresetStrip(GuiGraphics g, Font font, FollowspotFixtureCameraSession session, int x, int y, int w) {
+        FollowspotConsoleBlockEntity console = session.getConsole();
+        int count = FollowspotConsoleBlockEntity.PRESET_COUNT;
+        int cell = 18;
+        int gap = 3;
+        int stripW = count * cell + (count - 1) * gap;
+        int sx = x + w - stripW;
+        for (int i = 0; i < count; i++) {
+            int cx = sx + i * (cell + gap);
+            boolean stored = console != null && console.hasPreset(i);
+            boolean last = session.getLastPreset() == i;
+            int bg = last ? TelUi.ACCENT_DIM : (stored ? 0xD826262C : 0xB0131317);
+            g.fill(cx, y, cx + cell, y + 16, bg);
+            TelUi.outline(g, cx, y, cell, 16, last ? TelUi.ACCENT : (stored ? 0xFF4A4A54 : 0xFF2C2C33));
+            String label = Integer.toString(i + 1);
+            g.drawString(font, label, cx + (cell - font.width(label)) / 2, y + 4,
+                    stored ? TelUi.TITLE : 0xFF5A5A64, false);
+        }
+        Component label = Component.translatable("screen.followspot_console.hud.presets");
+        g.drawString(font, label, x, y + 4, TelUi.LABEL, false);
     }
 
     private static void drawBar(GuiGraphics g, Font font, int x, int y, int w, Component label, int value, int color) {

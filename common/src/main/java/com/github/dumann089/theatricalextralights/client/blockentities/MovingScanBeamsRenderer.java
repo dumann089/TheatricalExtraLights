@@ -32,6 +32,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import com.github.dumann089.theatricalextralights.client.render.beam.FramingShutterRender;
+import com.github.dumann089.theatricalextralights.client.render.beam.ProfileHeadRender;
 
 import java.util.Map;
 import java.util.Optional;
@@ -147,8 +148,8 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
         state.lastUpdateTime = now;
         deltaTime = Math.min(deltaTime, 0.1f);
 
-        float targetPan = blockEntity.getPrevPan() + (blockEntity.getPan() - blockEntity.getPrevPan()) * partialTicks;
-        float targetTilt = blockEntity.getPrevTilt() + (blockEntity.getTilt() - blockEntity.getPrevTilt()) * partialTicks;
+        float targetPan = blockEntity.getPartialPanDeg(partialTicks);
+        float targetTilt = blockEntity.getPartialTiltDeg(partialTicks);
 
         float alpha = 1f - (float) Math.exp(-SMOOTH_SPEED * deltaTime);
         state.smoothPan = state.smoothPan + (targetPan - state.smoothPan) * alpha;
@@ -307,8 +308,13 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
                 renderData = FramingShutterRender.attach(renderData, blockEntity, partialTicks);
                 publishCone(blockEntity, renderData);
 
-                volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer())
-                        .render(renderData, poseStack);
+                VolumetricBeamRenderer volumetric = volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer());
+
+                for (BeamRenderData prismBeam : ProfileHeadRender.prismBeams(renderData, blockEntity, partialTicks)) {
+
+                    volumetric.render(prismBeam, poseStack);
+
+                }
             }
         }
 

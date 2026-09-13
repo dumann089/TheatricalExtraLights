@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.Arrays;
 
@@ -36,7 +37,7 @@ public class LEDPanel2BlockEntity extends ExtraLightsLightBlockEntity {
         green = convertByteToInt(ourValues[2]);
         blue = convertByteToInt(ourValues[3]);
         setChanged();
-        level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        BlockEntitySync.sendData(this);
     }
 
     @Override

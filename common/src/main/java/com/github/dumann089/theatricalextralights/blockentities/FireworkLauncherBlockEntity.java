@@ -22,6 +22,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import net.minecraft.world.phys.Vec3;
 
@@ -232,7 +233,7 @@ public class FireworkLauncherBlockEntity extends ExtraLightsLightBlockEntity imp
         }
 
         if (storePrev() && level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
 
         int newIntensity = safetyArmed ? Byte.toUnsignedInt(ourValues[0]) : 0;
@@ -250,7 +251,7 @@ public class FireworkLauncherBlockEntity extends ExtraLightsLightBlockEntity imp
         blue = getPreset().getLaunchColor() & 0xFF;
 
         if (level != null) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            BlockEntitySync.sendData(this);
         }
         setChanged();
     }

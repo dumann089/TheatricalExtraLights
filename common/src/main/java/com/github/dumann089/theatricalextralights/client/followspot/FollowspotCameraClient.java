@@ -66,6 +66,23 @@ public final class FollowspotCameraClient {
             }
             return EventResult.interruptFalse();
         }
+        // 1-8 : rappel de memoire, Maj + 1-8 : enregistrement (clavier principal et pave numerique)
+        int preset = -1;
+        if (keyCode >= GLFW.GLFW_KEY_1 && keyCode <= GLFW.GLFW_KEY_8) {
+            preset = keyCode - GLFW.GLFW_KEY_1;
+        } else if (keyCode >= GLFW.GLFW_KEY_KP_1 && keyCode <= GLFW.GLFW_KEY_KP_8) {
+            preset = keyCode - GLFW.GLFW_KEY_KP_1;
+        }
+        if (preset >= 0) {
+            if (action == GLFW.GLFW_PRESS) {
+                if ((modifiers & GLFW.GLFW_MOD_SHIFT) != 0) {
+                    session.storePreset(preset);
+                } else {
+                    session.recallPreset(preset);
+                }
+            }
+            return EventResult.interruptFalse();
+        }
         // Les touches qui ouvriraient un ecran (inventaire, chat) couperaient la session : on les avale.
         if (minecraft.options.keyInventory.matches(keyCode, scanCode)
                 || minecraft.options.keyChat.matches(keyCode, scanCode)
