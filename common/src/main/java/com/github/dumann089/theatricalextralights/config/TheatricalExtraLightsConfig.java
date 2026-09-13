@@ -213,7 +213,7 @@ public class TheatricalExtraLightsConfig {
     }
 
     public static void setRaymarchMaxBeamsPerFrame(int value) {
-        INSTANCE.raymarchMaxBeamsPerFrame = Math.max(1, Math.min(128, value));
+        INSTANCE.raymarchMaxBeamsPerFrame = Math.max(1, Math.min(512, value));
         save();
     }
 

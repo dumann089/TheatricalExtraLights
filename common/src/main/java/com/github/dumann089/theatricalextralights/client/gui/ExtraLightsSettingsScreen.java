@@ -211,7 +211,7 @@ public class ExtraLightsSettingsScreen extends Screen {
         y += widgetHeight + rowGap;
 
         addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.maxbeams",
-                1f, 128f, TheatricalExtraLightsConfig.getRaymarchMaxBeamsPerFrame(), 0, "",
+                1f, 512f, TheatricalExtraLightsConfig.getRaymarchMaxBeamsPerFrame(), 0, "",
                 v -> TheatricalExtraLightsConfig.setRaymarchMaxBeamsPerFrame(Math.round(v))));
         y += widgetHeight + rowGap;
 
