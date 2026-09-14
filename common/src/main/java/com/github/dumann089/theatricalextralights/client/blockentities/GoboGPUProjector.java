@@ -2,6 +2,8 @@ package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGobo;
+import com.github.dumann089.theatricalextralights.client.render.beam.ProfileHeadRender;
+import java.util.List;
 import com.github.dumann089.theatricalextralights.client.CustomGoboLoader;
 import com.github.dumann089.theatricalextralights.client.ModShaders;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
@@ -103,9 +105,17 @@ public class GoboGPUProjector {
         tmpV.normalize();
 
         final Vec3 origin = Vec3.atLowerCornerOf(be.getBlockPos()).add(tmpPos.x(), tmpPos.y(), tmpPos.z());
-        final Vec3 beamDir = new Vec3(tmpDir.x(), tmpDir.y(), tmpDir.z()).normalize();
-        final Vec3 axisU = new Vec3(tmpU.x(), tmpU.y(), tmpU.z()).normalize();
-        final Vec3 axisV = new Vec3(tmpV.x(), tmpV.y(), tmpV.z()).normalize();
+        Vec3 baseDir = new Vec3(tmpDir.x(), tmpDir.y(), tmpDir.z()).normalize();
+        Vec3 baseU = new Vec3(tmpU.x(), tmpU.y(), tmpU.z()).normalize();
+        Vec3 baseV = new Vec3(tmpV.x(), tmpV.y(), tmpV.z()).normalize();
+
+        // Prisme (personnalite Profile) : une projection par facette, comme pour le faisceau.
+        List<Vec3[]> frames = ProfileHeadRender.prismFrames(baseDir, baseU, baseV, be, partialTicks);
+        intensity *= ProfileHeadRender.prismIntensity(frames.size());
+        for (Vec3[] frame : frames) {
+        final Vec3 beamDir = frame[0];
+        final Vec3 axisU = frame[1];
+        final Vec3 axisV = frame[2];
 
         Vec3 rayStart = origin.add(beamDir.scale(0.35f));
         Vec3 rayEnd = origin.add(beamDir.scale(maxDistance));
@@ -235,6 +245,7 @@ public class GoboGPUProjector {
                 return finalBlockPos.getCenter();
             }
         });
+        }
     }
 
     private ResourceLocation resolveGoboTexture(HasGobo be, int slot) {

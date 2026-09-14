@@ -5,9 +5,9 @@
 - Fixed a client crash with Shimmer when a Profile head had its shutter closed (dynamic light registered without an emission position).
 - Beam haze is now anchored in world space: moving a head sweeps the beam through the haze instead of dragging the haze along.
 ### Gobo moving heads
-- New **27ch - Profile 16bit** personality on the 8 gobo heads: mechanical shutter, 16-bit dimmer, RGB, gobo wheel and rotation, 3-facet prism with indexed or continuous rotation, frost, zoom, focus, 16-bit pan/tilt, pan/tilt speed, framing shutters.
+- New **27ch - Profile 16bit** personality on the 8 gobo heads: shutter (0 closed, 1-254 strobe 0.5 to 10 Hz in whole ticks, 255 open), 16-bit dimmer, RGB, gobo wheel and rotation, 3-, 6- or 9-facet prism with indexed or continuous rotation, shown in the gobo preview, frost, zoom, focus, 16-bit pan/tilt, pan/tilt speed, framing shutters.
 - Heads now travel to their target with a motor model (720 to 25 deg/s with easing) instead of jumping; the speed channel sets the pace, 0 = tracking.
-- Prism splits the volumetric beam into three facets; frost softens the projected spot.
+- Prism splits the volumetric beam and the projected gobo into three facets; frost softens the projected spot.
 
 ### Followspot console
 - 8 position presets (pan, tilt, intensity, focus): keys 1-8 recall, Shift+1-8 store in control mode; click / Shift+click in the console screen; preset strip in the HUD.

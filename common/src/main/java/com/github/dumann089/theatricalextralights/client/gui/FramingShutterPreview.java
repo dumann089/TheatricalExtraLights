@@ -45,6 +45,16 @@ public final class FramingShutterPreview {
      */
     public static void draw(GuiGraphics g, int x, int y, int size, FramingShutterState.Snapshot snap,
                             ResourceLocation gobo, float goboRotDeg, float uiScale) {
+        draw(g, x, y, size, snap, gobo, goboRotDeg, uiScale, 1, 0f);
+    }
+
+    /**
+     * @param prismFacets   1 = pas de prisme, sinon nombre de copies du gobo disposees en cercle
+     * @param prismAngleDeg rotation du prisme en degres
+     */
+    public static void draw(GuiGraphics g, int x, int y, int size, FramingShutterState.Snapshot snap,
+                            ResourceLocation gobo, float goboRotDeg, float uiScale,
+                            int prismFacets, float prismAngleDeg) {
         float cx = x + size / 2f;
         float cy = y + size / 2f;
         float radius = size / 2f - 1.5f;
@@ -53,19 +63,31 @@ public final class FramingShutterPreview {
         TelUi.outline(g, x, y, size, size, TelUi.BORDER_SOFT);
 
         // Gobo : texture tournee autour du centre, teintee couleur lampe, coupee au carre.
+        // Avec prisme : une copie par facette, decalee en cercle et tournee avec le prisme,
+        // en additif pour que les recouvrements s'eclaircissent comme sur un mur.
         if (gobo != null) {
             int inner = size - 2;
             g.enableScissor(
                     (int) Math.floor((x + 1) * uiScale), (int) Math.floor((y + 1) * uiScale),
                     (int) Math.ceil((x + 1 + inner) * uiScale), (int) Math.ceil((y + 1 + inner) * uiScale));
-            g.pose().pushPose();
-            g.pose().translate(cx, cy, 0f);
-            g.pose().mulPose(Axis.ZP.rotationDegrees(goboRotDeg));
-            g.pose().translate(-cx, -cy, 0f);
-            g.setColor(0.965f, 0.925f, 0.82f, 1.0f);
-            g.blit(gobo, x + 1, y + 1, 0, 0, inner, inner, inner, inner);
+            // Prisme : copies reduites disposees en cercle, comme les taches sur un mur.
+            int facets = Math.max(1, prismFacets);
+            float scale = facets <= 1 ? 1f : facets <= 3 ? 0.55f : facets <= 6 ? 0.45f : 0.38f;
+            float spread = facets <= 1 ? 0f : radius * (1f - scale) * 0.95f;
+            for (int i = 0; i < facets; i++) {
+                double a = Math.toRadians(prismAngleDeg + i * 360.0 / facets);
+                float ox = (float) (Math.cos(a) * spread);
+                float oy = (float) (Math.sin(a) * spread);
+                g.pose().pushPose();
+                g.pose().translate(cx + ox, cy + oy, 0f);
+                g.pose().scale(scale, scale, 1f);
+                g.pose().mulPose(Axis.ZP.rotationDegrees(goboRotDeg));
+                g.pose().translate(-cx, -cy, 0f);
+                g.setColor(0.965f, 0.925f, 0.82f, 1.0f);
+                g.blit(gobo, x + 1, y + 1, 0, 0, inner, inner, inner, inner);
+                g.pose().popPose();
+            }
             g.setColor(1f, 1f, 1f, 1f);
-            g.pose().popPose();
             g.disableScissor();
         }
 

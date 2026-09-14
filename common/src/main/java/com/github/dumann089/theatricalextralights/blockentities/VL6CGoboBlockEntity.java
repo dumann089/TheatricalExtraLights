@@ -227,7 +227,7 @@ public class VL6CGoboBlockEntity extends ExtraLightsLightBlockEntity
     public int getFrost() { return profile.isActive() ? profile.getFrost() : 0; }
 
     @Override
-    public int getPrismFacets() { return profile.isActive() && profile.hasPrism() ? 3 : 1; }
+    public int getPrismFacets() { return profile.isActive() ? profile.prismFacets() : 1; }
 
     @Override
     public float getPrismAngleDeg(float partialTicks) { return profile.isActive() ? profile.prismAngle(partialTicks) : 0f; }
