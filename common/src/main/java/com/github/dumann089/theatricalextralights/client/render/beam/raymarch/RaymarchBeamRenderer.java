@@ -148,7 +148,6 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
             Vector3f look = camera.getLookVector();
 
             sortFarToNear(camPos);
-
             poseStack.pushPose();
             poseStack.translate(-camPos.x, -camPos.y, -camPos.z);
             Matrix4f viewMat = new Matrix4f(poseStack.last().pose());

@@ -519,6 +519,10 @@ public class Items {
             "iris_700_gobo",
             () -> new BlockItem(Blocks.IRIS_700_GOBO_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
     );
+    public static final RegistrySupplier<Item> PROFILE3_GOBO = ITEMS.register(
+            "profile3_gobo",
+            () -> new BlockItem(Blocks.PROFILE3_GOBO_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
     public static final RegistrySupplier<Item> PRO_SPOT_GOBO = ITEMS.register(
             "pro_spot_gobo",
             () -> new BlockItem(Blocks.PRO_SPOT_GOBO_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))

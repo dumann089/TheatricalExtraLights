@@ -223,6 +223,7 @@ public class Blocks {
     public static final RegistrySupplier<Block> PRO_SPOT_GOBO_BLOCK = BLOCKS.register("pro_spot_gobo", ProSpotGoboBlock::new);
     public static final RegistrySupplier<Block> MINI_SCAN_GOBO_BLOCK = BLOCKS.register("mini_scan_gobo", MiniScanGobosBlock::new);
     public static final RegistrySupplier<Block> MINI_SPOT_GOBO_BLOCK = BLOCKS.register("mini_spot_gobo", MiniSpotGobosBlock::new);
+    public static final RegistrySupplier<Block> PROFILE3_GOBO_BLOCK = BLOCKS.register("profile3_gobo", Profile3GoboBlock::new);
 
 
     public static final RegistrySupplier<Block> A1X1PAR64_BLOCK = BLOCKS.register("a1x1par64", a1x1par64Block::new);

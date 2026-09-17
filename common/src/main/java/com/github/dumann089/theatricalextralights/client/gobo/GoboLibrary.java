@@ -84,6 +84,24 @@ public enum GoboLibrary {
             new GoboEntry("generic_3/gobo7",         FakeVolumetricBeamPattern.RING_8)
     ),
 
+    PROFILE3(
+            new GoboEntry("generic_3/open",          FakeVolumetricBeamPattern.SINGLE),
+            new GoboEntry("generic_1/gobo15",         FakeVolumetricBeamPattern.SCATTER_NATURE),
+            new GoboEntry("generic_1/gobo13",        FakeVolumetricBeamPattern.RING_8),
+            new GoboEntry("generic_1/gobo21",        FakeVolumetricBeamPattern.SCATTER_NATURE),
+            new GoboEntry("generic_1/gobo29",        FakeVolumetricBeamPattern.DOUBLE_RING),
+            new GoboEntry("generic_1/gobo37",        FakeVolumetricBeamPattern.SCATTER_NATURE),
+            new GoboEntry("generic_1/gobo18",        FakeVolumetricBeamPattern.CROSS_5),
+            new GoboEntry("generic_1/gobo14",         FakeVolumetricBeamPattern.SCATTER_NATURE),
+            new GoboEntry("generic_1/gobo10",        FakeVolumetricBeamPattern.FAN_7),
+            new GoboEntry("generic_1/gobo22",        FakeVolumetricBeamPattern.RING_8),
+            new GoboEntry("generic_1/gobo6",        FakeVolumetricBeamPattern.SCATTER_NATURE),
+            new GoboEntry("generic_1/gobo31",        FakeVolumetricBeamPattern.CROSS_5),
+            new GoboEntry("generic_1/gobo7",        FakeVolumetricBeamPattern.SCATTER_NATURE),
+            new GoboEntry("generic_1/gobo27",        FakeVolumetricBeamPattern.DOUBLE_RING),
+            new GoboEntry("generic_1/gobo19",         FakeVolumetricBeamPattern.RING_8)
+    ),
+
     PROSPOT(
             new GoboEntry("generic_3/open",          FakeVolumetricBeamPattern.SINGLE),
             new GoboEntry("generic_3/gobo3",         FakeVolumetricBeamPattern.SCATTER_NATURE),

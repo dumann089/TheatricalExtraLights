@@ -457,6 +457,8 @@ public class Fixtures {
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "mini_scan_gobos"), MiniScanGobosFixture::new);
     public static final RegistrySupplier<Fixture> MINI_SPOT_GOBOS =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "mini_spot_gobos"), MiniSpotGobosFixture::new);
+    public static final RegistrySupplier<Fixture> PROFILE3_GOBO =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "profile3_gobo"), Profile3GoboFixture::new);
     public static final RegistrySupplier<Fixture> LED_FACADE =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "led_facade"), LedFacadeFixture::new);
 

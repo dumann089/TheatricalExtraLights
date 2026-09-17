@@ -143,6 +143,7 @@ public class TheatricalExtraLightsClient {
         BlockEntityRendererRegistry.register(BlockEntities.A6X3PAR64_VERTICAL.get(), a6x3par64_verticalRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.SPOT_XTREME_GOBO.get(), SpotXtremeGoboRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.VL6C_GOBO.get(), VL6CGoboRenderer::new);
+        BlockEntityRendererRegistry.register(BlockEntities.PROFILE3_GOBO.get(), Profile3GoboRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.IRIS_700_GOBO.get(), Iris700GoboRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.PRO_SPOT_GOBO.get(), ProSpotGoboRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MINI_SCAN_GOBO.get(), MiniScanGobosRenderer::new);

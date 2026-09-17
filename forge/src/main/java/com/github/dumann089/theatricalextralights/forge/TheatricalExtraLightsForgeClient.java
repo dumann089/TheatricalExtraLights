@@ -6,12 +6,8 @@ import com.github.dumann089.theatricalextralights.client.ConfettiCannonClientSet
 import com.github.dumann089.theatricalextralights.client.ModShaders;
 import com.github.dumann089.theatricalextralights.client.entities.FireworkRocketRenderer;
 import com.github.dumann089.theatricalextralights.client.forge.ModParticleClientImpl;
-import com.github.dumann089.theatricalextralights.client.render.beam.raymarch.SceneDepthCopy;
-import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.github.dumann089.theatricalextralights.entities.ModEntities;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import dev.imabad.theatrical.compat.ModCompat;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -45,52 +41,28 @@ public final class TheatricalExtraLightsForgeClient {
     }
 
     /**
-     * Captura la profundidad justo después de las block entities,
-     * antes del renderizado translúcido y partículas.
+     * Intercepta la etapa posterior a los bloques transparentes y nivel.
+     * Ejecuta el pase de renderizado en el FBO personalizado para omitir las restricciones de Iris.
      */
     private static void onRenderLevelStage(final RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
             return;
         }
-
-        if (!TheatricalExtraLightsConfig.isRaymarchEngine()
-                || !ModShaders.canUseRaymarch()) {
-            return;
-        }
-
-        // Flush de los batches pendientes para incluir su profundidad.
-        Minecraft.getInstance()
-                .renderBuffers()
-                .bufferSource()
-                .endBatch();
-
-        SceneDepthCopy.capture();
     }
 
     @SubscribeEvent
-    public static void registerParticleProviders(
-            final RegisterParticleProvidersEvent event
-    ) {
+    public static void registerParticleProviders(final RegisterParticleProvidersEvent event) {
         ModParticleClientImpl.registerForgeProviders(event);
     }
 
     @SubscribeEvent
-    public static void registerLayerDefinitions(
-            final EntityRenderersEvent.RegisterLayerDefinitions event
-    ) {
-        ConfettiCannonClientSetup.registerModelLayer(
-                event::registerLayerDefinition
-        );
+    public static void registerLayerDefinitions(final EntityRenderersEvent.RegisterLayerDefinitions event) {
+        ConfettiCannonClientSetup.registerModelLayer(event::registerLayerDefinition);
     }
 
     @SubscribeEvent
-    public static void registerEntityRenderers(
-            final EntityRenderersEvent.RegisterRenderers event
-    ) {
-        event.registerEntityRenderer(
-                ModEntities.FIREWORK_ROCKET.get(),
-                FireworkRocketRenderer::new
-        );
+    public static void registerEntityRenderers(final EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(ModEntities.FIREWORK_ROCKET.get(), FireworkRocketRenderer::new);
     }
 
     @SubscribeEvent
@@ -99,10 +71,7 @@ public final class TheatricalExtraLightsForgeClient {
             event.registerShader(
                     new ShaderInstance(
                             event.getResourceProvider(),
-                            new ResourceLocation(
-                                    "theatricalextralights",
-                                    "gobo_projector"
-                            ),
+                            new ResourceLocation("theatricalextralights", "gobo_projector"),
                             DefaultVertexFormat.POSITION_COLOR_TEX
                     ),
                     shader -> ModShaders.goboProjectorShader = shader
@@ -111,10 +80,7 @@ public final class TheatricalExtraLightsForgeClient {
             event.registerShader(
                     new ShaderInstance(
                             event.getResourceProvider(),
-                            new ResourceLocation(
-                                    "theatricalextralights",
-                                    "volumetric_beam"
-                            ),
+                            new ResourceLocation("theatricalextralights", "volumetric_beam"),
                             DefaultVertexFormat.POSITION_COLOR_TEX
                     ),
                     shader -> ModShaders.volumetricBeamShader = shader
@@ -123,20 +89,14 @@ public final class TheatricalExtraLightsForgeClient {
             event.registerShader(
                     new ShaderInstance(
                             event.getResourceProvider(),
-                            new ResourceLocation(
-                                    "theatricalextralights",
-                                    "beam_raymarch"
-                            ),
+                            new ResourceLocation("theatricalextralights", "beam_raymarch"),
                             DefaultVertexFormat.POSITION_COLOR_TEX
                     ),
                     shader -> ModShaders.beamRaymarchShader = shader
             );
 
         } catch (IOException e) {
-            throw new RuntimeException(
-                    "Error Loading Shader Theatrical Extra Lights",
-                    e
-            );
+            throw new RuntimeException("Error Loading Shader Theatrical Extra Lights", e);
         }
     }
 }
