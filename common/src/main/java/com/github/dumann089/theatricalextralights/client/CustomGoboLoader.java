@@ -84,6 +84,42 @@ public class CustomGoboLoader {
         return null;
     }
 
+    /** Morceaux en cours de reception par fichier : index → donnees. */
+    private static final java.util.Map<String, byte[][]> PENDING_CHUNKS = new java.util.HashMap<>();
+
+    /**
+     * Range un morceau et retourne le fichier complet quand tous sont arrives, null sinon.
+     */
+    public static byte[] collectChunk(String fileName, int totalChunks, int chunkIndex, byte[] chunkData) {
+        if (totalChunks <= 1) {
+            return chunkData;
+        }
+        byte[][] parts = PENDING_CHUNKS.computeIfAbsent(fileName, k -> new byte[totalChunks][]);
+        if (parts.length != totalChunks) {
+            parts = new byte[totalChunks][];
+            PENDING_CHUNKS.put(fileName, parts);
+        }
+        if (chunkIndex < 0 || chunkIndex >= totalChunks) {
+            return null;
+        }
+        parts[chunkIndex] = chunkData;
+        int size = 0;
+        for (byte[] p : parts) {
+            if (p == null) {
+                return null;
+            }
+            size += p.length;
+        }
+        byte[] whole = new byte[size];
+        int pos = 0;
+        for (byte[] p : parts) {
+            System.arraycopy(p, 0, whole, pos, p.length);
+            pos += p.length;
+        }
+        PENDING_CHUNKS.remove(fileName);
+        return whole;
+    }
+
     public static void receiveBytesFromServer(
             String fileName,
             byte[] data

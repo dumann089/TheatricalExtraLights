@@ -125,7 +125,12 @@ public class ModNetworking {
             int chunkIndex = buf.readInt();
             byte[] chunkData = buf.readByteArray();
             context.queue(() -> {
-                com.github.dumann089.theatricalextralights.client.CustomGoboLoader.receiveBytesFromServer(fileName, chunkData);
+                // Reassemble every chunk before decoding: a PNG above one chunk arrives in pieces.
+                byte[] whole = com.github.dumann089.theatricalextralights.client.CustomGoboLoader
+                        .collectChunk(fileName, totalChunks, chunkIndex, chunkData);
+                if (whole != null) {
+                    com.github.dumann089.theatricalextralights.client.CustomGoboLoader.receiveBytesFromServer(fileName, whole);
+                }
             });
         });
     }

@@ -713,6 +713,8 @@ public class ExtraLightsConfigScreen extends TelScaledScreen {
 
         TelUi.text(g, font, Component.literal("Prism " + (p.hasPrism() ? p.prismFacets() + " facets" : "out") + " · rot " + p.getPrismRotation()
                 + " · frost " + Math.round(p.getFrost() / 2.55f) + "%"), col1, y + 33, TelUi.TEXT);
+        String anim = "Anim " + p.animationName() + (p.hasAnimation() ? " · " + p.getAnimRotation() : "");
+        TelUi.text(g, font, Component.literal(anim), right - font.width(anim), y + 33, TelUi.TEXT);
 
         TelUi.text(g, font, Component.literal(String.format(java.util.Locale.ROOT, "Pan %.2f° · Tilt %.2f° (16 bit)",
                 p.getTargetPan(), p.getTargetTilt())), col1, y + 46, TelUi.SUB);

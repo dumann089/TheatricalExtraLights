@@ -4,6 +4,7 @@ import com.github.dumann089.theatricalextralights.client.ModShaders;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData;
 import com.github.dumann089.theatricalextralights.client.render.beam.FramingShutterRender;
 import com.github.dumann089.theatricalextralights.client.render.beam.VolumetricBeamRenderer;
+import com.github.dumann089.theatricalextralights.client.render.beam.shadow.BeamShadowOccluders;
 import com.github.dumann089.theatricalextralights.util.FramingShutterState;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -103,6 +104,7 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         s.goboRotation = data.goboRotation();
         s.wheelTransition = data.wheelTransition();
         s.shutters = data.hasShutters() ? data.shutters() : null;
+        s.animation = data.hasAnimation() ? data.animation() : null;
         s.hitBlock = hitBlock;
         s.fixturePos = data.fixturePos();
         s.localOriginX = (float) data.origin().x;
@@ -165,13 +167,7 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                     continue;
                 }
 
-                double distSq = dx * dx + dy * dy + dz * dz;
-                int beamSteps = steps;
-                if (distSq > 96.0 * 96.0) {
-                    beamSteps = Math.max(6, steps / 3);
-                } else if (distSq > 48.0 * 48.0) {
-                    beamSteps = Math.max(8, steps / 2);
-                }
+                int beamSteps = lodStepCount(steps, s, camPos);
 
                 ShaderInstance shader = ModShaders.beamRaymarchShader;
                 if (shader == null) {
@@ -215,6 +211,14 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 shader.safeGetUniform("GoboRotation").set(s.goboRotation);
                 shader.safeGetUniform("WheelTransition").set(s.wheelTransition);
                 FramingShutterRender.applyUniforms(shader, s.shutters);
+                applyAnimationUniforms(shader, s.animation);
+                BeamShadowOccluders.Snapshot shadows = null;
+                if (TheatricalExtraLightsConfig.isBeamShadowsEnabled() && mc.level != null) {
+                    shadows = BeamShadowOccluders.get(mc.level, s.fixturePos,
+                            new Vec3(s.originX, s.originY, s.originZ), new Vec3(s.dirX, s.dirY, s.dirZ),
+                            s.scanLen, endRadius);
+                }
+                applyShadowUniforms(shader, shadows);
                 shader.safeGetUniform("Time").set(time);
                 shader.safeGetUniform("Ambient").set(daylight);
                 shader.safeGetUniform("ScreenSize").set(screenW, screenH);
@@ -238,6 +242,17 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 int nextGoboTex = RenderSystem.getShaderTexture(2);
                 shader.setSampler("Sampler2", nextGoboTex);
 
+                RenderSystem.setShaderTexture(3, s.animation != null ? s.animation.texture() : OPEN_GOBO);
+                shader.setSampler("Sampler3", RenderSystem.getShaderTexture(3));
+
+                if (shadows != null) {
+                    RenderSystem.setShaderTexture(4, shadows.textureId());
+                    shader.setSampler("Sampler4", shadows.textureId());
+                } else {
+                    RenderSystem.setShaderTexture(4, OPEN_GOBO);
+                    shader.setSampler("Sampler4", RenderSystem.getShaderTexture(4));
+                }
+
                 shader.apply();
 
                 Tesselator tess = Tesselator.getInstance();
@@ -251,6 +266,39 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
             poseStack.popPose();
         } finally {
             this.activeBeamCount = 0;
+        }
+    }
+
+    /** Uniforms de la roue d'animation : {@code AnimEnabled}, {@code AnimAngle}, {@code AnimOffset}. */
+    public static void applyAnimationUniforms(ShaderInstance shader, BeamRenderData.Animation anim) {
+        if (anim == null) {
+            shader.safeGetUniform("AnimEnabled").set(0.0f);
+            shader.safeGetUniform("AnimAngle").set(0.0f);
+            shader.safeGetUniform("AnimOffset").set(0.0f);
+            return;
+        }
+        shader.safeGetUniform("AnimEnabled").set(1.0f);
+        shader.safeGetUniform("AnimAngle").set((float) Math.toRadians(anim.angleDeg()));
+        shader.safeGetUniform("AnimOffset").set(anim.offset());
+    }
+
+    /** Uniforms des ombres : grille de blocs et boites d'entites, ou desactive si {@code snap} est null. */
+    public static void applyShadowUniforms(ShaderInstance shader, BeamShadowOccluders.Snapshot snap) {
+        if (snap == null) {
+            shader.safeGetUniform("ShadowEnabled").set(0.0f);
+            shader.safeGetUniform("OccCount").set(0.0f);
+            return;
+        }
+        shader.safeGetUniform("ShadowEnabled").set(1.0f);
+        shader.safeGetUniform("VoxelOrigin").set((float) snap.gridOrigin().x, (float) snap.gridOrigin().y, (float) snap.gridOrigin().z);
+        shader.safeGetUniform("VoxelCell").set(snap.cell());
+        shader.safeGetUniform("VoxelSize").set((float) snap.size());
+        int n = Math.min(BeamShadowOccluders.MAX_BOXES, snap.boxes().size());
+        shader.safeGetUniform("OccCount").set((float) n);
+        for (int i = 0; i < n; i++) {
+            var b = snap.boxes().get(i);
+            shader.safeGetUniform("OccMin" + i).set((float) b.minX, (float) b.minY, (float) b.minZ);
+            shader.safeGetUniform("OccMax" + i).set((float) b.maxX, (float) b.maxY, (float) b.maxZ);
         }
     }
 
@@ -274,6 +322,43 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
             }
             drawOrder[j + 1] = key;
         }
+    }
+
+    /**
+     * Quality setting, then distance LOD. Close to the cone the fullscreen pass
+     * covers most pixels so samples drop; far beams drop too because they are thin.
+     */
+    private static int lodStepCount(int qualitySteps, BeamSlot s, Vec3 camPos) {
+        double ox = camPos.x - (double) s.originX;
+        double oy = camPos.y - (double) s.originY;
+        double oz = camPos.z - (double) s.originZ;
+        double along = ox * (double) s.dirX + oy * (double) s.dirY + oz * (double) s.dirZ;
+        double t = Math.max(0.0, Math.min((double) s.scanLen, along));
+        double px = s.originX + s.dirX * t - camPos.x;
+        double py = s.originY + s.dirY * t - camPos.y;
+        double pz = s.originZ + s.dirZ * t - camPos.z;
+        double radial = Math.sqrt(px * px + py * py + pz * pz);
+        float scale = Math.max(s.widthScale, s.heightScale);
+        double radius = Math.max((double) s.baseRadius, t * (double) Math.max(s.tanHalfAngle, 1.0e-4f)) * (double) scale;
+        double distToVolume = Math.max(0.0, radial - radius);
+
+        int beamSteps = qualitySteps;
+        if (distToVolume < 2.0) {
+            beamSteps = Math.max(4, qualitySteps / 4);
+        } else if (distToVolume < 8.0) {
+            beamSteps = Math.max(4, (qualitySteps * 2) / 5);
+        }
+
+        double mx = s.originX + s.dirX * s.scanLen * 0.5 - camPos.x;
+        double my = s.originY + s.dirY * s.scanLen * 0.5 - camPos.y;
+        double mz = s.originZ + s.dirZ * s.scanLen * 0.5 - camPos.z;
+        double distSq = mx * mx + my * my + mz * mz;
+        if (distSq > 96.0 * 96.0) {
+            beamSteps = Math.min(beamSteps, Math.max(6, qualitySteps / 3));
+        } else if (distSq > 48.0 * 48.0) {
+            beamSteps = Math.min(beamSteps, Math.max(8, qualitySteps / 2));
+        }
+        return beamSteps;
     }
 
     private static double distSq(BeamSlot s, Vec3 camPos) {
@@ -357,6 +442,7 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         public float goboRotation;
         public float wheelTransition;
         public FramingShutterState.Snapshot shutters;
+        public BeamRenderData.Animation animation;
         public boolean hitBlock;
         public net.minecraft.core.BlockPos fixturePos;
         public float localOriginX, localOriginY, localOriginZ;

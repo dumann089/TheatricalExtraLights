@@ -44,6 +44,8 @@ public class TheatricalExtraLightsConfig {
     private Float raymarchAnisotropy = 0.55f;
     private Float raymarchDustAmount = 0.55f;
     private Integer raymarchMaxBeamsPerFrame = 128;
+    /** Ombres portees des blocs et entites dans le faisceau et sur la tache projetee. */
+    private Boolean beamShadows = true;
 
     /**
      * Dimensionne la tache lumineuse des lyres sur la section du cone a la distance eclairee,
@@ -163,6 +165,15 @@ public class TheatricalExtraLightsConfig {
 
     public static float getRaymarchAnisotropy() {
         return INSTANCE.raymarchAnisotropy != null ? INSTANCE.raymarchAnisotropy : 0.55f;
+    }
+
+    public static boolean isBeamShadowsEnabled() {
+        return INSTANCE.beamShadows == null || INSTANCE.beamShadows;
+    }
+
+    public static void setBeamShadows(boolean value) {
+        INSTANCE.beamShadows = value;
+        save();
     }
 
     public static float getRaymarchDustAmount() {

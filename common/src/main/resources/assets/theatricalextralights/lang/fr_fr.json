@@ -266,7 +266,7 @@
   "screen.shutters.inactive_hint": "Choisir la personnalité 19ch pour les utiliser",
   "screen.shutters.gobo_slot": "Gobo slot %s · %s°",
   "screen.profile.section": "Profile 16bit (DMX en direct)",
-  "screen.profile.waiting": "Aucune trame DMX 28ch reçue pour l'instant",
+  "screen.profile.waiting": "Aucune trame DMX Profile reçue pour l'instant",
   "screen.waterjet.section": "Réglages du jet",
   "screen.waterjet.height": "Hauteur",
   "screen.waterjet.thickness": "Épaisseur",

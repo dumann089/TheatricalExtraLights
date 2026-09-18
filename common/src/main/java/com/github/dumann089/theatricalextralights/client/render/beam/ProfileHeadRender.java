@@ -17,6 +17,15 @@ public final class ProfileHeadRender {
     private ProfileHeadRender() {
     }
 
+    /** Attache la roue d'animation du block entity au faisceau, si elle est dans le faisceau. */
+    public static BeamRenderData attachAnimation(BeamRenderData data, Object blockEntity, float partialTicks) {
+        if (!(blockEntity instanceof HasGobo gobo)) return data;
+        var tex = gobo.getAnimationTexture();
+        if (tex == null) return data;
+        return data.withAnimation(new BeamRenderData.Animation(tex, gobo.getAnimationAngleDeg(),
+                gobo.getAnimationOffset(partialTicks)));
+    }
+
     /** Facteur d'intensite par facette selon leur nombre (3 → 0.75, 6 → 0.6, 9 → 0.5). */
     public static float prismIntensity(int facets) {
         if (facets <= 1) return 1f;
@@ -75,7 +84,7 @@ public final class ProfileHeadRender {
                     data.fixturePos(), data.origin(), f[0], f[1], f[2],
                     data.zoomNorm(), data.scanLen(), data.tanHalfAngle(), data.color(), intensity,
                     data.goboTexture(), data.nextGoboTexture(), data.goboRotation(), data.wheelTransition(),
-                    data.level(), data.widthScale(), data.heightScale(), data.baseRadius(), data.shutters());
+                    data.level(), data.widthScale(), data.heightScale(), data.baseRadius(), data.shutters(), data.animation());
         }
         return List.of(out);
     }

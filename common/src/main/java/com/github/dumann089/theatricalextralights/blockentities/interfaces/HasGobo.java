@@ -57,4 +57,19 @@ public interface HasGobo extends HasExtendedBeamChannels {
     default float getPrismAngleDeg(float partialTicks) {
         return 0f;
     }
+
+    /** Texture de la roue d'animation devant la porte, null = hors faisceau. */
+    default net.minecraft.resources.ResourceLocation getAnimationTexture() {
+        return null;
+    }
+
+    /** Orientation de la roue d'animation en degres. */
+    default float getAnimationAngleDeg() {
+        return 0f;
+    }
+
+    /** Defilement de la roue d'animation en tuiles, interpole. */
+    default float getAnimationOffset(float partialTicks) {
+        return 0f;
+    }
 }

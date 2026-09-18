@@ -232,6 +232,15 @@ public class VL6CGoboBlockEntity extends ExtraLightsLightBlockEntity
     @Override
     public float getPrismAngleDeg(float partialTicks) { return profile.isActive() ? profile.prismAngle(partialTicks) : 0f; }
 
+    @Override
+    public net.minecraft.resources.ResourceLocation getAnimationTexture() { return profile.isActive() ? profile.animationTexture() : null; }
+
+    @Override
+    public float getAnimationAngleDeg() { return profile.isActive() ? profile.animationAngleDeg() : 0f; }
+
+    @Override
+    public float getAnimationOffset(float partialTicks) { return profile.isActive() ? profile.animationOffset(partialTicks) : 0f; }
+
     /** Shutter / strobe de la personnalite Profile : module l'intensite vue par le rendu. */
     @Override
     public float getIntensity() {

@@ -303,6 +303,7 @@ public class MiniScanGobosRenderer extends ExtraLightsFixtureRenderer<MiniScanGo
 
                 // Cone pilote par le zoom (1 a 19 deg) : la tache doit suivre.
                 renderData = FramingShutterRender.attach(renderData, blockEntity, partialTicks);
+                renderData = ProfileHeadRender.attachAnimation(renderData, blockEntity, partialTicks);
                 publishCone(blockEntity, renderData);
 
                 VolumetricBeamRenderer volumetric = volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer());

@@ -26,8 +26,29 @@ public record BeamRenderData(
         float heightScale,
         float baseRadius,
         /** Etat des couteaux (null = pas de module ou lames sorties). */
-        FramingShutterState.Snapshot shutters
+        FramingShutterState.Snapshot shutters,
+        /** Roue d'animation devant la porte (null = hors faisceau). */
+        Animation animation
 ) {
+    /** Texture d'effet, orientation en degres et defilement en tuiles. */
+    public record Animation(ResourceLocation texture, float angleDeg, float offset) {
+        public int stateHash() {
+            return 31 * (31 * texture.hashCode() + Float.floatToIntBits(angleDeg)) + Float.floatToIntBits(offset);
+        }
+    }
+
+    /** Constructeur avec couteaux, sans roue d'animation. */
+    public BeamRenderData(
+            BlockPos fixturePos, Vec3 origin, Vec3 beamDir, Vec3 axisU, Vec3 axisV,
+            float zoomNorm, float scanLen, float tanHalfAngle, int color, float intensity,
+            ResourceLocation goboTexture, ResourceLocation nextGoboTexture, float goboRotation,
+            float wheelTransition, Level level, float widthScale, float heightScale, float baseRadius,
+            FramingShutterState.Snapshot shutters
+    ) {
+        this(fixturePos, origin, beamDir, axisU, axisV, zoomNorm, scanLen, tanHalfAngle,
+                color, intensity, goboTexture, nextGoboTexture, goboRotation, wheelTransition,
+                level, widthScale, heightScale, baseRadius, shutters, null);
+    }
     /** Constructeur sans couteaux (compatibilite avec les renderers existants). */
     public BeamRenderData(
             BlockPos fixturePos,
@@ -82,7 +103,18 @@ public record BeamRenderData(
     public BeamRenderData withShutters(FramingShutterState.Snapshot snapshot) {
         return new BeamRenderData(fixturePos, origin, beamDir, axisU, axisV, zoomNorm, scanLen,
                 tanHalfAngle, color, intensity, goboTexture, nextGoboTexture, goboRotation,
-                wheelTransition, level, widthScale, heightScale, baseRadius, snapshot);
+                wheelTransition, level, widthScale, heightScale, baseRadius, snapshot, animation);
+    }
+
+    /** Copie avec la roue d'animation fournie. */
+    public BeamRenderData withAnimation(Animation anim) {
+        return new BeamRenderData(fixturePos, origin, beamDir, axisU, axisV, zoomNorm, scanLen,
+                tanHalfAngle, color, intensity, goboTexture, nextGoboTexture, goboRotation,
+                wheelTransition, level, widthScale, heightScale, baseRadius, shutters, anim);
+    }
+
+    public boolean hasAnimation() {
+        return animation != null && animation.texture() != null;
     }
 
     public boolean hasShutters() {
@@ -112,6 +144,7 @@ public record BeamRenderData(
         hash = 31 * hash + Float.floatToIntBits(heightScale);
         hash = 31 * hash + Float.floatToIntBits(baseRadius);
         hash = 31 * hash + (shutters != null ? shutters.stateHash() : 0);
+        hash = 31 * hash + (animation != null ? animation.stateHash() : 0);
         return hash;
     }
 }

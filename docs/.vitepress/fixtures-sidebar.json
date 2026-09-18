@@ -1,0 +1,583 @@
+[
+  {
+    "text": "Gobo moving heads",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Overview",
+        "link": "/fixtures/gobo-heads"
+      },
+      {
+        "text": "Xtreme Spot (Gobos)",
+        "link": "/fixtures/spot_xtreme_gobo"
+      },
+      {
+        "text": "VL6C Spot (Gobos)",
+        "link": "/fixtures/vl6c_gobo"
+      },
+      {
+        "text": "Iris 700 Spot (Gobos)",
+        "link": "/fixtures/iris_700_gobo"
+      },
+      {
+        "text": "Pro Spot LX (Gobos)",
+        "link": "/fixtures/pro_spot_gobo"
+      },
+      {
+        "text": "Mini Scan (Gobos)",
+        "link": "/fixtures/mini_scan_gobo"
+      },
+      {
+        "text": "Mini Spot (Gobos)",
+        "link": "/fixtures/mini_spot_gobo"
+      },
+      {
+        "text": "Moving Scan (Gobos)",
+        "link": "/fixtures/moving_scan_beams"
+      },
+      {
+        "text": "Moving VL2 (Gobos)",
+        "link": "/fixtures/moving_vl2c_beams"
+      }
+    ]
+  },
+  {
+    "text": "Moving heads & beams",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Overview",
+        "link": "/fixtures/moving-heads"
+      },
+      {
+        "text": "Moving VL6 (7Ch/10Ch)",
+        "link": "/fixtures/moving_vl6"
+      },
+      {
+        "text": "Moving VL2 (7Ch/10Ch)",
+        "link": "/fixtures/moving_vl2c"
+      },
+      {
+        "text": "Moving Beam (7Ch/10Ch)",
+        "link": "/fixtures/moving_beam"
+      },
+      {
+        "text": "Moving Scan (7Ch/10Ch)",
+        "link": "/fixtures/moving_scan"
+      },
+      {
+        "text": "Beam 7r (7Ch/10Ch)",
+        "link": "/fixtures/beam_7r"
+      },
+      {
+        "text": "Mac Vip (7Ch/10Ch)",
+        "link": "/fixtures/mac_vip"
+      },
+      {
+        "text": "Sharplus (7Ch/10Ch)",
+        "link": "/fixtures/sharplus"
+      },
+      {
+        "text": "Moving 500 (7Ch/10Ch)",
+        "link": "/fixtures/moving500"
+      },
+      {
+        "text": "Robit Spot (7Ch/10Ch)",
+        "link": "/fixtures/robitspot"
+      },
+      {
+        "text": "Verve Spot (7Ch/10Ch)",
+        "link": "/fixtures/vervespot"
+      },
+      {
+        "text": "Searchlight (7Ch/10Ch)",
+        "link": "/fixtures/searchlight"
+      },
+      {
+        "text": "VL 6000",
+        "link": "/fixtures/vl6000"
+      },
+      {
+        "text": "Wash FX648",
+        "link": "/fixtures/washlight"
+      },
+      {
+        "text": "Wash Led",
+        "link": "/fixtures/washled"
+      },
+      {
+        "text": "Mini Wash",
+        "link": "/fixtures/miniwash"
+      },
+      {
+        "text": "Moving Bar",
+        "link": "/fixtures/moving_bar"
+      },
+      {
+        "text": "Atomic Tilt",
+        "link": "/fixtures/atomictilt"
+      },
+      {
+        "text": "Moving Mini Bar",
+        "link": "/fixtures/moving_mini_bar"
+      },
+      {
+        "text": "Moving Panel Par64 (DWT)",
+        "link": "/fixtures/dwt_panel"
+      }
+    ]
+  },
+  {
+    "text": "Wash, spot & followspot",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Overview",
+        "link": "/fixtures/wash-spot"
+      },
+      {
+        "text": "Source Four",
+        "link": "/fixtures/source_four"
+      },
+      {
+        "text": "Source Four (Warm)",
+        "link": "/fixtures/source_four_warm"
+      },
+      {
+        "text": "Followspot",
+        "link": "/fixtures/followspot"
+      },
+      {
+        "text": "Led Fountain",
+        "link": "/fixtures/led_fountain"
+      },
+      {
+        "text": "Invisible Light (25 blocks)",
+        "link": "/fixtures/invisiblelight"
+      },
+      {
+        "text": "Big Scroller",
+        "link": "/fixtures/bigscroller"
+      },
+      {
+        "text": "Horizontal Scroller",
+        "link": "/fixtures/horizontalscroller"
+      },
+      {
+        "text": "Vertical Scroller",
+        "link": "/fixtures/verticalscroller"
+      },
+      {
+        "text": "Par64 (Scroller)",
+        "link": "/fixtures/parscroller"
+      },
+      {
+        "text": "LED Facade",
+        "link": "/fixtures/led_facade"
+      }
+    ]
+  },
+  {
+    "text": "PARs & LED panels",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Overview",
+        "link": "/fixtures/pars-panels"
+      },
+      {
+        "text": "Par 1000 Red",
+        "link": "/fixtures/par1000_red"
+      },
+      {
+        "text": "Par 1000 Blue",
+        "link": "/fixtures/par1000_blue"
+      },
+      {
+        "text": "Par 1000 Green",
+        "link": "/fixtures/par1000_green"
+      },
+      {
+        "text": "Par 1000 Magenta",
+        "link": "/fixtures/par1000_magenta"
+      },
+      {
+        "text": "Par 1000 Amber",
+        "link": "/fixtures/par1000_amber"
+      },
+      {
+        "text": "Par 1000 Orange",
+        "link": "/fixtures/par1000_orange"
+      },
+      {
+        "text": "Par 1000 Purple",
+        "link": "/fixtures/par1000_purple"
+      },
+      {
+        "text": "Par 1000 Lightblue",
+        "link": "/fixtures/par1000_lightblue"
+      },
+      {
+        "text": "Par 1000 White",
+        "link": "/fixtures/par1000_white"
+      },
+      {
+        "text": "Par 1000",
+        "link": "/fixtures/par1000"
+      },
+      {
+        "text": "Par56 Red",
+        "link": "/fixtures/par56_red"
+      },
+      {
+        "text": "Par56 Green",
+        "link": "/fixtures/par56_green"
+      },
+      {
+        "text": "Par56 Blue",
+        "link": "/fixtures/par56_blue"
+      },
+      {
+        "text": "Par56 Orange",
+        "link": "/fixtures/par56_orange"
+      },
+      {
+        "text": "Par56 Magenta",
+        "link": "/fixtures/par56_magenta"
+      },
+      {
+        "text": "Par56 Lightblue",
+        "link": "/fixtures/par56_lightblue"
+      },
+      {
+        "text": "Par56 Purple",
+        "link": "/fixtures/par56_purple"
+      },
+      {
+        "text": "Par56 White",
+        "link": "/fixtures/par56_white"
+      },
+      {
+        "text": "Par56 Warm",
+        "link": "/fixtures/par56_warm"
+      },
+      {
+        "text": "Par56 Yellow",
+        "link": "/fixtures/par56_yellow"
+      },
+      {
+        "text": "x8 Par64 Red",
+        "link": "/fixtures/x8par_red"
+      },
+      {
+        "text": "x8 Par64 Green",
+        "link": "/fixtures/x8par_green"
+      },
+      {
+        "text": "x8 Par64 Blue",
+        "link": "/fixtures/x8par_blue"
+      },
+      {
+        "text": "x8 Par64 Magenta",
+        "link": "/fixtures/x8par_magenta"
+      },
+      {
+        "text": "x8 Par64 Lightblue",
+        "link": "/fixtures/x8par_lightblue"
+      },
+      {
+        "text": "x8 Par64 Yellow",
+        "link": "/fixtures/x8par_yellow"
+      },
+      {
+        "text": "x8 Par64 White",
+        "link": "/fixtures/x8par_white"
+      },
+      {
+        "text": "x8 Par64 Purple",
+        "link": "/fixtures/x8par_purple"
+      },
+      {
+        "text": "x8 Par64 Warm",
+        "link": "/fixtures/x8par_warm"
+      },
+      {
+        "text": "x8 Par64 Orange",
+        "link": "/fixtures/x8par_orange"
+      },
+      {
+        "text": "2x2 Par64 Red",
+        "link": "/fixtures/a2x2par64_red"
+      },
+      {
+        "text": "2x2 Par64 Green",
+        "link": "/fixtures/a2x2par64_green"
+      },
+      {
+        "text": "2x2 Par64 Blue",
+        "link": "/fixtures/a2x2par64_blue"
+      },
+      {
+        "text": "2x2 Par64 Magenta",
+        "link": "/fixtures/a2x2par64_magenta"
+      },
+      {
+        "text": "2x2 Par64 Lightblue",
+        "link": "/fixtures/a2x2par64_lightblue"
+      },
+      {
+        "text": "2x2 Par64 Purple",
+        "link": "/fixtures/a2x2par64_purple"
+      },
+      {
+        "text": "2x2 Par64 Orange",
+        "link": "/fixtures/a2x2par64_orange"
+      },
+      {
+        "text": "2x2 Par64 Yellow",
+        "link": "/fixtures/a2x2par64_yellow"
+      },
+      {
+        "text": "2x2 Par64 Warm",
+        "link": "/fixtures/a2x2par64_warm"
+      },
+      {
+        "text": "2x2 Par64 White",
+        "link": "/fixtures/a2x2par64_white"
+      },
+      {
+        "text": "2x2 Par64 (Block/Color Preset)",
+        "link": "/fixtures/a1x1par64"
+      },
+      {
+        "text": "2x8 Par64 (Color Preset)",
+        "link": "/fixtures/a2x8par64"
+      },
+      {
+        "text": "6x3 Par64 Vertical (Color Preset)",
+        "link": "/fixtures/a6x3par64_vertical"
+      },
+      {
+        "text": "LED Par",
+        "link": "/fixtures/par_led"
+      },
+      {
+        "text": "LED Panel 2",
+        "link": "/fixtures/led_panel_2"
+      },
+      {
+        "text": "Big Panel 3x3",
+        "link": "/fixtures/big_panel"
+      },
+      {
+        "text": "Big Panel 3x2",
+        "link": "/fixtures/big_panel2"
+      },
+      {
+        "text": "RGB Bar",
+        "link": "/fixtures/rgb_bar"
+      },
+      {
+        "text": "Vertical RGB Bar",
+        "link": "/fixtures/vertical_bar"
+      },
+      {
+        "text": "Mini RGB Bar",
+        "link": "/fixtures/mini_bar"
+      },
+      {
+        "text": "Truss 3x3 Lights",
+        "link": "/fixtures/truss_3lights"
+      }
+    ]
+  },
+  {
+    "text": "Blinders & strobes",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Overview",
+        "link": "/fixtures/blinders-strobes"
+      },
+      {
+        "text": "Blinder 4x2",
+        "link": "/fixtures/blinder"
+      },
+      {
+        "text": "2x2 Blinder",
+        "link": "/fixtures/blinder2x2"
+      },
+      {
+        "text": "Blinder 1x1",
+        "link": "/fixtures/blinder1x1"
+      },
+      {
+        "text": "Blinder (warm)",
+        "link": "/fixtures/blinder_warm"
+      },
+      {
+        "text": "2x2 Blinder (Warm)",
+        "link": "/fixtures/blinder2x2warm"
+      },
+      {
+        "text": "Strobe",
+        "link": "/fixtures/strobe"
+      },
+      {
+        "text": "White Strobe (1 Channel)",
+        "link": "/fixtures/white_strobe"
+      },
+      {
+        "text": "Atomic Strobe (34 Channels)",
+        "link": "/fixtures/atomic_strobe"
+      }
+    ]
+  },
+  {
+    "text": "Lasers & effects",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Overview",
+        "link": "/fixtures/lasers-effects"
+      },
+      {
+        "text": "Laser",
+        "link": "/fixtures/laser"
+      },
+      {
+        "text": "Laser Mirror",
+        "link": "/fixtures/laser_mirror"
+      }
+    ]
+  },
+  {
+    "text": "Water jets",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Overview",
+        "link": "/fixtures/water-jets"
+      },
+      {
+        "text": "Water Jet (25m)",
+        "link": "/fixtures/water_jet"
+      },
+      {
+        "text": "Water Jet 1 (Adjustable)",
+        "link": "/fixtures/water_jet_thin"
+      },
+      {
+        "text": "Water Jet 2 (Adjustable)",
+        "link": "/fixtures/water_jet_spread"
+      },
+      {
+        "text": "Conifer Water Jet (Adjustable)",
+        "link": "/fixtures/water_jet_big"
+      },
+      {
+        "text": "Central Water Jet (Adjustable)",
+        "link": "/fixtures/water_jet_central"
+      },
+      {
+        "text": "Water Jet Cone (Adjustable)",
+        "link": "/fixtures/water_jet_cone"
+      },
+      {
+        "text": "Bloom Jet (Adjustable)",
+        "link": "/fixtures/water_jet_bloom"
+      },
+      {
+        "text": "Fog Cone Jet (Adjustable)",
+        "link": "/fixtures/water_jet_fog"
+      },
+      {
+        "text": "Fan Water Jet (Adjustable)",
+        "link": "/fixtures/fan_water_jet"
+      },
+      {
+        "text": "Wedding Cake Water Jet (Adjustable)",
+        "link": "/fixtures/cake_water_jet"
+      },
+      {
+        "text": "Vase Water Jet (Adjustable)",
+        "link": "/fixtures/vase_water_jet"
+      },
+      {
+        "text": "Spinner (Water Jet Effect)",
+        "link": "/fixtures/spinner"
+      },
+      {
+        "text": "Organ Pipes (Water Jet Effect)",
+        "link": "/fixtures/organpipes"
+      },
+      {
+        "text": "Organ Pipes Inverted (Water Jet Effect)",
+        "link": "/fixtures/organpipes_inv"
+      },
+      {
+        "text": "Moving Jet (Adjustable)",
+        "link": "/fixtures/moving_jet"
+      },
+      {
+        "text": "9 Waltzes Water Jets (Adjustable)",
+        "link": "/fixtures/waltzes_water_jet"
+      },
+      {
+        "text": "Waltz Curtain Water Jets (Adjustable)",
+        "link": "/fixtures/waltz_curtain"
+      }
+    ]
+  },
+  {
+    "text": "Pyro & fireworks",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Overview",
+        "link": "/fixtures/pyro"
+      },
+      {
+        "text": "Firework Launcher (all presets)",
+        "link": "/fixtures/firework_launcher"
+      },
+      {
+        "text": "RGB Firework Launcher",
+        "link": "/fixtures/firework_rgb_launcher"
+      },
+      {
+        "text": "Pyro Fan — 10 Comets",
+        "link": "/fixtures/pyro_fan"
+      },
+      {
+        "text": "Flame Projector",
+        "link": "/fixtures/flame_projector"
+      },
+      {
+        "text": "Flame Thrower",
+        "link": "/fixtures/flame_thrower"
+      },
+      {
+        "text": "Gold Gerb (Ground Fountain)",
+        "link": "/fixtures/gerb_gold"
+      },
+      {
+        "text": "Flow2Jet CO₂ Cannon",
+        "link": "/fixtures/flow2jet"
+      },
+      {
+        "text": "Confetti Cannon",
+        "link": "/fixtures/confetti_cannon"
+      }
+    ]
+  },
+  {
+    "text": "Consoles, rig & misc",
+    "items": [
+      {
+        "text": "Overview",
+        "link": "/fixtures/consoles-misc"
+      }
+    ]
+  }
+]

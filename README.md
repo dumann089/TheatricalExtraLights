@@ -3,6 +3,8 @@
 **Extra stage lighting for [Theatrical](https://modrinth.com/mod/theatrical)** — moving heads, LED panels, PARs, lasers, water jets, pyro, and more.  
 Built for concert and theatre setups in Minecraft, controlled over DMX / Art-Net like the base mod.
 
+> 📖 **Full documentation:** [Theatrical: Extra Lights wiki](https://extra-light.nailec.fr/) — guides, every fixture's channel map, grandMA2 files.
+
 > **This is an addon.** [Theatrical](https://modrinth.com/mod/theatrical) is **required**. Keep both mods on the latest compatible versions.
 
 [![Discord](https://img.shields.io/discord/481830554447118371.svg?label=Join%20Theatrical%20Discord)](https://discord.gg/7qMs5d6)

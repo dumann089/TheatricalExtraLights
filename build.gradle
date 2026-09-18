@@ -50,6 +50,14 @@ allprojects {
         maven {
             url "https://maven.firstdarkdev.xyz/snapshots"
         }
+        maven {
+            name = 'BlameJared'
+            url = 'https://maven.blamejared.com'
+        }
+        maven {
+            name = 'CreateMod'
+            url = 'https://maven.createmod.net/'
+        }
         maven { url 'https://jitpack.io' }
         // ModMenu (bouton de reglages dans la liste des mods, cote Fabric)
         maven { url 'https://maven.terraformersmc.com/releases' }

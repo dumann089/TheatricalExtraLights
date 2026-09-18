@@ -19,3 +19,8 @@ classes/
 *.launch
 !gradle/wrapper/gradle-wrapper.jar
 PULL_REQUEST.md
+
+# Wiki (VitePress)
+docs/node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/

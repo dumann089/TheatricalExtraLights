@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.4.12 (mc 1.20.1)
+
+### Gobo moving heads
+- Profile personality is now **29ch - Profile 16bit**: two new channels after the prism rotation for an **animation wheel** (11: out / flames / water / clouds / breakup, 12: indexed orientation or continuous scroll in both directions). The effect texture scrolls in front of the gate and modulates both the volumetric beam and the projected gobo. Channels 13-29 shift by two (frost, zoom, focus, pan/tilt 16 bit, speed, framing shutters).
+
+### Rendering
+- **Shadows in the beam and on the projected spot.** Blocks and entities that cross the cone now cut the light behind them: an occupancy grid of the blocks around each beam (rebuilt every half second or when the beam leaves it) plus up to 8 entity boxes are tested in both the volumetric and the gobo projector shaders. Config `beamShadows` (default on).
+- Raymarch **sample LOD** when the camera is inside or next to a cone: fewer steps per ray (and cheaper haze) so close-up beams no longer stall the GPU, including on Low. Energy is kept by scaling with step size. Distant beams still drop samples as before.
+
+### Fixes
+- The **O** key (Open Configuration Menu) now opens the real settings screen instead of the empty legacy one.
+- Custom gobos larger than one network chunk are reassembled before decoding, so players fetching them from the server get the image.
+- Profile card waiting text no longer says "28ch".
+
+### Docs
+- New VitePress wiki under `docs/` (guides, full fixture reference, grandMA2 files); grandMA2 generator and XML files added under `tools/grandma2/`.
+
 ## 1.4.11 (mc 1.20.1)
 
 - Fixed a client crash with Shimmer when a Profile head had its shutter closed (dynamic light registered without an emission position).

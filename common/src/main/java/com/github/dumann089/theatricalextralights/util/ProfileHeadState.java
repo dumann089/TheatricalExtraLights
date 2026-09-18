@@ -15,16 +15,27 @@ import net.minecraft.util.Mth;
  *  7  Roue de gobos       8  Rotation du gobo
  *  9  Prisme              0-127 hors faisceau, 128-170 3 facettes, 171-213 6 facettes, 214-255 9 facettes
  * 10  Rotation du prisme  0-127 position indexee, 128-191 CW lent→rapide, 192-255 CCW lent→rapide
- * 11  Frost               0 aucun … 255 plein
- * 12  Zoom               13  Focus
- * 14  Pan (coarse)       15  Pan (fine)   16  Tilt (coarse)   17  Tilt (fine)
- * 18  Vitesse pan/tilt    0-2 tracking (instantane), 3-255 rapide→lent
- * 19-27 Couteaux (voir FramingShutterState)
+ * 11  Roue d'animation    0-15 hors faisceau, 16-75 flammes, 76-135 eau, 136-195 nuages, 196-255 breakup
+ * 12  Rotation animation  0-127 orientation indexee (fixe), 128-191 defile lent→rapide, 192-255 sens inverse
+ * 13  Frost               0 aucun … 255 plein
+ * 14  Zoom               15  Focus
+ * 16  Pan (coarse)       17  Pan (fine)   18  Tilt (coarse)   19  Tilt (fine)
+ * 20  Vitesse pan/tilt    0-2 tracking (instantane), 3-255 rapide→lent
+ * 21-29 Couteaux (voir FramingShutterState)
  * </pre>
  */
 public final class ProfileHeadState {
 
-    public static final int CHANNELS_BEFORE_SHUTTERS = 18;
+    public static final int CHANNELS_BEFORE_SHUTTERS = 20;
+
+    /** Textures de la roue d'animation, dans l'ordre des plages DMX (16-75, 76-135, 136-195, 196-255). */
+    public static final net.minecraft.resources.ResourceLocation[] ANIMATION_TEXTURES = {
+            new net.minecraft.resources.ResourceLocation("theatricalextralights", "textures/animation/flames.png"),
+            new net.minecraft.resources.ResourceLocation("theatricalextralights", "textures/animation/water.png"),
+            new net.minecraft.resources.ResourceLocation("theatricalextralights", "textures/animation/clouds.png"),
+            new net.minecraft.resources.ResourceLocation("theatricalextralights", "textures/animation/breakup.png"),
+    };
+    public static final String[] ANIMATION_NAMES = { "flames", "water", "clouds", "breakup" };
 
     /** Vitesse moteur max (tracking) et min, en degres par seconde. */
     private static final float MOTOR_FAST_DEG_S = 720f;
@@ -46,6 +57,8 @@ public final class ProfileHeadState {
     private int red = 255, green = 255, blue = 255;
     private int prism;
     private int prismRotation;
+    private int animWheel;
+    private int animRotation;
     private int frost;
     private int pan16 = 32768;
     private int tilt16 = 54613; // ~ tilt 0°
@@ -63,6 +76,11 @@ public final class ProfileHeadState {
     // Animation client du prisme
     private float prismAngle;
     private float prevPrismAngle;
+
+    // Animation client de la roue d'animation
+    private float animOffset;
+    private float prevAnimOffset;
+    private float animAngleDeg;
 
     public boolean isActive() {
         return active;
@@ -84,10 +102,12 @@ public final class ProfileHeadState {
         blue = u(v[5]);
         prism = u(v[8]);
         prismRotation = u(v[9]);
-        frost = u(v[10]);
-        pan16 = (u(v[13]) << 8) | u(v[14]);
-        tilt16 = (u(v[15]) << 8) | u(v[16]);
-        speed = u(v[17]);
+        animWheel = u(v[10]);
+        animRotation = u(v[11]);
+        frost = u(v[12]);
+        pan16 = (u(v[15]) << 8) | u(v[16]);
+        tilt16 = (u(v[17]) << 8) | u(v[18]);
+        speed = u(v[19]);
         targetPan = pan16 / 65535f * 360f - 180f;
         targetTilt = tilt16 / 65535f * 270f - 225f;
         active = true;
@@ -102,6 +122,8 @@ public final class ProfileHeadState {
         h = 31 * h + blue;
         h = 31 * h + prism;
         h = 31 * h + prismRotation;
+        h = 31 * h + animWheel;
+        h = 31 * h + animRotation;
         h = 31 * h + frost;
         h = 31 * h + pan16;
         h = 31 * h + tilt16;
@@ -122,8 +144,8 @@ public final class ProfileHeadState {
 
     public int getGoboRaw(byte[] v) { return u(v[6]); }
     public int getGoboSpinRaw(byte[] v) { return u(v[7]); }
-    public int getZoomRaw(byte[] v) { return u(v[11]); }
-    public int getFocusRaw(byte[] v) { return u(v[12]); }
+    public int getZoomRaw(byte[] v) { return u(v[13]); }
+    public int getFocusRaw(byte[] v) { return u(v[14]); }
 
     public int getPanInt() { return Math.round(targetPan); }
     public int getTiltInt() { return Math.round(targetTilt); }
@@ -136,6 +158,8 @@ public final class ProfileHeadState {
     public int getBlue() { return blue; }
     public int getPrism() { return prism; }
     public int getPrismRotation() { return prismRotation; }
+    public int getAnimWheel() { return animWheel; }
+    public int getAnimRotation() { return animRotation; }
     public int getFrost() { return frost; }
     public int getSpeed() { return speed; }
 
@@ -191,6 +215,38 @@ public final class ProfileHeadState {
         return 9;
     }
 
+    // ── Roue d'animation ─────────────────────────────────────────────────────
+
+    /** Index 0-3 de l'effet, -1 hors faisceau. */
+    public int animationSlot() {
+        if (animWheel < 16) return -1;
+        return Math.min(3, (animWheel - 16) / 60);
+    }
+
+    public boolean hasAnimation() {
+        return animationSlot() >= 0;
+    }
+
+    public net.minecraft.resources.ResourceLocation animationTexture() {
+        int slot = animationSlot();
+        return slot < 0 ? null : ANIMATION_TEXTURES[slot];
+    }
+
+    public String animationName() {
+        int slot = animationSlot();
+        return slot < 0 ? "out" : ANIMATION_NAMES[slot];
+    }
+
+    /** Orientation de la roue en degres : indexee sur 0-127, sinon la derniere orientation indexee. */
+    public float animationAngleDeg() {
+        return animAngleDeg;
+    }
+
+    /** Defilement en tuiles, interpole. */
+    public float animationOffset(float partialTicks) {
+        return prevAnimOffset + (animOffset - prevAnimOffset) * partialTicks;
+    }
+
     /** Angle du prisme en degres (indexe ou anime). */
     public float prismAngle(float partialTicks) {
         if (prismRotation < 128) {
@@ -205,6 +261,7 @@ public final class ProfileHeadState {
         prevMotorPan = motorPan;
         prevMotorTilt = motorTilt;
         prevPrismAngle = prismAngle;
+        prevAnimOffset = animOffset;
 
         if (!motorInit) {
             motorPan = targetPan;
@@ -238,6 +295,21 @@ public final class ProfileHeadState {
             // Mode indexe : on suit la position pour que la rotation continue reparte de la.
             prismAngle = prismRotation / 127f * 360f;
             prevPrismAngle = prismAngle;
+        }
+
+        if (animRotation < 128) {
+            animAngleDeg = animRotation / 127f * 360f;
+        } else {
+            boolean fwd = animRotation < 192;
+            float norm = fwd ? (animRotation - 128) / 63f : (animRotation - 192) / 63f;
+            // 0.1 a 1.5 tuile par seconde
+            float tilesPerTick = Mth.lerp(norm, 0.005f, 0.075f) * (fwd ? 1f : -1f);
+            animOffset += tilesPerTick;
+            if (Math.abs(animOffset) > 1000f) {
+                float shift = Math.copySign(1000f, animOffset);
+                animOffset -= shift;
+                prevAnimOffset -= shift;
+            }
         }
     }
 
@@ -279,6 +351,8 @@ public final class ProfileHeadState {
         t.putInt("blue", blue);
         t.putInt("prism", prism);
         t.putInt("prismRot", prismRotation);
+        t.putInt("animWheel", animWheel);
+        t.putInt("animRot", animRotation);
         t.putInt("frost", frost);
         t.putInt("pan16", pan16);
         t.putInt("tilt16", tilt16);
@@ -300,6 +374,8 @@ public final class ProfileHeadState {
         blue = t.getInt("blue");
         prism = t.getInt("prism");
         prismRotation = t.getInt("prismRot");
+        animWheel = t.getInt("animWheel");
+        animRotation = t.getInt("animRot");
         frost = t.getInt("frost");
         pan16 = t.getInt("pan16");
         tilt16 = t.getInt("tilt16");

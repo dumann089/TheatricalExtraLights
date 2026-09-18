@@ -1,0 +1,87 @@
+/* Hero image is a landscape stage photo, not a square logo. */
+.VPHero .image {
+  margin: 0 0 28px;
+  width: 100%;
+}
+
+.VPHero .image-container {
+  width: min(100%, 720px);
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.VPHero .image-bg {
+  display: none;
+}
+
+.VPHero .image-src {
+  position: absolute;
+  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  transform: none;
+  object-fit: cover;
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 0.35);
+}
+
+@media (min-width: 640px) {
+  .VPHero .image {
+    margin: 0 0 36px;
+  }
+
+  .VPHero .image-src {
+    max-width: none;
+    max-height: none;
+  }
+}
+
+@media (min-width: 960px) {
+  .VPHero.has-image .container {
+    align-items: center;
+    gap: 40px;
+  }
+
+  .VPHero .image {
+    flex: 1 1 46%;
+    margin: 0;
+    min-width: 0;
+  }
+
+  .VPHero .image-container {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    transform: none;
+  }
+
+  .VPHero .image-src {
+    max-width: none;
+    max-height: none;
+  }
+}
+
+.VPNavBarTitle .logo {
+  height: 40px;
+  width: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.vp-doc img {
+  border-radius: 10px;
+}
+
+.VPFooter .nailec-heart {
+  color: #f5a623;
+  font-style: normal;
+}
+
+.VPFooter a[href="https://nailec.fr"] {
+  font-weight: 600;
+}

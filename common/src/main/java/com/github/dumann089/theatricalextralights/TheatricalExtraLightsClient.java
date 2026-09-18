@@ -163,6 +163,9 @@ public class TheatricalExtraLightsClient {
         com.github.dumann089.theatricalextralights.client.followspot.FollowspotCameraClient.init();
 
         ClientTickEvent.CLIENT_POST.register(client -> {
+            if (client.level == null) {
+                com.github.dumann089.theatricalextralights.client.render.beam.shadow.BeamShadowOccluders.clear();
+            }
             ConfettiBurstClient.tick();
             DetachedPyroSparks.tick();
             if (client.level != null) {

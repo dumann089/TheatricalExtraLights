@@ -1,6 +1,6 @@
 package com.github.dumann089.theatricalextralights.client;
 
-import com.github.dumann089.theatricalextralights.config.ConfigScreen;
+import com.github.dumann089.theatricalextralights.client.gui.ExtraLightsSettingsScreen;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
@@ -20,7 +20,7 @@ public class ModKeybinds {
         KeyMappingRegistry.register(CONFIG_MENU);
         ClientTickEvent.CLIENT_POST.register(minecraft -> {
             while (CONFIG_MENU.consumeClick()) {
-                minecraft.setScreen(new ConfigScreen(minecraft.screen));
+                minecraft.setScreen(new ExtraLightsSettingsScreen(minecraft.screen));
             }
         });
     }

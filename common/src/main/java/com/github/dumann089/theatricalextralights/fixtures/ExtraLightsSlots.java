@@ -30,6 +30,8 @@ public final class ExtraLightsSlots {
     public static final DMXSlot GOBO_ROTATION  = new DMXSlot("Gobo Rotation",    RDMSlotType.ST_PRIMARY, RDMSlotID.SD_ROTO_GOBO_WHEEL);
     public static final DMXSlot PRISM          = new DMXSlot("Prism",            RDMSlotType.ST_PRIMARY, RDMSlotID.SD_PRISM_WHEEL);
     public static final DMXSlot PRISM_ROTATION = new DMXSlot("Prism Rotation",   RDMSlotType.ST_PRIMARY, RDMSlotID.SD_PRISM_WHEEL);
+    public static final DMXSlot ANIMATION_WHEEL    = new DMXSlot("Animation Wheel",    RDMSlotType.ST_PRIMARY, RDMSlotID.SD_ROTO_GOBO_WHEEL);
+    public static final DMXSlot ANIMATION_ROTATION = new DMXSlot("Animation Rotation", RDMSlotType.ST_PRIMARY, RDMSlotID.SD_ROTO_GOBO_WHEEL);
     public static final DMXSlot FROST          = new DMXSlot("Frost",            RDMSlotType.ST_PRIMARY, RDMSlotID.SD_FROST);
     public static final DMXSlot ZOOM           = new DMXSlot("Zoom",             RDMSlotType.ST_PRIMARY, RDMSlotID.SD_ZOOM);
     public static final DMXSlot PAN_FINE       = new DMXSlot("Pan Fine",         RDMSlotType.ST_PRIMARY, RDMSlotID.SD_PAN);

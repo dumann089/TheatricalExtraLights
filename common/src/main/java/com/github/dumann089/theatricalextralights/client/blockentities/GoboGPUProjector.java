@@ -137,8 +137,19 @@ public class GoboGPUProjector {
         final ResourceLocation finalNextTexture = nextTexture;
         final float finalWheelTransition = wheelTransition;
         final FramingShutterState.Snapshot finalShutters = FramingShutterRender.snapshot(be, partialTicks);
+        final ResourceLocation animTex = be.getAnimationTexture();
+        final com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData.Animation finalAnimation =
+                animTex == null ? null : new com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData.Animation(
+                        animTex, be.getAnimationAngleDeg(), be.getAnimationOffset(partialTicks));
 
         final BlockPos finalBlockPos = be.getBlockPos();
+        final com.github.dumann089.theatricalextralights.client.render.beam.shadow.BeamShadowOccluders.Snapshot finalShadows =
+                TheatricalExtraLightsConfig.isBeamShadowsEnabled()
+                        ? com.github.dumann089.theatricalextralights.client.render.beam.shadow.BeamShadowOccluders.get(
+                                be.getLevel(), finalBlockPos, origin, beamDir,
+                                (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance),
+                                (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance) * tanHalfAngle + finalBaseRadius)
+                        : null;
         final int finalColor = be.getColour() == 0 ? 0xFFFFFF : be.getColour();
 
         LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
@@ -179,6 +190,12 @@ public class GoboGPUProjector {
                 shader.safeGetUniform("Focus").set(finalFocus);
                 shader.safeGetUniform("BaseRadius").set(finalBaseRadius);
                 FramingShutterRender.applyUniforms(shader, finalShutters);
+                com.github.dumann089.theatricalextralights.client.render.beam.raymarch.RaymarchBeamRenderer.applyAnimationUniforms(shader, finalAnimation);
+                com.github.dumann089.theatricalextralights.client.render.beam.raymarch.RaymarchBeamRenderer.applyShadowUniforms(shader, finalShadows);
+                shader.safeGetUniform("LightPosW").set((float) origin.x, (float) origin.y, (float) origin.z);
+                shader.safeGetUniform("LightDirW").set((float) beamDir.x, (float) beamDir.y, (float) beamDir.z);
+                shader.safeGetUniform("AxisUW").set((float) axisU.x, (float) axisU.y, (float) axisU.z);
+                shader.safeGetUniform("AxisVW").set((float) axisV.x, (float) axisV.y, (float) axisV.z);
 
                 if (hasOcclusion) {
                     tmpPos.set((float)(finalOcclusionPos.x - cameraPos.x), (float)(finalOcclusionPos.y - cameraPos.y), (float)(finalOcclusionPos.z - cameraPos.z), 1.0f);
@@ -223,6 +240,14 @@ public class GoboGPUProjector {
                 int nextGoboTextureId = mc.getTextureManager().getTexture(finalNextTexture).getId();
                 RenderSystem.setShaderTexture(2, nextGoboTextureId);
                 shader.setSampler("Sampler2", nextGoboTextureId);
+
+                int animTextureId = mc.getTextureManager().getTexture(finalAnimation != null ? finalAnimation.texture() : finalTexture).getId();
+                RenderSystem.setShaderTexture(3, animTextureId);
+                shader.setSampler("Sampler3", animTextureId);
+
+                int shadowTextureId = finalShadows != null ? finalShadows.textureId() : goboTexture;
+                RenderSystem.setShaderTexture(4, shadowTextureId);
+                shader.setSampler("Sampler4", shadowTextureId);
 
                 shader.apply();
 
