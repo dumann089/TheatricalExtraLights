@@ -39,7 +39,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
      * existants. Persistee uniquement pour les block entities qui implementent l'interface.
      */
     protected boolean safetyArmed = true;
-    private static final int BEAM_LIGHT_COUNT = 8;
+    private static final int BEAM_LIGHT_COUNT = 12;
     private BeamLightSource[] beamLightSources;
 
 

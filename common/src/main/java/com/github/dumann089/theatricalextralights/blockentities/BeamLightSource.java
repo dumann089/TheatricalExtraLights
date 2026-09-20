@@ -13,7 +13,7 @@ import org.joml.Vector3f;
 
 /** One point emitter used to turn a focused beam into a lit tube in the world. */
 final class BeamLightSource implements DynamicLightProvider {
-    private static final float SPREAD = 8.0f;
+    private static final float SPREAD = 12.0f;
     private final ExtraLightsLightBlockEntity parent;
     private final int segment;
     private final int segmentCount;
@@ -99,12 +99,15 @@ final class BeamLightSource implements DynamicLightProvider {
         LongOpenHashSet newTrackedChunks = new LongOpenHashSet();
         if (luminance > 0) {
             ChunkPos chunk = new ChunkPos(currentBlock);
-            BlockPos.MutableBlockPos section = new BlockPos.MutableBlockPos(
-                    chunk.x,
-                    SectionPos.blockToSectionCoord(currentBlock.getY()),
-                    chunk.z);
-            LightManager.scheduleChunkRebuild(renderer, section);
-            LightManager.updateTrackedChunks(section, trackedLitChunkPos, newTrackedChunks);
+            int sectionY = SectionPos.blockToSectionCoord(currentBlock.getY());
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlockPos.MutableBlockPos section = new BlockPos.MutableBlockPos(
+                            chunk.x + dx, sectionY, chunk.z + dz);
+                    LightManager.scheduleChunkRebuild(renderer, section);
+                    LightManager.updateTrackedChunks(section, trackedLitChunkPos, newTrackedChunks);
+                }
+            }
         }
         scheduleTrackedChunksRebuild(renderer);
         trackedLitChunkPos.clear();
