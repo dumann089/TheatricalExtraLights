@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.render.beam;
 
 import com.github.dumann089.theatricalextralights.client.IrisCompat;
+import com.github.dumann089.theatricalextralights.client.BeamShaderData;
 import com.github.dumann089.theatricalextralights.client.ModShaders;
 import com.github.dumann089.theatricalextralights.client.render.beam.raymarch.RaymarchBeamRenderer;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
@@ -42,6 +43,7 @@ public class VolumetricBeamRenderer extends LazyRenderers.LazyRenderer {
     private BlockPos currentPos;
 
     public void render(BeamRenderData data, PoseStack poseStack) {
+        BeamShaderData.submit(data);
         if (!TheatricalExtraLightsConfig.isVolumetricBeamEnabled() || data.intensity() <= 0.0f) {
             return;
         }

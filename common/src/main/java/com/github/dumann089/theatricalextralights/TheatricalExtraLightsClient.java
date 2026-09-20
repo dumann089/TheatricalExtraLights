@@ -7,6 +7,7 @@ import com.github.dumann089.theatricalextralights.client.firework.DetachedPyroSp
 import com.github.dumann089.theatricalextralights.client.firework.FireworkSmokeEffects;
 import com.github.dumann089.theatricalextralights.client.ExtraLightsClientScreens;
 import com.github.dumann089.theatricalextralights.client.ModParticleClient;
+import com.github.dumann089.theatricalextralights.client.BeamShaderData;
 import com.github.dumann089.theatricalextralights.client.blockentities.*;
 import com.github.dumann089.theatricalextralights.client.entities.FireworkRocketRenderer;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelManager;
@@ -24,6 +25,8 @@ public class TheatricalExtraLightsClient {
 
 
     public static void init() {
+        BeamShaderData.init();
+        ClientTickEvent.CLIENT_PRE.register(client -> BeamShaderData.beginFrame());
         ModParticleClient.registerProviders();
         ModKeybinds.register();
         ModNetworking.register();
