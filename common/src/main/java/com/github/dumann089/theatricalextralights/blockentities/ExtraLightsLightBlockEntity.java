@@ -338,6 +338,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         }
         for (BeamLightSource source : beamLightSources) {
             LightManager.updateTracking(source);
+            source.setRegistryActive(true);
         }
     }
 
@@ -349,6 +350,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
             if (source.isLightEnabled()) {
                 source.setLightEnabled(false);
             }
+            source.setRegistryActive(false);
         }
     }
 

@@ -9,7 +9,8 @@
   },
   "client": [
     "client.shimmer.ReloadShaderManagerMixin",
-    "client.TheatricalRenderTypesMixin"
+    "client.TheatricalRenderTypesMixin",
+    "client.BeamLightLevelRendererMixin"
   ],
   "mixins": [
     "compat.BlockEntityTheatricalDmxExtendedMixin",

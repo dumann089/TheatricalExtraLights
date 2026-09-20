@@ -11,9 +11,14 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 /** One point emitter used to turn a focused beam into a lit tube in the world. */
-final class BeamLightSource implements DynamicLightProvider {
+public final class BeamLightSource implements DynamicLightProvider {
     private static final float SPREAD = 12.0f;
+    private static final Set<BeamLightSource> ACTIVE = ConcurrentHashMap.newKeySet();
+
     private final ExtraLightsLightBlockEntity parent;
     private final int segment;
     private final int segmentCount;
@@ -26,6 +31,31 @@ final class BeamLightSource implements DynamicLightProvider {
         this.parent = parent;
         this.segment = segment;
         this.segmentCount = segmentCount;
+    }
+
+    void setRegistryActive(boolean active) {
+        if (active) {
+            ACTIVE.add(this);
+        } else {
+            ACTIVE.remove(this);
+        }
+    }
+
+    public static double getDynamicLightLevel(BlockPos pos) {
+        double result = 0.0;
+        for (BeamLightSource source : ACTIVE) {
+            int luminance = source.getLightLuminance();
+            if (luminance <= 0) continue;
+            Vector3f lightPos = source.getLightPos();
+            double distance = Math.sqrt(
+                    (pos.getX() + 0.5 - lightPos.x()) * (pos.getX() + 0.5 - lightPos.x())
+                            + (pos.getY() + 0.5 - lightPos.y()) * (pos.getY() + 0.5 - lightPos.y())
+                            + (pos.getZ() + 0.5 - lightPos.z()) * (pos.getZ() + 0.5 - lightPos.z()));
+            if (distance <= source.getLightSpread()) {
+                result = Math.max(result, luminance * (1.0 - distance / source.getLightSpread()));
+            }
+        }
+        return Math.min(15.0, result);
     }
 
     @Override
@@ -50,9 +80,7 @@ final class BeamLightSource implements DynamicLightProvider {
 
     @Override
     public int getLightLuminance() {
-        if (!shouldUpdateLight()) {
-            return 0;
-        }
+        if (!shouldUpdateLight()) return 0;
         return Math.min(15, Math.max(0, (int) (parent.getIntensity() / 255.0f * 15.0f)));
     }
 
