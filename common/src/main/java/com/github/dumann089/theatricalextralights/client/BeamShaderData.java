@@ -29,9 +29,17 @@ public final class BeamShaderData {
         texture = new DynamicTexture(pixels);
         Minecraft.getInstance().getTextureManager().register(TEXTURE, texture);
     }
+    private static void ensureRegistered() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.getTextureManager().getTexture(TEXTURE) != texture) {
+            minecraft.getTextureManager().register(TEXTURE, texture);
+        }
+    }
+
 
     public static void beginFrame() {
         if (texture == null) init();
+        ensureRegistered();
         nextBeam = 0;
         for (int x = 0; x < WIDTH; x++) {
             pixels.setPixelRGBA(x, 0, 0);
