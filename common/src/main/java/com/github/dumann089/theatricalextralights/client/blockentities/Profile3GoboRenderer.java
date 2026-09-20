@@ -294,11 +294,12 @@ public class Profile3GoboRenderer extends ExtraLightsFixtureRenderer<Profile3Gob
                         blockEntity.getLevel(),
                         1.0f,
                         1.0f,
-                        0.3f
+                        0.25f
                 );
 
                 // Cone pilote par le zoom (1 a 19 deg) : la tache doit suivre.
                 renderData = FramingShutterRender.attach(renderData, blockEntity, partialTicks);
+                renderData = ProfileHeadRender.attachAnimation(renderData, blockEntity, partialTicks);
                 publishCone(blockEntity, renderData);
 
                 VolumetricBeamRenderer volumetric = volumetricRenderers.computeIfAbsent(blockEntity, k -> new VolumetricBeamRenderer());
@@ -354,11 +355,11 @@ public class Profile3GoboRenderer extends ExtraLightsFixtureRenderer<Profile3Gob
                 // ── Lens glow & lens cap ─────────────────────────────────────────
                 poseStack.pushPose();
                 poseStack.translate(0.5f, 0.950f, -0.1075f);
-                renderLensGlow(builder, poseStack, color, 0.19f);
+                renderLensGlow(builder, poseStack, color, 0.17f);
                 poseStack.popPose();
 
                 renderLens(bufferSource, poseStack, alpha, color,
-                        0.19f, 0.5f, 0.950f, -0.1075f);
+                        0.17f, 0.5f, 0.950f, -0.1075f);
 
                 poseStack.popPose();
             }
