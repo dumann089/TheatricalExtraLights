@@ -14,6 +14,7 @@ import com.github.dumann089.theatricalextralights.compat.FireworkLightCompat;
 import com.github.dumann089.theatricalextralights.entities.ModEntities;
 import com.github.dumann089.theatricalextralights.net.ModNetworking;
 import com.github.dumann089.theatricalextralights.net.OpenExtraLightsScreenPacket;
+import dev.imabad.theatrical.lighting.LightManager;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
@@ -169,6 +170,9 @@ public class TheatricalExtraLightsClient {
             DetachedPyroSparks.tick();
             if (client.level != null) {
                 FireworkSmokeEffects.beginClientTick(client.level.getGameTime());
+                if (client.levelRenderer != null) {
+                    LightManager.updateAll(client.levelRenderer);
+                }
             }
             FireworkLightCompat.flushPending();
         });
