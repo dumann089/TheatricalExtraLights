@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
 import dev.imabad.theatrical.api.DynamicLightProvider;
+import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import dev.imabad.theatrical.lighting.LightManager;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -142,6 +143,7 @@ public final class BeamLightSource implements DynamicLightProvider {
         previousSpread = spread;
         previousBlock = currentBlock;
         lastRebuildTick = gameTime;
+        StrobeRenderHelper.markSectionDirty(currentBlock);
         LongOpenHashSet newTrackedChunks = new LongOpenHashSet();
         if (luminance > 0) {
             ChunkPos chunk = new ChunkPos(currentBlock);
