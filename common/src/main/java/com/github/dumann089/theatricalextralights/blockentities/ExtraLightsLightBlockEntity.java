@@ -322,7 +322,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
             }
         }
     }
-    private void updateBeamLightSources() {
+    public void updateBeamLightSources() {
         if (level == null || !level.isClientSide) {
             return;
         }

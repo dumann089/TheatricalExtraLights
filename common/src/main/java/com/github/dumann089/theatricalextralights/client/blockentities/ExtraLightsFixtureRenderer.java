@@ -58,6 +58,9 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
         boolean isFlipped = blockEntity.isUpsideDown();
         boolean isHanging = ((HangableBlock) blockState.getBlock()).isHanging(blockEntity.getLevel(), blockEntity.getBlockPos());
         Direction facing = blockState.getValue(MovingLightBlock.FACING);
+        if (blockEntity instanceof com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity extra) {
+            extra.updateBeamLightSources();
+        }
         renderModel(blockEntity, poseStack, vertexConsumer, facing, partialTick, isFlipped, blockState, isHanging, packedLight, packedOverlay);
         beforeRenderBeam(blockEntity, poseStack, vertexConsumer, multiBufferSource, facing, partialTick, isFlipped, blockState, isHanging, packedLight, packedOverlay);
         poseStack.popPose();
