@@ -72,7 +72,7 @@ public final class IrisCompat {
             return false;
         }
         long now = System.nanoTime();
-        if (now - lastPollNanos >= POLL_INTERVAL_NANOS) {
+        if (lastPollNanos == Long.MIN_VALUE || now - lastPollNanos >= POLL_INTERVAL_NANOS) {
             cachedShadersActive = pollShaderPackInUse();
             lastPollNanos = now;
         }

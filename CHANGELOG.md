@@ -8,8 +8,10 @@
 ### Rendering
 - **Shadows in the beam and on the projected spot.** Blocks and entities that cross the cone now cut the light behind them: an occupancy grid of the blocks around each beam (rebuilt every half second or when the beam leaves it) plus up to 8 entity boxes are tested in both the volumetric and the gobo projector shaders. Config `beamShadows` (default on).
 - Raymarch **sample LOD** when the camera is inside or next to a cone: fewer steps per ray (and cheaper haze) so close-up beams no longer stall the GPU, including on Low. Energy is kept by scaling with step size. Distant beams still drop samples as before.
+- Active beams now contribute multiple client dynamic-light emitters along their path, so the beam illuminates nearby blocks instead of only lighting its fixture endpoint.
 
 ### Fixes
+- Iris shader packs now keep beams visible: custom beam shaders fall back to vanilla lightning and beacon render layers with fullbright lightmap data.
 - The **O** key (Open Configuration Menu) now opens the real settings screen instead of the empty legacy one.
 - Custom gobos larger than one network chunk are reassembled before decoding, so players fetching them from the server get the image.
 - Profile card waiting text no longer says "28ch".

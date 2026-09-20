@@ -84,8 +84,6 @@ public class ModShaders {
 
     private static final Map<ResourceLocation, RenderType> RENDER_TYPE_CACHE = new HashMap<>();
     private static final Map<ResourceLocation, RenderType> VOLUMETRIC_TYPE_CACHE = new HashMap<>();
-    private static final Map<ResourceLocation, RenderType> VOLUMETRIC_FALLBACK_CACHE = new HashMap<>();
-    private static final Map<ResourceLocation, RenderType> GOBO_FALLBACK_CACHE = new HashMap<>();
     private static final Map<ResourceLocation, RenderType> RAYMARCH_TYPE_CACHE = new HashMap<>();
 
     public static boolean isIrisShaderpackActive() {
@@ -222,45 +220,14 @@ public class ModShaders {
         });
     }
 
+    /**
+     * Iris-compatible gobo fallback.  A vanilla beacon layer is understood by
+     * shader packs; the mod's projector shader is deliberately not selected.
+     */
     public static RenderType getGoboFallbackRenderType(ResourceLocation texture) {
-        return GOBO_FALLBACK_CACHE.computeIfAbsent(texture, tex -> {
-            RenderType.CompositeState state =
-                    RenderType.CompositeState.builder()
-                            .setShaderState(
-                                    RenderStateShard.RENDERTYPE_BEACON_BEAM_SHADER
-                            )
-                            .setTextureState(
-                                    new RenderStateShard.TextureStateShard(
-                                            tex,
-                                            false,
-                                            false
-                                    )
-                            )
-                            .setTexturingState(CLAMP_TEXTURING)
-                            .setTransparencyState(ADDITIVE_TRANSPARENCY)
-                            .setDepthTestState(
-                                    new RenderStateShard.DepthTestStateShard(
-                                            "lequal_depth",
-                                            515
-                                    )
-                            )
-                            .setCullState(
-                                    new RenderStateShard.CullStateShard(false)
-                            )
-                            .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                            .createCompositeState(false);
-
-            return RenderType.create(
-                    "gobo_projector_fallback",
-                    DefaultVertexFormat.POSITION_COLOR_TEX,
-                    VertexFormat.Mode.QUADS,
-                    256,
-                    false,
-                    true,
-                    state
-            );
-        });
+        return RenderType.beaconBeam(texture, true);
     }
+
 
     public static RenderType getVolumetricRenderType(ResourceLocation texture) {
         if (ModCompat.SHIMMER || isIrisShaderpackActive()) {
@@ -304,43 +271,8 @@ public class ModShaders {
         });
     }
 
+    /** Iris-compatible volumetric fallback using the shader pack's entity pass. */
     public static RenderType getVolumetricFallbackRenderType(ResourceLocation texture) {
-        return VOLUMETRIC_FALLBACK_CACHE.computeIfAbsent(texture, tex -> {
-            RenderType.CompositeState state =
-                    RenderType.CompositeState.builder()
-                            .setShaderState(
-                                    RenderStateShard.RENDERTYPE_BEACON_BEAM_SHADER
-                            )
-                            .setTextureState(
-                                    new RenderStateShard.TextureStateShard(
-                                            tex,
-                                            false,
-                                            false
-                                    )
-                            )
-                            .setTexturingState(CLAMP_TEXTURING)
-                            .setTransparencyState(ADDITIVE_TRANSPARENCY)
-                            .setDepthTestState(
-                                    new RenderStateShard.DepthTestStateShard(
-                                            "lequal_depth",
-                                            515
-                                    )
-                            )
-                            .setCullState(
-                                    new RenderStateShard.CullStateShard(false)
-                            )
-                            .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                            .createCompositeState(false);
-
-            return RenderType.create(
-                    "volumetric_beam_fallback",
-                    DefaultVertexFormat.POSITION_COLOR_TEX,
-                    VertexFormat.Mode.QUADS,
-                    65536,
-                    false,
-                    true,
-                    state
-            );
-        });
+        return Beam2DRenderTypes.getIrisVolumetric();
     }
 }

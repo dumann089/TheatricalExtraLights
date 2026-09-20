@@ -43,24 +43,21 @@ public class Beam2DRenderTypes {
                     .createCompositeState(false)
     );
 
-    // SHADERS
-    public static final RenderType BEAM_SHADERS = RenderType.create(
-            "beam_shaders",
-            DefaultVertexFormat.POSITION_COLOR,
-            VertexFormat.Mode.QUADS,
-            256,
-            false,
-            false,
-            RenderType.CompositeState.builder()
-                    .setShaderState(new RenderStateShard.ShaderStateShard(
-                            GameRenderer::getPositionColorShader
-                    ))
-                    .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
-                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                    .setCullState(RenderStateShard.NO_CULL)
-                    .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
-                    .createCompositeState(false)
-    );
+
+    /**
+     * Iris replaces mod-provided core shaders.  The vanilla lightning layer is
+     * intentionally used for this path because Iris knows how to route it into
+     * the active shader pack's translucent pass.
+     */
+    private static final RenderType IRIS_BEAM = RenderType.lightning();
+    private static final ResourceLocation IRIS_VOLUME_TEXTURE =
+            new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
+    private static final RenderType IRIS_VOLUME =
+            RenderType.entityTranslucentEmissive(IRIS_VOLUME_TEXTURE);
+
+    public static RenderType getIrisVolumetric() {
+        return IRIS_VOLUME;
+    }
 
     // VANILLA
     public static final RenderType BEAM_VANILLA = RenderType.create(
@@ -80,7 +77,7 @@ public class Beam2DRenderTypes {
     );
 
     public static RenderType getBeam() {
-        return isShadersActive() ? BEAM_SHADERS : BEAM_VANILLA;
+        return isShadersActive() ? IRIS_BEAM : BEAM_VANILLA;
     }
 
     public static boolean isShadersActive() {

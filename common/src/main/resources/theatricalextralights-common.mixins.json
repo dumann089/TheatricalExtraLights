@@ -8,7 +8,8 @@
     "defaultRequire": 1
   },
   "client": [
-    "client.shimmer.ReloadShaderManagerMixin"
+    "client.shimmer.ReloadShaderManagerMixin",
+    "client.TheatricalRenderTypesMixin"
   ],
   "mixins": [
     "compat.BlockEntityTheatricalDmxExtendedMixin",
