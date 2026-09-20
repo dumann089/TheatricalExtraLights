@@ -26,6 +26,7 @@ public final class BeamLightSource implements DynamicLightProvider {
     private BlockPos previousBlock;
     private int previousLuminance;
     private float previousSpread;
+    private long lastRebuildTick = Long.MIN_VALUE;
 
     BeamLightSource(ExtraLightsLightBlockEntity parent, int segment, int segmentCount) {
         this.parent = parent;
@@ -55,7 +56,8 @@ public final class BeamLightSource implements DynamicLightProvider {
                             + (pos.getY() + 0.5 - lightPos.y()) * (pos.getY() + 0.5 - lightPos.y())
                             + (pos.getZ() + 0.5 - lightPos.z()) * (pos.getZ() + 0.5 - lightPos.z()));
             if (distance <= source.getLightSpread()) {
-                result = Math.max(result, luminance * (1.0 - distance / source.getLightSpread()));
+                double sourceLight = Math.max(0.0, 15.0 - distance) * (luminance / 15.0);
+                result = Math.max(result, sourceLight);
             }
         }
         return Math.min(15.0, result);
@@ -129,13 +131,17 @@ public final class BeamLightSource implements DynamicLightProvider {
         int luminance = getLightLuminance();
         float spread = getLightSpread();
         BlockPos currentBlock = BlockPos.containing(getLightPos().x(), getLightPos().y(), getLightPos().z());
-        if (luminance == previousLuminance && spread == previousSpread && currentBlock.equals(previousBlock)) {
+        long gameTime = parent.getLevel() != null ? parent.getLevel().getGameTime() : 0L;
+        if (luminance == previousLuminance && spread == previousSpread
+                && currentBlock.equals(previousBlock)
+                && gameTime - lastRebuildTick < 5L) {
             return false;
         }
 
         previousLuminance = luminance;
         previousSpread = spread;
         previousBlock = currentBlock;
+        lastRebuildTick = gameTime;
         LongOpenHashSet newTrackedChunks = new LongOpenHashSet();
         if (luminance > 0) {
             ChunkPos chunk = new ChunkPos(currentBlock);
