@@ -6,6 +6,7 @@ import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.util.FollowspotDmxHelper;
 import com.github.dumann089.theatricalextralights.util.TheatricalDmxFrameBridge;
+import dev.imabad.theatrical.lighting.LightManager;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -38,6 +39,9 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
      * existants. Persistee uniquement pour les block entities qui implementent l'interface.
      */
     protected boolean safetyArmed = true;
+    private static final int BEAM_LIGHT_COUNT = 8;
+    private BeamLightSource[] beamLightSources;
+
 
     protected ExtraLightsLightBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -298,6 +302,8 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
 
     @Override
     public void lightTick() {
+        updateBeamLightSources();
+
         super.lightTick();
         if (level != null && level.isClientSide) {
             if (com.github.dumann089.theatricalextralights.client.followspot.FollowspotFixtureCameraSession.isControlling(getBlockPos())
@@ -316,6 +322,42 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
             }
         }
     }
+    private void updateBeamLightSources() {
+        if (level == null || !level.isClientSide) {
+            return;
+        }
+        if (!LightManager.shouldUpdateDynamicLight() || !emitsLight() || intensity <= 0 || getDistance() <= 0) {
+            disableBeamLightSources();
+            return;
+        }
+        if (beamLightSources == null) {
+            beamLightSources = new BeamLightSource[BEAM_LIGHT_COUNT];
+            for (int i = 0; i < BEAM_LIGHT_COUNT; i++) {
+                beamLightSources[i] = new BeamLightSource(this, i, BEAM_LIGHT_COUNT);
+            }
+        }
+        for (BeamLightSource source : beamLightSources) {
+            LightManager.updateTracking(source);
+        }
+    }
+
+    private void disableBeamLightSources() {
+        if (beamLightSources == null) {
+            return;
+        }
+        for (BeamLightSource source : beamLightSources) {
+            if (source.isLightEnabled()) {
+                source.setLightEnabled(false);
+            }
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        disableBeamLightSources();
+        super.setRemoved();
+    }
+
 
     /**
      * Sodium met en cache le rendu des block entities — les faisceaux/lentilles passent

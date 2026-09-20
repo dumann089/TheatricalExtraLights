@@ -63,6 +63,8 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
         poseStack.popPose();
     }
 
+
+
     // ── Central volumetric beam helper ──────────────────────────────────────
 
     /**

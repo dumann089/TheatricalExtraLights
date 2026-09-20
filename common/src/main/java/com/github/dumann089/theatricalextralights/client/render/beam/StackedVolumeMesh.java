@@ -1,8 +1,11 @@
 package com.github.dumann089.theatricalextralights.client.render.beam;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+
 
 /**
  * Filled cone mesh: stacked discs, crossed longitudinal planes, and a soft 8-sided shell.
@@ -169,6 +172,9 @@ public final class StackedVolumeMesh {
                 vc.vertex(mat, verts[o], verts[o + 1], verts[o + 2])
                         .color(r, g, b, a)
                         .uv(verts[o + 3], verts[o + 4])
+                        .overlayCoords(OverlayTexture.NO_OVERLAY)
+                        .uv2(LightTexture.FULL_BRIGHT)
+                        .normal(0.0f, 0.0f, 1.0f)
                         .endVertex();
             }
         }
@@ -226,9 +232,23 @@ public final class StackedVolumeMesh {
             if (a <= 0) {
                 continue;
             }
+
             emitBillboard(vc, mat, px, py, pz, right, up, rW, rH, r, g, b, a);
         }
     }
+    private static void emitEntityVertex(VertexConsumer vc, Matrix4f mat,
+                                         float x, float y, float z,
+                                         int r, int g, int b, int a,
+                                         float u, float v) {
+        vc.vertex(mat, x, y, z)
+                .color(r, g, b, a)
+                .uv(u, v)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(LightTexture.FULL_BRIGHT)
+                .normal(0.0f, 0.0f, 1.0f)
+                .endVertex();
+    }
+
 
     private static void emitBillboard(VertexConsumer vc, Matrix4f mat,
                                       float cx, float cy, float cz,
@@ -246,10 +266,10 @@ public final class StackedVolumeMesh {
         float x3 = cx - right.x * rW + up.x * rH;
         float y3 = cy - right.y * rW + up.y * rH;
         float z3 = cz - right.z * rW + up.z * rH;
-        vc.vertex(mat, x0, y0, z0).color(r, g, b, a).uv(0f, 1f).endVertex();
-        vc.vertex(mat, x1, y1, z1).color(r, g, b, a).uv(1f, 1f).endVertex();
-        vc.vertex(mat, x2, y2, z2).color(r, g, b, a).uv(1f, 0f).endVertex();
-        vc.vertex(mat, x3, y3, z3).color(r, g, b, a).uv(0f, 0f).endVertex();
+        emitEntityVertex(vc, mat, x0, y0, z0, r, g, b, a, 0f, 1f);
+        emitEntityVertex(vc, mat, x1, y1, z1, r, g, b, a, 1f, 1f);
+        emitEntityVertex(vc, mat, x2, y2, z2, r, g, b, a, 1f, 0f);
+        emitEntityVertex(vc, mat, x3, y3, z3, r, g, b, a, 0f, 0f);
     }
 
     private static int emitDisc(float[] dest, int idx,

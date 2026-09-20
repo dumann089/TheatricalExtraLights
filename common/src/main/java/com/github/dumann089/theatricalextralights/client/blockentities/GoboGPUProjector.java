@@ -19,6 +19,8 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.renderer.LightTexture;
+
 import com.mojang.math.Axis;
 import dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity;
 import dev.imabad.theatrical.blocks.HangableBlock;
@@ -27,6 +29,8 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -156,6 +160,13 @@ public class GoboGPUProjector {
             @Override
             public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
                 Minecraft mc = Minecraft.getInstance();
+                if (ModShaders.isIrisShaderpackActive()) {
+                    renderIrisFallback(bufferSource, camera, finalTexture, finalOcclusionPos,
+                            finalOcclusionNormal, origin, axisU, axisV,
+                            finalTanHalfAngle, finalBaseRadius, finalIntensity,
+                            hasOcclusion);
+                    return;
+                }
                 ShaderInstance shader = ModShaders.goboProjectorShader;
                 if (shader == null || mc.getMainRenderTarget() == null) return;
 
@@ -271,6 +282,68 @@ public class GoboGPUProjector {
             }
         });
         }
+    }
+    private static void renderIrisFallback(
+            MultiBufferSource.BufferSource bufferSource,
+            Camera camera,
+            ResourceLocation texture,
+            Vec3 hitPosition,
+            Vec3 hitNormal,
+            Vec3 origin,
+            Vec3 axisU,
+            Vec3 axisV,
+            float tanHalfAngle,
+            float baseRadius,
+            float intensity,
+            boolean hasOcclusion
+    ) {
+        if (!hasOcclusion || hitPosition == null || hitNormal.lengthSqr() < 1.0e-8) {
+            return;
+        }
+
+        Vec3 normal = hitNormal.normalize();
+        Vec3 u = axisU.subtract(normal.scale(axisU.dot(normal)));
+        if (u.lengthSqr() < 1.0e-8) {
+            u = axisV.subtract(normal.scale(axisV.dot(normal)));
+        }
+        if (u.lengthSqr() < 1.0e-8) {
+            return;
+        }
+        u = u.normalize();
+        Vec3 v = normal.cross(u).normalize();
+        float radius = Math.max(baseRadius, (float) origin.distanceTo(hitPosition) * tanHalfAngle);
+        Vec3 center = hitPosition.add(normal.scale(0.002));
+        Vec3 p0 = center.subtract(u.scale(radius)).subtract(v.scale(radius));
+        Vec3 p1 = center.add(u.scale(radius)).subtract(v.scale(radius));
+        Vec3 p2 = center.add(u.scale(radius)).add(v.scale(radius));
+        Vec3 p3 = center.subtract(u.scale(radius)).add(v.scale(radius));
+
+        PoseStack stack = new PoseStack();
+        Vec3 cameraPos = camera.getPosition();
+        stack.translate(center.x - cameraPos.x, center.y - cameraPos.y, center.z - cameraPos.z);
+        Matrix4f matrix = stack.last().pose();
+        VertexConsumer consumer = bufferSource.getBuffer(ModShaders.getGoboFallbackRenderType(texture));
+        int alpha = Math.min(255, Math.max(0, (int) (intensity * 255.0f)));
+
+        emitFallbackVertex(consumer, matrix, p0.subtract(center), alpha, 0.0f, 1.0f);
+        emitFallbackVertex(consumer, matrix, p1.subtract(center), alpha, 1.0f, 1.0f);
+        emitFallbackVertex(consumer, matrix, p2.subtract(center), alpha, 1.0f, 0.0f);
+        emitFallbackVertex(consumer, matrix, p3.subtract(center), alpha, 0.0f, 0.0f);
+    }
+
+    private static void emitFallbackVertex(
+            VertexConsumer consumer,
+            Matrix4f matrix,
+            Vec3 position,
+            int alpha,
+            float u,
+            float v
+    ) {
+        consumer.vertex(matrix, (float) position.x, (float) position.y, (float) position.z)
+                .color(255, 255, 255, alpha)
+                .uv(u, v)
+                .uv2(LightTexture.FULL_BRIGHT)
+                .endVertex();
     }
 
     private ResourceLocation resolveGoboTexture(HasGobo be, int slot) {
