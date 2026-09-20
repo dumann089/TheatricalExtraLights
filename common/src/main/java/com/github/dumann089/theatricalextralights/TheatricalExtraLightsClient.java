@@ -25,7 +25,6 @@ public class TheatricalExtraLightsClient {
 
 
     public static void init() {
-        BeamShaderData.init();
         ClientTickEvent.CLIENT_PRE.register(client -> BeamShaderData.beginFrame());
         ModParticleClient.registerProviders();
         ModKeybinds.register();

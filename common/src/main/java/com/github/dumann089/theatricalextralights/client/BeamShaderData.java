@@ -28,7 +28,6 @@ public final class BeamShaderData {
         pixels = new NativeImage(NativeImage.Format.RGBA, WIDTH, 1, false);
         texture = new DynamicTexture(pixels);
         Minecraft.getInstance().getTextureManager().register(TEXTURE, texture);
-        beginFrame();
     }
 
     public static void beginFrame() {
