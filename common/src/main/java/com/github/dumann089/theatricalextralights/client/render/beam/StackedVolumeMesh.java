@@ -64,6 +64,12 @@ public final class StackedVolumeMesh {
      */
     public static int build(float[] dest, BeamRenderData data, float scanLen,
                             float density, float maxAlpha, float fadeLen, boolean hitBlock, int discs) {
+        return build(dest, data, scanLen, density, maxAlpha, fadeLen, hitBlock, discs, true);
+    }
+
+    public static int build(float[] dest, BeamRenderData data, float scanLen,
+                            float density, float maxAlpha, float fadeLen, boolean hitBlock, int discs,
+                            boolean includeDiscs) {
         Axes axes = Axes.from(data);
         int idx = 0;
         int quads = 0;
@@ -91,15 +97,17 @@ public final class StackedVolumeMesh {
             al[i] = sliceAlpha(dist, scanLen, density, maxAlpha, fadeLen, hitBlock);
         }
 
-        for (int i = 0; i < discs; i++) {
-            if (al[i] <= 0.001f) {
-                continue;
+        if (includeDiscs) {
+            for (int i = 0; i < discs; i++) {
+                if (al[i] <= 0.001f) {
+                    continue;
+                }
+                float a = al[i] * 0.85f;
+                idx = emitDisc(dest, idx, cx[i], cy[i], cz[i], axes, rW[i], rH[i], a, 0.0);
+                quads++;
+                idx = emitDisc(dest, idx, cx[i], cy[i], cz[i], axes, rW[i], rH[i], a, Math.PI * 0.25);
+                quads++;
             }
-            float a = al[i] * 0.85f;
-            idx = emitDisc(dest, idx, cx[i], cy[i], cz[i], axes, rW[i], rH[i], a, 0.0);
-            quads++;
-            idx = emitDisc(dest, idx, cx[i], cy[i], cz[i], axes, rW[i], rH[i], a, Math.PI * 0.25);
-            quads++;
         }
 
         for (int i = 0; i < segs; i++) {

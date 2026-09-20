@@ -120,6 +120,7 @@ public class VolumetricBeamRenderer extends LazyRenderers.LazyRenderer {
         float maxAlpha = TheatricalExtraLightsConfig.getVolumetricBeamMaxAlpha();
         float fadeLen = TheatricalExtraLightsConfig.getVolumetricBeamFadeLength();
         int discs = StackedVolumeMesh.discCount(scanLen);
+        boolean irisFallback = IrisCompat.isShadersActive();
 
         int currentHash = 1;
         currentHash = 31 * currentHash + data.generateStateHash(discs);
@@ -129,6 +130,7 @@ public class VolumetricBeamRenderer extends LazyRenderers.LazyRenderer {
         currentHash = 31 * currentHash + Float.floatToIntBits(fadeLen);
         currentHash = 31 * currentHash + discs;
         currentHash = 31 * currentHash + (hitBlock ? 1231 : 1237);
+        currentHash = 31 * currentHash + (irisFallback ? 1231 : 1237);
 
         if (currentHash != cachedHashSlots[slot]) {
             int needed = StackedVolumeMesh.estimateFloats(discs);
@@ -136,7 +138,8 @@ public class VolumetricBeamRenderer extends LazyRenderers.LazyRenderer {
                 cachedVertsSlots[slot] = new float[needed + 512];
             }
             cachedQuadCountSlots[slot] = StackedVolumeMesh.build(
-                    cachedVertsSlots[slot], data, scanLen, density, maxAlpha, fadeLen, hitBlock, discs);
+                    cachedVertsSlots[slot], data, scanLen, density, maxAlpha, fadeLen, hitBlock, discs,
+                    !irisFallback);
             cachedCenterCountSlots[slot] = StackedVolumeMesh.buildCenters(
                     cachedCenterSlots[slot], data, scanLen, density, maxAlpha, fadeLen, hitBlock, discs);
             cachedHashSlots[slot] = currentHash;
@@ -188,6 +191,7 @@ public class VolumetricBeamRenderer extends LazyRenderers.LazyRenderer {
         Matrix4f mat = ps.last().pose();
 
         java.util.Arrays.fill(this.processedSlots, 0, this.activeBeamCount, false);
+        boolean irisFallback = IrisCompat.isShadersActive();
 
         for (int b = 0; b < activeBeamCount; b++) {
             if (processedSlots[b]) {
@@ -214,8 +218,10 @@ public class VolumetricBeamRenderer extends LazyRenderers.LazyRenderer {
 
                 StackedVolumeMesh.emitCachedQuads(vc, mat, cachedVertsSlots[k], cachedQuadCountSlots[k],
                         r, g, bl, alphaScale);
-                StackedVolumeMesh.emitCameraDiscs(vc, mat, cachedCenterSlots[k], cachedCenterCountSlots[k],
-                        blockX, blockY, blockZ, camX, camY, camZ, r, g, bl, alphaScale);
+                if (!irisFallback) {
+                    StackedVolumeMesh.emitCameraDiscs(vc, mat, cachedCenterSlots[k], cachedCenterCountSlots[k],
+                            blockX, blockY, blockZ, camX, camY, camZ, r, g, bl, alphaScale);
+                }
             }
         }
 
