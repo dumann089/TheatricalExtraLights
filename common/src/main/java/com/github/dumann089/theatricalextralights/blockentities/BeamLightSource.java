@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** One point emitter used to turn a focused beam into a lit tube in the world. */
 public final class BeamLightSource implements DynamicLightProvider {
-    private static final float SPREAD = 12.0f;
+    private static final float SPREAD = 24.0f;
     private static final Set<BeamLightSource> ACTIVE = ConcurrentHashMap.newKeySet();
 
     private final ExtraLightsLightBlockEntity parent;

@@ -1,6 +1,5 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
-import com.github.dumann089.theatricalextralights.TheatricalExtraLights;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasExtendedBeamChannels;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
@@ -43,7 +42,6 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
     protected boolean safetyArmed = true;
     private static final int BEAM_LIGHT_COUNT = 12;
     private BeamLightSource[] beamLightSources;
-    private boolean beamLightLogged;
     private Vec3 beamLightOrigin = Vec3.ZERO;
     private Vec3 beamLightDirection = new Vec3(0.0, 0.0, -1.0);
     private double beamLightDistance;
@@ -369,13 +367,6 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         for (BeamLightSource source : beamLightSources) {
             LightManager.updateTracking(source);
             source.setRegistryActive(true);
-        }
-        if (!beamLightLogged) {
-            TheatricalExtraLights.LOGGER.info(
-                    "Beam dynamic lights active at {}: intensity={}, distance={}, registered={}, registryCount={}",
-                    getBlockPos(), intensity, getDistance(), beamLightSources[0].isLightEnabled(),
-                    BeamLightSource.getActiveCount());
-            beamLightLogged = true;
         }
     }
 
