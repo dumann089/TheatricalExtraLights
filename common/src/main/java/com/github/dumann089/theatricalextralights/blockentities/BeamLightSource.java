@@ -40,6 +40,9 @@ public final class BeamLightSource implements DynamicLightProvider {
             ACTIVE.remove(this);
         }
     }
+    public static int getActiveCount() {
+        return ACTIVE.size();
+    }
 
     public static double getDynamicLightLevel(BlockPos pos) {
         double result = 0.0;
@@ -65,9 +68,18 @@ public final class BeamLightSource implements DynamicLightProvider {
 
     @Override
     public Vector3f getLightPos() {
-        Vec3 origin = Vec3.atCenterOf(parent.getBlockPos());
-        Vec3 direction = dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity.rayTraceDir(parent);
-        double distance = Math.max(1.0, parent.getDistance());
+        Vec3 origin;
+        Vec3 direction;
+        double distance;
+        if (parent.hasBeamLightGeometry()) {
+            origin = Vec3.atLowerCornerOf(parent.getBlockPos()).add(parent.getBeamLightOrigin());
+            direction = parent.getBeamLightDirection();
+            distance = Math.max(1.0, parent.getBeamLightDistance());
+        } else {
+            origin = Vec3.atCenterOf(parent.getBlockPos());
+            direction = dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity.rayTraceDir(parent);
+            distance = Math.max(1.0, parent.getDistance());
+        }
         double fraction = (segment + 0.5) / segmentCount;
         Vec3 point = origin.add(direction.scale(distance * fraction));
         return new Vector3f((float) point.x, (float) point.y, (float) point.z);

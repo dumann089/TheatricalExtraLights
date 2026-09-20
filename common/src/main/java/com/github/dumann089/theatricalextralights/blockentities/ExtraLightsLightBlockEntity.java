@@ -1,11 +1,13 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
+import com.github.dumann089.theatricalextralights.TheatricalExtraLights;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasExtendedBeamChannels;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.util.FollowspotDmxHelper;
 import com.github.dumann089.theatricalextralights.util.TheatricalDmxFrameBridge;
+import com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData;
 import dev.imabad.theatrical.lighting.LightManager;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -41,6 +43,11 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
     protected boolean safetyArmed = true;
     private static final int BEAM_LIGHT_COUNT = 12;
     private BeamLightSource[] beamLightSources;
+    private boolean beamLightLogged;
+    private Vec3 beamLightOrigin = Vec3.ZERO;
+    private Vec3 beamLightDirection = new Vec3(0.0, 0.0, -1.0);
+    private double beamLightDistance;
+    private boolean beamLightGeometrySet;
 
 
     protected ExtraLightsLightBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -322,6 +329,29 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
             }
         }
     }
+    public void updateBeamLightGeometry(BeamRenderData data) {
+        beamLightOrigin = data.origin();
+        beamLightDirection = data.beamDir();
+        beamLightDistance = data.scanLen();
+        beamLightGeometrySet = true;
+    }
+
+    Vec3 getBeamLightOrigin() {
+        return beamLightOrigin;
+    }
+
+    Vec3 getBeamLightDirection() {
+        return beamLightDirection;
+    }
+
+    double getBeamLightDistance() {
+        return beamLightDistance;
+    }
+
+    boolean hasBeamLightGeometry() {
+        return beamLightGeometrySet;
+    }
+
     public void updateBeamLightSources() {
         if (level == null || !level.isClientSide) {
             return;
@@ -339,6 +369,13 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         for (BeamLightSource source : beamLightSources) {
             LightManager.updateTracking(source);
             source.setRegistryActive(true);
+        }
+        if (!beamLightLogged) {
+            TheatricalExtraLights.LOGGER.info(
+                    "Beam dynamic lights active at {}: intensity={}, distance={}, registered={}, registryCount={}",
+                    getBlockPos(), intensity, getDistance(), beamLightSources[0].isLightEnabled(),
+                    BeamLightSource.getActiveCount());
+            beamLightLogged = true;
         }
     }
 

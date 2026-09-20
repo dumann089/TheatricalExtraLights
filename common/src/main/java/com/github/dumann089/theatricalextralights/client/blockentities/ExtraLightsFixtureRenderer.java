@@ -165,6 +165,10 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
                 heightScale,
                 baseRadius
         );
+        if (blockEntity instanceof com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity extra) {
+            extra.updateBeamLightGeometry(renderData);
+            extra.updateBeamLightSources();
+        }
 
         // Cone variable = lyre a focus. Un PAR a minAngleDeg == maxAngleDeg et ne publie rien.
         if (maxAngleDeg > minAngleDeg + 1.0e-3f) {
