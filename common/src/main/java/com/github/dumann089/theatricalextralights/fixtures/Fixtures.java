@@ -513,6 +513,7 @@ public class Fixtures {
             case CROSSETTE_WHITE -> FIREWORK_CROSSETTE_WHITE.get();
             case CROSSETTE_AMBER -> FIREWORK_CROSSETTE_AMBER.get();
             case CROSSETTE_VIOLET -> FIREWORK_CROSSETTE_VIOLET.get();
+
             case MINE_BLUE -> FIREWORK_MINE_BLUE.get();
             case MINE_RED -> FIREWORK_MINE_RED.get();
             case MINE_GREEN -> FIREWORK_MINE_GREEN.get();
@@ -520,7 +521,9 @@ public class Fixtures {
             case MINE_WHITE -> FIREWORK_MINE_WHITE.get();
             case MINE_AMBER -> FIREWORK_MINE_AMBER.get();
             case MINE_VIOLET -> FIREWORK_MINE_VIOLET.get();
+            case MINE_COMET -> FIREWORK_MINE_RED.get();
             case SPIDER_WHITE -> FIREWORK_SPIDER_WHITE.get();
+
             case DIADEM_BLUE -> FIREWORK_DIADEM_BLUE.get();
             case SALUTE_WHITE -> FIREWORK_SALUTE_WHITE.get();
             case HEART_PINK -> FIREWORK_HEART_PINK.get();
@@ -595,6 +598,7 @@ public class Fixtures {
             case CROSSETTE_WHITE -> FIREWORK_CROSSETTE_WHITE.getId();
             case CROSSETTE_AMBER -> FIREWORK_CROSSETTE_AMBER.getId();
             case CROSSETTE_VIOLET -> FIREWORK_CROSSETTE_VIOLET.getId();
+
             case MINE_BLUE -> FIREWORK_MINE_BLUE.getId();
             case MINE_RED -> FIREWORK_MINE_RED.getId();
             case MINE_GREEN -> FIREWORK_MINE_GREEN.getId();
@@ -602,7 +606,9 @@ public class Fixtures {
             case MINE_WHITE -> FIREWORK_MINE_WHITE.getId();
             case MINE_AMBER -> FIREWORK_MINE_AMBER.getId();
             case MINE_VIOLET -> FIREWORK_MINE_VIOLET.getId();
+            case MINE_COMET -> FIREWORK_MINE_RED.getId();
             case SPIDER_WHITE -> FIREWORK_SPIDER_WHITE.getId();
+
             case DIADEM_BLUE -> FIREWORK_DIADEM_BLUE.getId();
             case SALUTE_WHITE -> FIREWORK_SALUTE_WHITE.getId();
             case HEART_PINK -> FIREWORK_HEART_PINK.getId();

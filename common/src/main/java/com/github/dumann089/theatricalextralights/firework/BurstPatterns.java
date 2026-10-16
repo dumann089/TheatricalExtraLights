@@ -1,15 +1,19 @@
 package com.github.dumann089.theatricalextralights.firework;
 
+import com.github.dumann089.theatricalextralights.blockentities.FireworkLauncherBlockEntity;
 import com.github.dumann089.theatricalextralights.client.firework.FireworkSmokeEffects;
 import com.github.dumann089.theatricalextralights.entities.FireworkRocketEntity;
+import com.github.dumann089.theatricalextralights.entities.MineRocketEntity;
 import com.github.dumann089.theatricalextralights.sounds.ModSounds;
 import dev.imabad.theatrical.blocks.light.BaseLightBlock;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.core.registries.BuiltInRegistries;
 
 /**
  * Concrete burst patterns. Each one is a fundamentally different algorithm — not
@@ -727,103 +731,207 @@ public final class BurstPatterns {
     }
 
     /**
-     * Mine: a ground-level upward fountain. The launcher fires no rocket — instead
-     * the burst happens immediately at the launcher position, throwing many sparks
-     * into a tall narrow cone of fire above the device. Used for stage mine effects.
+     * Comet exclusivo para Mine.
      */
-    public static class Mine extends BurstPattern {
-        @Override public boolean isBurst() { return true; }
-        @Override public boolean hasCrackleSound() { return true; }
-        @Override public int getBurstDuration() { return 30; }
-        @Override public int getFlightLifetime() { return 1; }
-        @Override public float getLaunchSpeedMultiplier() { return 0.0f; }
+    public static class MineComet extends BurstPattern {
+        @Override public boolean isBurst() { return false; }
+        @Override public int getBurstDuration() { return 0; }
+        @Override public int getCometFadeTicks() { return 14; }
+        @Override public int getFlightLifetime() { return 80; }
+        @Override public int getServerHoldTicks() {
+            return 88 + getCometFadeTicks() + 16;
+        }
+        @Override public float getFlightLightSpread() { return 45.0f; }
+        @Override public float getFlightHaloInnerSize() { return 0.35f; }
+        @Override public float getFlightHaloOuterSize() { return 0.55f; }
+        @Override public boolean spawnsFlightSmoke() { return true; }
 
         @Override
-        public boolean isTriggerShot() {
-            return true;
+        public void onFlightTick(FireworkRocketEntity rocket, RandomSource random) {
+            int color = rocket.getLaunchColor();
+            emitFlightTrail(rocket, random, color, 0.13f, 12, true);
         }
+
+        @Override
+        public void onFadeTick(
+                FireworkRocketEntity rocket,
+                RandomSource random,
+                int remainingTicks
+        ) {
+            int color = rocket.getLaunchColor();
+            int fadeTicks = getCometFadeTicks();
+            float fade = remainingTicks / (float) Math.max(1, fadeTicks);
+
+            if (fade <= 0.0f || random.nextFloat() > fade * 0.85f) {
+                return;
+            }
+
+            Vec3 motion = rocket.getDeltaMovement().scale(-0.05);
+            double scatter = 0.06;
+
+            double vx = motion.x + (random.nextDouble() - 0.5) * scatter;
+            double vy = motion.y + (random.nextDouble() - 0.5) * scatter * 0.5;
+            double vz = motion.z + (random.nextDouble() - 0.5) * scatter;
+
+            rocket.addSpark(new Spark(
+                    rocket.getX(),
+                    rocket.getY(),
+                    rocket.getZ(),
+                    vx,
+                    vy,
+                    vz,
+                    color,
+                    0.30f + random.nextFloat() * 0.12f,
+                    6,
+                    0.065f,
+                    0.97f,
+                    true,
+                    false
+            ));
+        }
+    }
+
+    /**
+     * Mine: a ground-level directional fountain. The launcher fires no rocket —
+     * instead the burst happens immediately at the launcher position, throwing
+     * many sparks into a narrow cone oriented by CH2.
+     *
+     * CH2 = inclination/direction
+     * CH3 = height
+     */
+    public static class Mine extends BurstPattern {
+        private static final int COMET_COUNT = 25;
+        private static final double MIN_CONE_ANGLE = 1.0;
+        private static final double MAX_CONE_ANGLE = 9.0;
+        private static final double MIN_HEIGHT_FACTOR = 0.72;
+        private static final double MAX_HEIGHT_FACTOR = 0.90;
+        private static int NEXT_MINE_ROCKET_ID = -1000000;
+
+        @Override public boolean isBurst() { return true; }
+        @Override public boolean hasCrackleSound() { return true; }
+        @Override public int getBurstDuration() { return 1; }
+        @Override public int getFlightLifetime() { return 1; }
+        @Override public float getLaunchSpeedMultiplier() { return 0.0f; }
+        @Override public boolean isTriggerShot() { return true; }
 
         @Override
         public void onBurstStart(FireworkRocketEntity rocket, RandomSource random) {
+            if (!(rocket.level() instanceof ClientLevel clientLevel)) {
+                return;
+            }
+
             int[] palette = rocket.getColors();
-            double floorY = rocket.getY();
-            int count = 300;
 
-            for (int i = 0; i < count; i++) {
+            float pitchDegrees = 90.0f;
+            float heightMultiplier = 1.0f;
+            Direction facing = Direction.NORTH;
 
-                double spawnAngle = random.nextDouble() * Math.PI * 2.5;
-                double spawnRadius = random.nextDouble() * 0.2;
+            if (rocket.level().getBlockEntity(rocket.getLauncherPos())
+                    instanceof FireworkLauncherBlockEntity launcher) {
 
-                double x = rocket.getX() + Math.cos(spawnAngle) * spawnRadius;
-                double z = rocket.getZ() + Math.sin(spawnAngle) * spawnRadius;
+                pitchDegrees = launcher.getPitchDegrees();
 
-                double spread = Math.pow(random.nextDouble(), 2.5);
-                double coneAngle = 0.1 + spread * 0.15;
+                float power = launcher.getLaunchPowerMultiplier();
+                float normalizedHeight = Mth.clamp(
+                        (power - 0.7f) / 1.9f,
+                        0.0f,
+                        1.0f
+                );
 
-                double azimuth = random.nextDouble() * Math.PI * 2.0;
+                heightMultiplier = Mth.lerp(
+                        normalizedHeight,
+                        0.70f,
+                        3.50f
+                );
 
-                double speed;
-                float r = random.nextFloat();
+                if (rocket.level().getBlockState(rocket.getLauncherPos())
+                        .hasProperty(BaseLightBlock.FACING)) {
 
-                if (r < 0.12f) {
-                    speed = 1.35 + random.nextDouble() * 0.35;
-                } else if (r < 0.65f) {
-                    speed = 1.15 + random.nextDouble() * 0.35;
-                } else {
-                    speed = 0.95 + random.nextDouble() * 0.35;
+                    facing = rocket.level()
+                            .getBlockState(rocket.getLauncherPos())
+                            .getValue(BaseLightBlock.FACING)
+                            .getClockWise();
                 }
+            }
 
-                double vy = Math.cos(coneAngle) * speed;
-                double horiz = Math.sin(coneAngle) * speed;
+            double pitch = pitchDegrees * Mth.DEG_TO_RAD;
+            double yaw = facing.toYRot() * Mth.DEG_TO_RAD;
 
-                double vx = Math.cos(azimuth) * horiz;
-                double vz = Math.sin(azimuth) * horiz;
+            Vec3 axis = new Vec3(
+                    -Math.sin(yaw) * Math.cos(pitch),
+                    Math.sin(pitch),
+                    Math.cos(yaw) * Math.cos(pitch)
+            ).normalize();
+
+            Vec3 referenceUp = Math.abs(axis.y) < 0.99
+                    ? new Vec3(0.0, 1.0, 0.0)
+                    : new Vec3(1.0, 0.0, 0.0);
+
+            Vec3 right = axis.cross(referenceUp).normalize();
+            Vec3 up = right.cross(axis).normalize();
+
+            double azimuthOffset = random.nextDouble() * Math.PI * 2.0;
+
+            for (int i = 0; i < COMET_COUNT; i++) {
+                double azimuth = azimuthOffset + Math.PI * 2.0 * i / COMET_COUNT;
+
+                double coneAngle = (
+                        MIN_CONE_ANGLE
+                                + random.nextDouble() * (MAX_CONE_ANGLE - MIN_CONE_ANGLE)
+                ) * Mth.DEG_TO_RAD;
+
+                Vec3 radial = right.scale(Math.cos(azimuth))
+                        .add(up.scale(Math.sin(azimuth)))
+                        .normalize();
+
+                Vec3 direction = axis.scale(Math.cos(coneAngle))
+                        .add(radial.scale(Math.sin(coneAngle)))
+                        .normalize();
+
+                int heightGroup = i % 6;
+                double groupT = heightGroup / 5.0;
+
+                double heightFactor = Mth.lerp(
+                        (float) groupT,
+                        (float) MIN_HEIGHT_FACTOR,
+                        (float) MAX_HEIGHT_FACTOR
+                );
+
+                heightFactor += (random.nextDouble() - 0.5) * 0.04;
+
+                double speed =
+                        heightMultiplier
+                                * heightFactor;
+
+                Vec3 velocity = direction.scale(speed);
 
                 int color = paletteAt(palette, i);
+                int red = (color >> 16) & 0xFF;
+                int green = (color >> 8) & 0xFF;
+                int blue = color & 0xFF;
 
-                rocket.addSpark(new Spark(
-                        x,
-                        floorY,
-                        z,
-                        vx,
-                        vy,
-                        vz,
-                        color,
-                        0.15f + random.nextFloat() * 0.12f,
-                        (int)(10 + speed * 4 + random.nextInt(4)),
-                        0.04f + random.nextFloat() * 0.004f,
-                        0.986f + random.nextFloat() * 0.006f,
-                        true,
-                        false,
-                        false,
-                        floorY
-                ));
+                MineRocketEntity comet = new MineRocketEntity(
+                        clientLevel,
+                        rocket.getLauncherPos()
+                );
+
+                comet.setId(NEXT_MINE_ROCKET_ID--);
+                comet.setPos(
+                        rocket.getX(),
+                        rocket.getY(),
+                        rocket.getZ()
+                );
+                comet.setDeltaMovement(velocity);
+                comet.setCustomColors(red, green, blue);
+
+                clientLevel.putNonPlayerEntity(
+                        comet.getId(),
+                        comet
+                );
             }
-            for (int i = 0; i < 35; i++) {
-                double theta = random.nextDouble() * Math.PI * 2.0;
-                double spread = 0.12 + random.nextDouble() * 0.18;
-                double speed = 0.25 + random.nextDouble() * 0.40;
-                double vx = Math.cos(theta) * spread * speed;
-                double vz = Math.sin(theta) * spread * speed;
-                double vy = 0.40 + random.nextDouble() * 0.50;
-                int color = paletteAt(palette, i);
-                rocket.addSpark(new Spark(
-                        rocket.getX(), floorY, rocket.getZ(),
-                        vx, vy, vz,
-                        color,
-                        0.18f + random.nextFloat() * 0.10f,
-                        10 + random.nextInt(5),
-                        0.045f,
-                        0.996f,
-                        false,
-                        false,
-                        false,
-                        floorY
-                ));
-            }
-            FireworkSmokeEffects.spawnMineSmoke(rocket, random);
         }
     }
+
     // Silver Jet
     public static class SilverJet extends BurstPattern {
         private static final double HEIGHT = 9.5;
@@ -843,22 +951,22 @@ public final class BurstPatterns {
         @Override public int getFlightLifetime() { return 1; }
         @Override public float getLaunchSpeedMultiplier() { return 0.0f; }
         @Override public float getFlightLightSpread() { return 75.0f; }
-
+        @Override public boolean isTriggerShot() { return true; }
 
         @Override
         public void onBurstStart(FireworkRocketEntity rocket, RandomSource random) {
         }
 
         @Override
-        public boolean isTriggerShot() {
-            return true;
-        }
-
-        @Override
-        public void onBurstTick(FireworkRocketEntity rocket, RandomSource random, int tick) {
+        public void onBurstTick(
+                FireworkRocketEntity rocket,
+                RandomSource random,
+                int tick
+        ) {
             if (tick >= 10) {
                 return;
             }
+
             spawnSilverJet(rocket, random, 135, tick);
         }
 
@@ -870,9 +978,60 @@ public final class BurstPatterns {
         ) {
             int[] palette = rocket.getColors();
 
+            float pitchDegrees = 180.0f;
+            float heightMultiplier = 1.0f;
+            Direction facing = Direction.NORTH;
+
+            if (rocket.level().getBlockEntity(rocket.getLauncherPos())
+                    instanceof FireworkLauncherBlockEntity launcher) {
+
+                // CH2 = inclinación
+                pitchDegrees = launcher.getPitchDegrees();
+
+                // CH3 = altura
+                float power = launcher.getLaunchPowerMultiplier();
+                float normalizedHeight = Mth.clamp(
+                        (power - 0.7f) / 1.9f,
+                        0.0f,
+                        1.0f
+                );
+
+                heightMultiplier = Mth.lerp(
+                        normalizedHeight,
+                        0.70f,
+                        1.80f
+                );
+
+                if (rocket.level().getBlockState(rocket.getLauncherPos())
+                        .hasProperty(BaseLightBlock.FACING)) {
+                    facing = rocket.level()
+                            .getBlockState(rocket.getLauncherPos())
+                            .getValue(BaseLightBlock.FACING)
+                            .getClockWise();
+                }
+            }
+
+            double pitch = pitchDegrees * Mth.DEG_TO_RAD;
+            double yaw = facing.toYRot() * Mth.DEG_TO_RAD;
+
+            Vec3 axis = new Vec3(
+                    -Math.sin(yaw) * Math.cos(pitch),
+                    Math.sin(pitch),
+                    Math.cos(yaw) * Math.cos(pitch)
+            ).normalize();
+
+            Vec3 referenceUp = Math.abs(axis.y) < 0.99
+                    ? new Vec3(0.0, 1.0, 0.0)
+                    : new Vec3(1.0, 0.0, 0.0);
+
+            Vec3 right = axis.cross(referenceUp).normalize();
+            Vec3 up = right.cross(axis).normalize();
+
             double baseX = rocket.getX();
             double baseY = rocket.getY();
             double baseZ = rocket.getZ();
+
+            double actualHeight = HEIGHT * heightMultiplier;
 
             for (int i = 0; i < count; i++) {
                 double h = random.nextDouble();
@@ -882,15 +1041,14 @@ public final class BurstPatterns {
                     double t = h / START_HEIGHT;
                     width = START_SIZE +
                             (MIDDLE_SIZE - START_SIZE) * t;
-                }
-                else if (h < 1.0 - END_HEIGHT) {
+                } else if (h < 1.0 - END_HEIGHT) {
                     width = MIDDLE_SIZE;
-                }
-                else {
+                } else {
                     double t = (h - (1.0 - END_HEIGHT)) / END_HEIGHT;
                     width = MIDDLE_SIZE +
                             (END_SIZE - MIDDLE_SIZE) * t;
                 }
+
                 width *= 0.85 + random.nextDouble() * 0.30;
 
                 double theta = random.nextDouble() * Math.PI * 2.0;
@@ -898,41 +1056,36 @@ public final class BurstPatterns {
                         Math.pow(random.nextDouble(), 0.45)
                                 * width
                                 * SPREAD;
-                radius += random.nextGaussian() * 0.04;
-                double x =
-                        baseX +
-                                Math.cos(theta) * radius;
-                double z =
-                        baseZ +
-                                Math.sin(theta) * radius;
-                double y =
-                        baseY +
-                                h * HEIGHT;
-                double vx =
-                        Math.cos(theta) * 0.025
-                                + random.nextGaussian() * 0.02;
-                double vz =
-                        Math.sin(theta) * 0.025
-                                + random.nextGaussian() * 0.02;
-                double vy =
-                        0.25 +
-                                random.nextDouble() * 0.35;
-                rocket.addSpark(new Spark(
-                        x,
-                        y,
-                        z,
-                        vx,
-                        vy,
-                        vz,
-                        paletteAt(
-                                palette,
-                                tick * count + i
-                        ),
-                        0.09f +
-                                random.nextFloat() * 0.08f,
 
-                        15 +
-                                random.nextInt(12),
+                radius += random.nextGaussian() * 0.04;
+
+                Vec3 radial = right.scale(Math.cos(theta) * radius)
+                        .add(up.scale(Math.sin(theta) * radius));
+
+                Vec3 position = new Vec3(baseX, baseY, baseZ)
+                        .add(axis.scale(h * actualHeight))
+                        .add(radial);
+
+                Vec3 velocity = axis.scale(
+                        0.25 + random.nextDouble() * 0.35
+                ).add(
+                        radial.normalize().scale(0.025)
+                ).add(
+                        right.scale(random.nextGaussian() * 0.02)
+                ).add(
+                        up.scale(random.nextGaussian() * 0.02)
+                );
+
+                rocket.addSpark(new Spark(
+                        position.x,
+                        position.y,
+                        position.z,
+                        velocity.x,
+                        velocity.y,
+                        velocity.z,
+                        paletteAt(palette, tick * count + i),
+                        0.09f + random.nextFloat() * 0.08f,
+                        15 + random.nextInt(12),
                         0.035f,
                         0.985f,
                         true,
@@ -948,29 +1101,17 @@ public final class BurstPatterns {
 
     // FLAME PROJECTOR
     public static class FlameProjector extends BurstPattern {
-
-        private static final double FLAME_HEIGHT = 4.5;
-
-        private static final double EMITTER_RADIUS = 0.1;
-
-        private static final double TURBULENCE = 0.02;
-
-        private static final double VERTICAL_SPEED = 0.75;
-
+        private static final double FLAME_HEIGHT = 2.0;
+        private static final double EMITTER_RADIUS = 0.08;
+        private static final double TURBULENCE = 0.015;
+        private static final double VERTICAL_SPEED = 0.6;
         private static final int MAX_PARTICLES = 40;
-
         private static final int DURATION = 85;
-
         private static final double FADE_IN = 0.15;
-
         private static final double FADE_OUT = 0.50;
-
-        private static final double MIN_EMITTER = 0.0;
-
         private static final float MIN_SIZE = 0.05f;
-        private static final float MAX_SIZE = 0.45f;
-
-        private static final double PARTICLE_CURVE = 2.5;
+        private static final float MAX_SIZE = 0.35f;
+        private static final double PARTICLE_CURVE = 1.5;
 
         @Override
         public boolean isBurst() {
@@ -1008,10 +1149,8 @@ public final class BurstPatterns {
         }
 
         @Override
-        public int getBurstLuminance(int tick) {
-
+        public float getBurstLightSpread(int tick) {
             double progress = tick / (double) DURATION;
-
             double fade;
 
             if (progress < FADE_IN) {
@@ -1022,16 +1161,13 @@ public final class BurstPatterns {
                 fade = 1.0;
             }
 
-            fade = Math.max(0.0, Math.min(1.0, fade));
-
-            return Math.max(0, (int) Math.round(9 * fade));
+            fade = Mth.clamp(fade, 0.0, 1.0);
+            return (float) (25.0 * fade);
         }
 
         @Override
-        public float getBurstLightSpread(int tick) {
-
+        public int getBurstLuminance(int tick) {
             double progress = tick / (double) DURATION;
-
             double fade;
 
             if (progress < FADE_IN) {
@@ -1042,9 +1178,8 @@ public final class BurstPatterns {
                 fade = 1.0;
             }
 
-            fade = Math.max(0.0, Math.min(1.0, fade));
-
-            return (float) (25.0 * fade);
+            fade = Mth.clamp(fade, 0.0, 1.0);
+            return Math.max(0, (int) Math.round(9 * fade));
         }
 
         @Override
@@ -1053,7 +1188,11 @@ public final class BurstPatterns {
         }
 
         @Override
-        public void onBurstTick(FireworkRocketEntity rocket, RandomSource random, int tick) {
+        public void onBurstTick(
+                FireworkRocketEntity rocket,
+                RandomSource random,
+                int tick
+        ) {
             spawnFlameProjector(rocket, random, tick);
         }
 
@@ -1062,51 +1201,42 @@ public final class BurstPatterns {
                 RandomSource random,
                 int tick
         ) {
-
             int[] palette = rocket.getColors();
 
-            double baseX = rocket.getX();
-            double baseY = rocket.getY();
-            double baseZ = rocket.getZ();
+            BlockPos launcherPos = rocket.getLauncherPos();
+
+            double baseX = launcherPos.getX() + 0.5;
+            double baseY = launcherPos.getY() + 0.2;
+            double baseZ = launcherPos.getZ() + 0.5;
 
             double progress = tick / (double) DURATION;
-
             double fade;
 
-            // Fade IN
             if (progress < FADE_IN) {
                 fade = progress / FADE_IN;
-            }
-            // Fade OUT
-            else if (progress > FADE_OUT) {
+            } else if (progress > FADE_OUT) {
                 fade = 1.0 - ((progress - FADE_OUT) / (1.0 - FADE_OUT));
-            }
-            else {
+            } else {
                 fade = 1.0;
             }
 
-            fade = Math.max(0.0, Math.min(1.0, fade));
+            fade = Mth.clamp(fade, 0.0, 1.0);
 
             if (fade <= 0.01) {
                 return;
             }
 
             int count = (int) (MAX_PARTICLES * Math.pow(fade, PARTICLE_CURVE));
-
             if (count <= 0) {
                 return;
             }
 
             double flameHeight = FLAME_HEIGHT * (0.30 + 0.70 * fade);
-
             double emitterRadius = EMITTER_RADIUS * fade * fade;
-
             double turbulence = TURBULENCE * (0.35 + 0.65 * fade);
-
             double verticalSpeed = VERTICAL_SPEED * (0.40 + 0.60 * fade);
 
             for (int i = 0; i < count; i++) {
-
                 double theta = random.nextDouble() * Math.PI * 2.0;
                 double r = Math.sqrt(random.nextDouble()) * emitterRadius;
 
@@ -1115,9 +1245,9 @@ public final class BurstPatterns {
                 double z = baseZ + Math.sin(theta) * r;
 
                 double vx = random.nextGaussian() * turbulence;
+                double vy = verticalSpeed
+                        + random.nextDouble() * (flameHeight * 0.025);
                 double vz = random.nextGaussian() * turbulence;
-
-                double vy = verticalSpeed + random.nextDouble() * (flameHeight * 0.025);
 
                 float size =
                         (MIN_SIZE + random.nextFloat() * (MAX_SIZE - MIN_SIZE))
@@ -1512,14 +1642,14 @@ public final class BurstPatterns {
             return 88 + getCometFadeTicks() + 16;
         }
         @Override public float getFlightLightSpread() { return 32.0f; }
-        @Override public float getFlightHaloInnerSize() { return 1.7f; }
-        @Override public float getFlightHaloOuterSize() { return 2.55f; }
+        @Override public float getFlightHaloInnerSize() { return 0.7f; }
+        @Override public float getFlightHaloOuterSize() { return 1.55f; }
         @Override public boolean spawnsFlightSmoke() { return true; }
 
         @Override
         public void onFlightTick(FireworkRocketEntity rocket, RandomSource random) {
             int color = rocket.getLaunchColor();
-            emitFlightTrail(rocket, random, color, 0.50f, 16, true);
+            emitFlightTrail(rocket, random, color, 0.20f, 16, true);
         }
 
         @Override

@@ -9,7 +9,6 @@ import com.github.dumann089.theatricalextralights.client.ExtraLightsClientScreen
 import com.github.dumann089.theatricalextralights.client.ModParticleClient;
 import com.github.dumann089.theatricalextralights.client.blockentities.*;
 import com.github.dumann089.theatricalextralights.client.entities.FireworkRocketRenderer;
-import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelManager;
 import com.github.dumann089.theatricalextralights.compat.FireworkLightCompat;
 import com.github.dumann089.theatricalextralights.entities.ModEntities;
 import com.github.dumann089.theatricalextralights.net.ModNetworking;
@@ -26,6 +25,7 @@ public class TheatricalExtraLightsClient {
         ModParticleClient.registerProviders();
         ModKeybinds.register();
         ModNetworking.register();
+
 
         BlockEntityRendererRegistry.register(BlockEntities.MOVING_SCAN.get(), MovingScanRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MOVING_VL2C.get(), MovingVL2CRenderer::new);

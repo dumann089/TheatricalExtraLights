@@ -1,21 +1,30 @@
 package com.github.dumann089.theatricalextralights.client.firework;
 
+import com.github.dumann089.theatricalextralights.blockentities.FireworkLauncherBlockEntity;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
+import com.github.dumann089.theatricalextralights.entities.MineRocketEntity;
 import com.github.dumann089.theatricalextralights.firework.FireworkRenderDistances;
 import com.github.dumann089.theatricalextralights.entities.FireworkRocketEntity;
 import com.github.dumann089.theatricalextralights.firework.Spark;
+import dev.imabad.theatrical.blocks.light.BaseLightBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 public final class FireworkSmokeEffects {
     private static int budgetThisTick;
     private static long budgetTick = Long.MIN_VALUE;
     private static int mortarSmokeBudget = 0;
+    private static int mineSmokeBudgetThisTick;
+    private static final int MAX_MINE_SMOKE_PER_TICK = 1500;
+
 
     private static final int MAX_MORTAR_SMOKE_PARTICLES = 1500;
 
@@ -26,7 +35,7 @@ public final class FireworkSmokeEffects {
         if (gameTime != budgetTick) {
             budgetTick = gameTime;
             budgetThisTick = TheatricalExtraLightsConfig.getFireworkSmokeBudgetPerTick();
-
+            mineSmokeBudgetThisTick = MAX_MINE_SMOKE_PER_TICK;
             mortarSmokeBudget = 0;
         }
     }
@@ -49,30 +58,59 @@ public final class FireworkSmokeEffects {
         return true;
     }
 
-    public static void trySpawnFlightSmoke(FireworkRocketEntity rocket, RandomSource random, int flightLife) {
-        if (!TheatricalExtraLightsConfig.isFireworkSmokeEnabled() || budgetThisTick <= 0) {
-            return;
-        }
-        if (!rocket.getPreset().getPattern().spawnsFlightSmoke()) {
-            return;
-        }
-        if (rocket.getPreset().getPattern().isDaytimePowder()) {
-            return;
-        }
-        if (flightLife % TheatricalExtraLightsConfig.getFireworkSmokeSpawnInterval() != 0) {
-            return;
-        }
-        if (!(rocket.level() instanceof ClientLevel level)) {
-            return;
-        }
-        if (!canSpawnNearPlayer(rocket.getX(), rocket.getY(), rocket.getZ(), FireworkRenderDistances.clientSmokeRange(0.6))) {
+    public static void trySpawnFlightSmoke(
+            FireworkRocketEntity rocket,
+            RandomSource random,
+            int flightLife
+    ) {
+        if (!TheatricalExtraLightsConfig.isFireworkSmokeEnabled()) {
             return;
         }
 
-        budgetThisTick--;
-        double vx = rocket.getDeltaMovement().x * -0.04 + (random.nextDouble() - 0.5) * 0.01;
+        if (flightLife % TheatricalExtraLightsConfig.getFireworkSmokeSpawnInterval() != 0) {
+            return;
+        }
+
+        if (!(rocket.level() instanceof ClientLevel level)) {
+            return;
+        }
+
+        if (!canSpawnNearPlayer(
+                rocket.getX(),
+                rocket.getY(),
+                rocket.getZ(),
+                FireworkRenderDistances.clientSmokeRange(0.6)
+        )) {
+            return;
+        }
+
+        boolean mineRocket = rocket instanceof MineRocketEntity;
+
+        if (mineRocket) {
+            if (!rocket.getPreset().getPattern().spawnsFlightSmoke() ||
+                    mineSmokeBudgetThisTick <= 0) {
+                return;
+            }
+
+            mineSmokeBudgetThisTick--;
+        } else {
+            if (budgetThisTick <= 0 ||
+                    !rocket.getPreset().getPattern().spawnsFlightSmoke() ||
+                    rocket.getPreset().getPattern().isDaytimePowder()) {
+                return;
+            }
+
+            budgetThisTick--;
+        }
+
+        double vx = rocket.getDeltaMovement().x * -0.04
+                + (random.nextDouble() - 0.5) * 0.01;
+
         double vy = rocket.getDeltaMovement().y * -0.04 + 0.01;
-        double vz = rocket.getDeltaMovement().z * -0.04 + (random.nextDouble() - 0.5) * 0.01;
+
+        double vz = rocket.getDeltaMovement().z * -0.04
+                + (random.nextDouble() - 0.5) * 0.01;
+
         level.addParticle(
                 ParticleTypes.CAMPFIRE_COSY_SMOKE,
                 rocket.getX(),
@@ -422,6 +460,7 @@ public final class FireworkSmokeEffects {
 
 
     // MINE SMOKE
+    // MINE SMOKE
     public static void spawnMineSmoke(
             FireworkRocketEntity rocket,
             RandomSource random
@@ -443,13 +482,87 @@ public final class FireworkSmokeEffects {
         final double y = rocket.getY();
         final double z = rocket.getZ();
 
-        final double columnHeight = 8.5;
+        /*
+         * CH2 = ONLY direction / inclination
+         * CH3 = ONLY height
+         */
+        float pitchDegrees = 90.0f;
+        float heightMultiplier = 8.5f;
+
+        Direction facing = Direction.NORTH;
+
+        if (level.getBlockEntity(rocket.getLauncherPos())
+                instanceof FireworkLauncherBlockEntity launcher) {
+
+            // CH2 ONLY: 0..180 degrees
+            pitchDegrees = launcher.getPitchDegrees();
+
+            // CH3 ONLY: 0.7..2.6 -> height multiplier
+            float power = launcher.getLaunchPowerMultiplier();
+
+            heightMultiplier = Mth.lerp(
+                    Mth.clamp(
+                            (power - 0.7f) / (2.6f - 0.7f),
+                            0.0f,
+                            1.0f
+                    ),
+                    0.70f,
+                    1.80f
+            );
+
+            if (level.getBlockState(rocket.getLauncherPos())
+                    .hasProperty(BaseLightBlock.FACING)) {
+
+                facing = level.getBlockState(rocket.getLauncherPos())
+                        .getValue(BaseLightBlock.FACING)
+                        .getClockWise();
+            }
+        }
+
+        /*
+         * CH2 ONLY controls the inclination.
+         *
+         * 0   = horizontal
+         * 90  = vertical
+         * 180 = inverted
+         */
+        double pitch = pitchDegrees * Mth.DEG_TO_RAD;
+
+        double yaw = facing.toYRot() * Mth.DEG_TO_RAD;
+
+        /*
+         * CENTRAL AXIS OF THE SMOKE
+         *
+         * The horizontal direction comes from the fixture's facing.
+         * The inclination comes ONLY from CH2.
+         */
+        Vec3 axis = new Vec3(
+                -Math.sin(yaw) * Math.cos(pitch),
+                Math.sin(pitch),
+                Math.cos(yaw) * Math.cos(pitch)
+        ).normalize();
+
+        /*
+         * Basis perpendicular to the smoke axis.
+         */
+        Vec3 referenceUp = Math.abs(axis.y) < 0.99
+                ? new Vec3(0.0, 1.0, 0.0)
+                : new Vec3(1.0, 0.0, 0.0);
+
+        Vec3 right = axis.cross(referenceUp).normalize();
+        Vec3 up = right.cross(axis).normalize();
+
+        /*
+         * CH3 ONLY controls the HEIGHT.
+         */
+        final double columnHeight = 8.5 * heightMultiplier;
         final double columnRadius = 0.68;
 
         final double mushroomRadius = 1.1;
         final double mushroomHeight = 1.1;
 
         final double spreadRandomness = 7.65;
+
         //
         // COLUMN
         //
@@ -461,29 +574,45 @@ public final class FireworkSmokeEffects {
 
             mortarSmokeBudget++;
 
-            double h = random.nextDouble();
+            double h = random.nextDouble() * columnHeight;
 
             double theta = random.nextDouble() * Math.PI * 2.0;
-            double r = Math.sqrt(random.nextDouble()) *
-                    columnRadius *
-                    (1.0 + (random.nextDouble() - 0.5) * spreadRandomness);
+
+            double r = Math.sqrt(random.nextDouble())
+                    * columnRadius
+                    * (1.0 + (random.nextDouble() - 0.5) * spreadRandomness);
+
+            Vec3 radial = right.scale(Math.cos(theta) * r)
+                    .add(up.scale(Math.sin(theta) * r));
+
+            Vec3 position = new Vec3(x, y, z)
+                    .add(axis.scale(h))
+                    .add(radial);
+
+            Vec3 drift = axis.scale(
+                    0.025 + random.nextDouble() * 0.020
+            ).add(
+                    right.scale(random.nextGaussian() * 0.023)
+            ).add(
+                    up.scale(random.nextGaussian() * 0.023)
+            );
 
             level.addParticle(
                     ParticleTypes.CAMPFIRE_SIGNAL_SMOKE,
-
-                    x + Math.cos(theta) * r,
-                    y + h * columnHeight,
-                    z + Math.sin(theta) * r,
-
-                    random.nextGaussian() * 0.023,
-                    0.025 + random.nextDouble() * 0.020,
-                    random.nextGaussian() * 0.023
+                    position.x,
+                    position.y,
+                    position.z,
+                    drift.x,
+                    drift.y,
+                    drift.z
             );
         }
+
         //
         // MUSHROOM
         //
-        double topY = y + columnHeight;
+        Vec3 top = new Vec3(x, y, z)
+                .add(axis.scale(columnHeight));
 
         for (int i = 0; i < 20; i++) {
 
@@ -492,29 +621,103 @@ public final class FireworkSmokeEffects {
             }
 
             mortarSmokeBudget++;
-            double yy = (random.nextDouble() * 2.0 - 1.0) * mushroomHeight;
-            double profile = 1.0 - Math.abs(yy) / mushroomHeight;
+
+            double yy =
+                    (random.nextDouble() * 2.0 - 1.0)
+                            * mushroomHeight;
+
+            double profile =
+                    1.0 - Math.abs(yy) / mushroomHeight;
+
             profile = Math.max(profile, 0.0);
             profile = Math.pow(profile, 0.45);
 
             double radius =
-                    profile *
-                            mushroomRadius *
-                            (0.75 + random.nextDouble() * 0.35) *
-                            (1.0 + (random.nextDouble() - 0.5) * spreadRandomness);
+                    profile
+                            * mushroomRadius
+                            * (0.75 + random.nextDouble() * 0.35)
+                            * (1.0 + (random.nextDouble() - 0.5) * spreadRandomness);
 
             double theta = random.nextDouble() * Math.PI * 2.0;
 
+            Vec3 radial = right.scale(Math.cos(theta) * radius)
+                    .add(up.scale(Math.sin(theta) * radius));
+
+            Vec3 position = top
+                    .add(axis.scale(yy))
+                    .add(radial);
+
+            Vec3 drift = axis.scale(
+                    0.025 + random.nextDouble() * 0.020
+            ).add(
+                    right.scale(random.nextGaussian() * 0.023)
+            ).add(
+                    up.scale(random.nextGaussian() * 0.023)
+            );
+
             level.addParticle(
                     ParticleTypes.CAMPFIRE_SIGNAL_SMOKE,
+                    position.x,
+                    position.y,
+                    position.z,
+                    drift.x,
+                    drift.y,
+                    drift.z
+            );
+        }
+    }
 
-                    x + Math.cos(theta) * radius,
-                    topY + yy,
-                    z + Math.sin(theta) * radius,
+    public static void spawnCometSmoke(
+            FireworkRocketEntity rocket,
+            RandomSource random,
+            Vec3 direction,
+            double speed
+    ) {
+        Level level = rocket.level();
 
-                    random.nextGaussian() * 0.023,
-                    0.025 + random.nextDouble() * 0.020,
-                    random.nextGaussian() * 0.023
+        Vec3 origin = new Vec3(
+                rocket.getX(),
+                rocket.getY(),
+                rocket.getZ()
+        );
+
+        /*
+         * Varias bocanadas a lo largo del inicio de la trayectoria.
+         */
+        for (int i = 0; i < 8; i++) {
+
+            double distance =
+                    i * (0.10 + random.nextDouble() * 0.08);
+
+            Vec3 pos =
+                    origin.add(
+                            direction.scale(distance)
+                    );
+
+            /*
+             * Mismo movimiento general que el comet,
+             * pero mucho más lento para que el humo
+             * vaya quedándose atrás.
+             */
+            Vec3 smokeVelocity =
+                    direction.scale(
+                            speed * (0.18 + random.nextDouble() * 0.08)
+                    );
+
+            smokeVelocity = smokeVelocity.add(
+                    (random.nextDouble() - 0.5) * 0.025,
+                    0.015 + random.nextDouble() * 0.02,
+                    (random.nextDouble() - 0.5) * 0.025
+            );
+
+            level.addParticle(
+                    ParticleTypes.SMOKE,
+                    pos.x,
+                    pos.y,
+                    pos.z,
+                    smokeVelocity.x,
+                    smokeVelocity.y,
+                    smokeVelocity.z
             );
         }
     }

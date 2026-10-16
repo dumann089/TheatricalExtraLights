@@ -1,5 +1,5 @@
 {
   "variants": {
-    "": { "model": "theatricalextralights:block/firework/firework_spider_white_static" }
+    "": { "model": "theatricalextralights:block/firework/pyro_pot_white" }
   }
 }

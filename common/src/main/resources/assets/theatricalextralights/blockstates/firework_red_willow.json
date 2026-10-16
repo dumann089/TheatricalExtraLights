@@ -1,7 +1,7 @@
 {
   "variants": {
     "": {
-      "model": "theatricalextralights:block/firework/firework_red_willow_static"
+      "model": "theatricalextralights:block/firework/pyro_pot_red"
     }
   }
 }

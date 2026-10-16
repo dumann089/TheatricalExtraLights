@@ -94,7 +94,6 @@ public final class TheatricalExtraLightsForgeClient {
                     ),
                     shader -> ModShaders.beamRaymarchShader = shader
             );
-
         } catch (IOException e) {
             throw new RuntimeException("Error Loading Shader Theatrical Extra Lights", e);
         }
