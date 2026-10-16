@@ -37,14 +37,14 @@ public final class Flow2JetClientEffects {
     }
 
     public static void tick(Flow2JetBlockEntity blockEntity) {
-        boolean active = blockEntity.getIntensity() > 0;
+        boolean active = blockEntity.getDisplayIntensity(1f) > 0;
         Minecraft minecraft = Minecraft.getInstance();
         BlockPos pos = blockEntity.getBlockPos();
         Vec3 center = pos.getCenter();
 
         boolean playerCanHear = minecraft.player != null
                 && minecraft.player.distanceToSqr(center) <= HEAR_DISTANCE_SQ;
-        float intensityFactor = FixtureJetDirection.intensityFactor((int) blockEntity.getIntensity());
+        float intensityFactor = FixtureJetDirection.intensityFactor((int) blockEntity.getDisplayIntensity(1f));
         float volume = LOOP_VOLUME_MIN + LOOP_VOLUME_RANGE * intensityFactor;
         boolean shouldPlaySound = active && playerCanHear;
 
@@ -120,7 +120,7 @@ public final class Flow2JetClientEffects {
                     beamStart,
                     isRigged,
                     bodyFlip,
-                    (int) blockEntity.getIntensity(),
+                    (int) blockEntity.getDisplayIntensity(1f),
                     level.random
             );
         } else {

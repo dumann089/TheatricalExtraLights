@@ -5,6 +5,7 @@ import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.blockentities.ParLedBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.RGBBarBlockEntity;
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
+import com.github.dumann089.theatricalextralights.client.LensBloomCompat;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -129,7 +130,7 @@ public class ParLedRenderer extends ExtraLightsRenderer<ParLedBlockEntity> {
             int packedLight,
             int packedOverlay
     ) {
-        if (blockEntity.getIntensity() > 0) {
+        if (blockEntity.getDisplayIntensity(partialTicks) > 0) {
             LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
 
                 @Override
@@ -150,14 +151,19 @@ public class ParLedRenderer extends ExtraLightsRenderer<ParLedBlockEntity> {
                     VertexConsumer beamConsumer =
                             multiBufferSource.getBuffer(TheatricalRenderTypes.BEAM);
 
-                    float intensity = blockEntity.getPrevIntensity()
-                            + (blockEntity.getIntensity() - blockEntity.getPrevIntensity()) * partialTicks;
+                    float intensity = blockEntity.getDisplayIntensity(partialTicks);
 
-                    int color = blockEntity.getColour();
-                    int r = (color >> 16) & 0xFF;
-                    int g = (color >> 8) & 0xFF;
-                    int b = color & 0xFF;
+                    int color = blockEntity.getDisplayColour(partialTicks);
+                    int pr = (color >> 16) & 0xFF;
+                    int pg = (color >> 8) & 0xFF;
+                    int pb = color & 0xFF;
                     int a = (int) ((intensity / 255f) * 255f);
+
+                    final float GLOW_WHITEN = 0.80f;
+                    int r = LensBloomCompat.whiten(pr, GLOW_WHITEN);
+                    int g = LensBloomCompat.whiten(pg, GLOW_WHITEN);
+                    int b = LensBloomCompat.whiten(pb, GLOW_WHITEN);
+
                     poseStack.pushPose();
 
                     poseStack.translate(0.5f, 0.415f, 0.3906f);
@@ -170,6 +176,9 @@ public class ParLedRenderer extends ExtraLightsRenderer<ParLedBlockEntity> {
                     addVertex(beamConsumer, m, normal, r, g, b, a,  0.25f, 0.25f, 0f);
                     addVertex(beamConsumer, m, normal, r, g, b, a, 0.25f, -0.25f,0f);
                     addVertex(beamConsumer, m, normal, r, g, b, a,-0.25f, -0.25f, 0f);
+
+                    LensBloomCompat.renderBloomedQuad(poseStack,
+                            (int) (pr * (a / 255f)), (int) (pg * (a / 255f)), (int) (pb * (a / 255f)), 0.25f);
 
                     poseStack.popPose();
 

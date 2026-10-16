@@ -134,7 +134,7 @@ public final class WaterJetClientEffects {
         float alpha = 0.15F;
         blockEntity.currentAngle += (targetAngle - blockEntity.currentAngle) * alpha;
 
-        float intensityNorm = blockEntity.getIntensity() / 255.0F;
+        float intensityNorm = StrobeRenderHelper.displayIntensity(blockEntity, 1f) / 255.0F;
         double targetHeight = intensityNorm * blockEntity.getJetHeight();
         blockEntity.smoothedHeight += (targetHeight - blockEntity.smoothedHeight) * 0.15;
     }
@@ -158,14 +158,14 @@ public final class WaterJetClientEffects {
         float alpha = 0.15F;
         blockEntity.currentAngle += (targetAngle - blockEntity.currentAngle) * alpha;
 
-        float intensityNorm = blockEntity.getIntensity() / 255.0F;
+        float intensityNorm = StrobeRenderHelper.displayIntensity(blockEntity, 1f) / 255.0F;
         double targetHeight = intensityNorm * blockEntity.getJetHeight();
         blockEntity.smoothedHeight += (targetHeight - blockEntity.smoothedHeight) * 0.15;
     }
 
     public static void spawnFromBeam(BaseLightBlockEntity blockEntity, float partialTick) {
         ClientLevel level = resolveClientLevel(blockEntity);
-        if (level == null || blockEntity.getIntensity() <= 0) {
+        if (level == null || StrobeRenderHelper.displayIntensity(blockEntity, partialTick) <= 0) {
             return;
         }
 
@@ -213,7 +213,7 @@ public final class WaterJetClientEffects {
         if (resolveClientLevel(blockEntity) == null) {
             return;
         }
-        float intensityNorm = blockEntity.getIntensity() / 255.0F;
+        float intensityNorm = StrobeRenderHelper.displayIntensity(blockEntity, 1f) / 255.0F;
         double targetHeight = intensityNorm * blockEntity.getJetHeight();
         blockEntity.smoothedHeight += (targetHeight - blockEntity.smoothedHeight) * 0.15;
         blockEntity.updateSpin();
@@ -347,7 +347,7 @@ public final class WaterJetClientEffects {
         double maxHeight = preset.fixedMaxHeight() > 0.0
                 ? preset.fixedMaxHeight()
                 : ((HasJetHeight) blockEntity).getJetHeight();
-        double targetHeight = (blockEntity.getIntensity() / 255.0) * maxHeight;
+        double targetHeight = (StrobeRenderHelper.displayIntensity(blockEntity, partialTick) / 255.0) * maxHeight;
         double smoothed = readSmoothedHeight(blockEntity);
         smoothed += (targetHeight - smoothed) * preset.smoothFactor();
         writeSmoothedHeight(blockEntity, smoothed);
@@ -395,7 +395,7 @@ public final class WaterJetClientEffects {
             return;
         }
 
-        float intensity = blockEntity.getIntensity() / 255.0F;
+        float intensity = StrobeRenderHelper.displayIntensity(blockEntity, partialTick) / 255.0F;
         float thickness = blockEntity instanceof HasJetThickness jetThickness ? jetThickness.getJetThickness() : 0.12F;
         float coneAngle = blockEntity instanceof HasJetConeAngle jetCone ? jetCone.getJetConeAngle() : 45.0F;
         WaterJetParticleOptions options = new WaterJetParticleOptions(intensity, thickness, coneAngle, preset.variant());
@@ -412,13 +412,13 @@ public final class WaterJetClientEffects {
         double[] currentHeightMult = isInv ? ORGAN_PIPE_INV_HEIGHT_MULT : ORGAN_PIPE_HEIGHT_MULT;
 
         double maxHeight = hasJetHeight.getJetHeight();
-        double targetHeight = (blockEntity.getIntensity() / 255.0) * maxHeight;
+        double targetHeight = (StrobeRenderHelper.displayIntensity(blockEntity, partialTick) / 255.0) * maxHeight;
         double smoothed = getOrganSmoothed(blockEntity);
         smoothed += (targetHeight - smoothed) * 0.1;
         setOrganSmoothed(blockEntity, smoothed);
 
         double baseSpeed = smoothed * 0.09;
-        float intensity = blockEntity.getIntensity() / 255.0F;
+        float intensity = StrobeRenderHelper.displayIntensity(blockEntity, partialTick) / 255.0F;
         float thickness = hasJetThickness.getJetThickness();
 
         Matrix4f pose = getFixturePoseStack(blockEntity, partialTick).last().pose();
@@ -455,14 +455,14 @@ public final class WaterJetClientEffects {
         }
 
         double maxHeight = hasJetHeight.getJetHeight();
-        double targetHeight = (blockEntity.getIntensity() / 255.0) * maxHeight;
+        double targetHeight = (StrobeRenderHelper.displayIntensity(blockEntity, partialTick) / 255.0) * maxHeight;
 
         double smoothed = readSmoothedHeight(blockEntity);
         smoothed += (targetHeight - smoothed) * 0.1;
         writeSmoothedHeight(blockEntity, smoothed);
 
         double baseSpeed = smoothed * 0.09;
-        float intensity = blockEntity.getIntensity() / 255.0F;
+        float intensity = StrobeRenderHelper.displayIntensity(blockEntity, partialTick) / 255.0F;
         float thickness = hasJetThickness.getJetThickness();
 
         Matrix4f pose = getFixturePoseStack(blockEntity, partialTick).last().pose();
@@ -520,14 +520,14 @@ public final class WaterJetClientEffects {
         }
 
         double maxHeight = hasJetHeight.getJetHeight();
-        double targetHeight = (blockEntity.getIntensity() / 255.0) * maxHeight;
+        double targetHeight = (StrobeRenderHelper.displayIntensity(blockEntity, partialTick) / 255.0) * maxHeight;
 
         double smoothed = readSmoothedHeight(blockEntity);
         smoothed += (targetHeight - smoothed) * 0.1;
         writeSmoothedHeight(blockEntity, smoothed);
 
         double baseSpeed = smoothed * 0.09;
-        float intensity = blockEntity.getIntensity() / 255.0F;
+        float intensity = StrobeRenderHelper.displayIntensity(blockEntity, partialTick) / 255.0F;
         float thickness = hasJetThickness.getJetThickness();
 
         Matrix4f pose = getFixturePoseStack(blockEntity, partialTick).last().pose();
@@ -585,14 +585,14 @@ public final class WaterJetClientEffects {
         }
 
         double maxHeight = hasJetHeight.getJetHeight();
-        double targetHeight = (blockEntity.getIntensity() / 255.0) * maxHeight;
+        double targetHeight = (StrobeRenderHelper.displayIntensity(blockEntity, partialTick) / 255.0) * maxHeight;
 
         double smoothed = readSmoothedHeight(blockEntity);
         smoothed += (targetHeight - smoothed) * 0.1;
         writeSmoothedHeight(blockEntity, smoothed);
 
         double baseSpeed = smoothed * 0.09;
-        float intensity = blockEntity.getIntensity() / 255.0F;
+        float intensity = StrobeRenderHelper.displayIntensity(blockEntity, partialTick) / 255.0F;
         float thickness = hasJetThickness.getJetThickness();
 
         Matrix4f pose = getFixturePoseStack(blockEntity, partialTick).last().pose();
@@ -632,7 +632,7 @@ public final class WaterJetClientEffects {
     }
 
     public static void spawnWaltzesParticles(WaltzesWaterJetBlockEntity blockEntity, ClientLevel level, JetVariant variant, float partialTicks) {
-        float intensityNorm = blockEntity.getIntensity() / 255.0f;
+        float intensityNorm = StrobeRenderHelper.displayIntensity(blockEntity, partialTicks) / 255.0f;
         float smoothAngle = blockEntity.getRenderAngle(partialTicks);
         double tiltRad = Math.toRadians(smoothAngle);
 
@@ -665,7 +665,7 @@ public final class WaterJetClientEffects {
     }
 
     public static void spawnWaltzCurtainParticles(WaltzCurtainBlockEntity blockEntity, ClientLevel level, JetVariant variant, float partialTicks) {
-        float intensityNorm = blockEntity.getIntensity() / 255.0f;
+        float intensityNorm = StrobeRenderHelper.displayIntensity(blockEntity, partialTicks) / 255.0f;
         float smoothAngle = blockEntity.getRenderAngle(partialTicks);
         double tiltRad = Math.toRadians(smoothAngle);
 
@@ -699,7 +699,7 @@ public final class WaterJetClientEffects {
 
     private static void spawnSpinner(SpinnerBlockEntity blockEntity, ClientLevel level, float partialTick) {
         double speed = blockEntity.smoothedHeight * 0.10;
-        float intensity = blockEntity.getIntensity() / 255.0F;
+        float intensity = StrobeRenderHelper.displayIntensity(blockEntity, partialTick) / 255.0F;
         float thickness = blockEntity.getJetThickness();
         WaterJetParticleOptions options = new WaterJetParticleOptions(intensity, thickness, JetVariant.JET3);
 

@@ -48,6 +48,13 @@ public abstract class ExtraLightsLightBlock extends BaseLightBlock {
                 return InteractionResult.SUCCESS;
             }
 
+            if (player.getItemInHand(hand).getItem()
+                    == com.github.dumann089.theatricalextralights.items.Items.FIXTURE_TRACKER.get()) {
+                com.github.dumann089.theatricalextralights.items.FixtureTrackerItem.addFixtureToSelection(
+                        (ServerPlayer) player, player.getItemInHand(hand), (ExtraLightsLightBlockEntity) be);
+                return InteractionResult.SUCCESS;
+            }
+
             if (be instanceof BaseDMXConsumerLightBlockEntity consumerLightBlockEntity) {
                 if (player.getItemInHand(hand).getItem() == dev.imabad.theatrical.items.Items.CONFIGURATION_CARD.get()) {
                     ItemStack itemInHand = player.getItemInHand(hand);

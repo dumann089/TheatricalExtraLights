@@ -150,6 +150,21 @@ public final class ProfileHeadState {
     public int getPanInt() { return Math.round(targetPan); }
     public int getTiltInt() { return Math.round(targetTilt); }
 
+    /**
+     * Forces the pan/tilt target in degrees (Fixture Tracker), using the same 16 bit encoding as DMX.
+     * Returns true if the encoded value changed.
+     */
+    public boolean setTargetAngles(float panDeg, float tiltDeg) {
+        int newPan16 = Mth.clamp(Math.round((panDeg + 180f) / 360f * 65535f), 0, 65535);
+        int newTilt16 = Mth.clamp(Math.round((tiltDeg + 225f) / 270f * 65535f), 0, 65535);
+        boolean changed = newPan16 != pan16 || newTilt16 != tilt16;
+        pan16 = newPan16;
+        tilt16 = newTilt16;
+        targetPan = pan16 / 65535f * 360f - 180f;
+        targetTilt = tilt16 / 65535f * 270f - 225f;
+        return changed;
+    }
+
     public float getTargetPan() { return targetPan; }
     public float getTargetTilt() { return targetTilt; }
     public int getShutter() { return shutter; }

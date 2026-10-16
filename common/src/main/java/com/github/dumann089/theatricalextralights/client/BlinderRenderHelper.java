@@ -33,7 +33,7 @@ public final class BlinderRenderHelper {
             return;
         }
 
-        int color = blockEntity.getColour();
+        int color = StrobeRenderHelper.displayColour(blockEntity, partialTicks);
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
         int b = color & 0xFF;
@@ -68,5 +68,46 @@ public final class BlinderRenderHelper {
             float z
     ) {
         builder.vertex(matrix, x, y, z).color(r, g, b, a).endVertex();
+    }
+
+     public static void renderFaceWithGlow(
+            BaseLightBlockEntity blockEntity,
+            MultiBufferSource.BufferSource bufferSource,
+            PoseStack poseStack,
+            float partialTicks,
+            FaceQuad face
+    ) {
+        float intensity = StrobeRenderHelper.renderedIntensity(blockEntity, partialTicks);
+        if (intensity <= 0f) {
+            return;
+        }
+
+        final float GLOW_WHITEN = 0.80f;
+
+        int color = StrobeRenderHelper.displayColour(blockEntity, partialTicks);
+        int pr = (color >> 16) & 0xFF;
+        int pg = (color >> 8) & 0xFF;
+        int pb = color & 0xFF;
+        int a = (int) intensity;
+
+        int r = LensBloomCompat.whiten(pr, GLOW_WHITEN);
+        int g = LensBloomCompat.whiten(pg, GLOW_WHITEN);
+        int b = LensBloomCompat.whiten(pb, GLOW_WHITEN);
+
+        VertexConsumer beamConsumer = bufferSource.getBuffer(TheatricalRenderTypes.BEAM);
+        poseStack.pushPose();
+        poseStack.translate(face.x(), face.y(), face.z());
+        Matrix4f matrix = poseStack.last().pose();
+        Matrix3f normal = poseStack.last().normal();
+        addVertex(beamConsumer, matrix, normal, r, g, b, a, -face.halfW(), face.halfH(), 0f);
+        addVertex(beamConsumer, matrix, normal, r, g, b, a, face.halfW(), face.halfH(), 0f);
+        addVertex(beamConsumer, matrix, normal, r, g, b, a, face.halfW(), -face.halfH(), 0f);
+        addVertex(beamConsumer, matrix, normal, r, g, b, a, -face.halfW(), -face.halfH(), 0f);
+
+        LensBloomCompat.renderBloomedQuad(poseStack,
+                (int) (pr * (a / 255f)), (int) (pg * (a / 255f)), (int) (pb * (a / 255f)),
+                face.halfW(), face.halfH());
+
+        poseStack.popPose();
     }
 }

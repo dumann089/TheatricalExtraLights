@@ -187,6 +187,16 @@ public class ExtraLightsSettingsScreen extends Screen {
         addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.gobodistance",
                 50f, 1000f, TheatricalExtraLightsConfig.getMaxGoboDistance(), 0, " m",
                 TheatricalExtraLightsConfig::setMaxGoboDistance));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.gobobrightness",
+                0f, 4f, TheatricalExtraLightsConfig.getGoboBrightness(), 2, " x",
+                TheatricalExtraLightsConfig::setGoboBrightness));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.gobosurfacetint",
+                0f, 1f, TheatricalExtraLightsConfig.getGoboSurfaceTint(), 2, "",
+                TheatricalExtraLightsConfig::setGoboSurfaceTint));
     }
 
     // Onglet Faisceau ------------------------------------------------------

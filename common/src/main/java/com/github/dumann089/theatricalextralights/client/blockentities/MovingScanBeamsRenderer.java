@@ -188,7 +188,7 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
             int packedLight,
             int packedOverlay
     ) {
-        if (blockEntity.getIntensity() <= 0) return;
+        if (blockEntity.getDisplayIntensity(partialTicks) <= 0) return;
 
         if (blockEntity.getGobo() >= 0) {
             GoboWheelAnimator animator = goboAnimators.computeIfAbsent(blockEntity, k -> new GoboWheelAnimator());
@@ -292,8 +292,8 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
                         zoomNorm,
                         (float) blockEntity.getDistance(),
                         tanHalfAngle,
-                        blockEntity.getColour(),
-                        blockEntity.getIntensity() / 255.0f,
+                        blockEntity.getDisplayColour(partialTicks),
+                        blockEntity.getDisplayIntensity(partialTicks) / 255.0f,
                         goboTex,
                         nextGoboTex,     // Añadido
                         (float) blockEntity.getGoboRotation(),
@@ -335,9 +335,8 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
                 preparePoseStack(blockEntity, poseStack, facing, partialTick,
                         isFlipped, blockstate, isHanging);
 
-                float intensity = blockEntity.getPrevIntensity()
-                        + (blockEntity.getIntensity() - blockEntity.getPrevIntensity()) * partialTick;
-                int   color     = blockEntity.getColour();
+                float intensity = blockEntity.getDisplayIntensity(partialTick);
+                int color = blockEntity.getDisplayColour(partialTick);
                 float alpha     = (intensity / 255f) * beamOpacity.floatValue();
 
                 VertexConsumer builder  = multiBufferSource.getBuffer(Beam2DRenderTypes.getBeam());
@@ -363,7 +362,7 @@ public class MovingScanBeamsRenderer extends ExtraLightsFixtureRenderer<MovingSc
                 // ── Lens glow ─────────────────────────────────────────
                 poseStack.pushPose();
                 poseStack.translate(0.5f, 1.25f, 0.418f);
-                renderLensGlow(builder, poseStack, color, 0.18f);
+                renderLensGlow(builder, poseStack, color, 0.18f, intensity);
                 poseStack.popPose();
 
                 poseStack.popPose();

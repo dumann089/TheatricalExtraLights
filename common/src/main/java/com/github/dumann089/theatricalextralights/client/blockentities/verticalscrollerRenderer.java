@@ -9,6 +9,8 @@ import dev.imabad.theatrical.TheatricalExpectPlatform;
 import dev.imabad.theatrical.blocks.HangableBlock;
 import dev.imabad.theatrical.client.LazyRenderers;
 import dev.imabad.theatrical.client.TheatricalRenderTypes;
+
+import com.github.dumann089.theatricalextralights.client.LensBloomCompat;
 import com.github.dumann089.theatricalextralights.client.blockentities.ExtraLightsRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -105,12 +107,12 @@ public class verticalscrollerRenderer extends ExtraLightsRenderer<verticalscroll
     }
 @Override
 public void beforeRenderBeam(verticalscrollerBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockstate, boolean isHanging, int packedLight, int packedOverlay) {
-    if (blockEntity.getIntensity() > 0) {
+    if (blockEntity.getDisplayIntensity(partialTicks) > 0) {
         LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
             @Override
             public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
-                float intensity = blockEntity.getPrevIntensity() + (blockEntity.getIntensity() - blockEntity.getPrevIntensity()) * partialTick;
-                int color = blockEntity.getColour();
+                float intensity = blockEntity.getDisplayIntensity(partialTick);
+                int color = blockEntity.getDisplayColour(partialTick);
                 int r = (color >> 16) & 0xFF;
                 int g = (color >> 8) & 0xFF;
                 int b = color & 0xFF;
@@ -130,23 +132,41 @@ public void beforeRenderBeam(verticalscrollerBlockEntity blockEntity, PoseStack 
                             {0.25F, 1.515F, 0.468F},   // Beam 8
                 };
 
-                for (float[] pos : beamPositions) {
-                    poseStack.pushPose();
-                    poseStack.translate(offset.x, offset.y, offset.z);
-                    preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
-                    poseStack.translate(pos[0], pos[1], pos[2]);
+                final float GLOW_WHITEN = 0.80f;
+                    int wr = LensBloomCompat.whiten(r, GLOW_WHITEN);
+                    int wg = LensBloomCompat.whiten(g, GLOW_WHITEN);
+                    int wb = LensBloomCompat.whiten(b, GLOW_WHITEN);
 
-                    Matrix4f matrix = poseStack.last().pose();
-                    Matrix3f normal = poseStack.last().normal();
+                    for (float[] pos : beamPositions) {
+                        poseStack.pushPose();
+                        poseStack.translate(offset.x, offset.y, offset.z);
+                        preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
+                        poseStack.translate(pos[0], pos[1], pos[2]);
 
+                        Matrix4f matrix = poseStack.last().pose();
+                        Matrix3f normal = poseStack.last().normal();
 
-                    addVertex(beamConsumer, matrix, normal, r, g, b, a, -0.09375f,  0.09375f, 0f);
-                    addVertex(beamConsumer, matrix, normal, r, g, b, a,  0.09375f,  0.09375f, 0f);
-                    addVertex(beamConsumer, matrix, normal, r, g, b, a,  0.09375f, -0.09375f, 0f);
-                    addVertex(beamConsumer, matrix, normal, r, g, b, a, -0.09375f, -0.09375f, 0f);
+                        addVertex(beamConsumer, matrix, normal, wr, wg, wb, a, -0.09375f,  0.09375f, 0f);
+                        addVertex(beamConsumer, matrix, normal, wr, wg, wb, a,  0.09375f,  0.09375f, 0f);
+                        addVertex(beamConsumer, matrix, normal, wr, wg, wb, a,  0.09375f, -0.09375f, 0f);
+                        addVertex(beamConsumer, matrix, normal, wr, wg, wb, a, -0.09375f, -0.09375f, 0f);
 
-                    poseStack.popPose();
-                }
+                        poseStack.popPose();
+                    }
+
+                    LensBloomCompat.renderBloomedQuads(poseStack, (bloomConsumer, bloomStack) -> {
+                        int br = (int) (r * (a / 255f));
+                        int bg = (int) (g * (a / 255f));
+                        int bb = (int) (b * (a / 255f));
+                        for (float[] pos : beamPositions) {
+                            bloomStack.pushPose();
+                            bloomStack.translate(offset.x, offset.y, offset.z);
+                            preparePoseStack(blockEntity, bloomStack, facing, partialTick, isFlipped, blockstate, isHanging);
+                            bloomStack.translate(pos[0], pos[1], pos[2]);
+                            LensBloomCompat.emitQuad(bloomConsumer, bloomStack, br, bg, bb, 0.09375f, 0.09375f);
+                            bloomStack.popPose();
+                        }
+                    });
             }
 
             @Override

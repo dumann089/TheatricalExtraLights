@@ -132,10 +132,10 @@ public class Par1000PurpleRenderer extends ExtraLightsFixtureRenderer<Par1000Pur
             int packedLight,
             int packedOverlay
     ) {
-        if (blockEntity.getIntensity() <= 0) return;
+        if (blockEntity.getDisplayIntensity(partialTicks) <= 0) return;
 
-        int color = blockEntity.getColour();
-        float intensityNorm = blockEntity.getIntensity() / 255.0f;
+        int color = blockEntity.getDisplayColour(partialTicks);
+        float intensityNorm = blockEntity.getDisplayIntensity(partialTicks) / 255.0f;
         float baseRadius = 0.25f;
 
         PoseStack beamPose = new PoseStack();
@@ -168,16 +168,15 @@ public class Par1000PurpleRenderer extends ExtraLightsFixtureRenderer<Par1000Pur
                 poseStack.translate(offset.x, offset.y, offset.z);
                 preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
 
-                float intensity = blockEntity.getPrevIntensity()
-                        + (blockEntity.getIntensity() - blockEntity.getPrevIntensity()) * partialTick;
-                int   color = blockEntity.getColour();
+                float intensity = blockEntity.getDisplayIntensity(partialTick);
+                int color = blockEntity.getDisplayColour(partialTick);
                 float alpha = (intensity / 255f) * beamOpacity.floatValue();
 
                 VertexConsumer builder = multiBufferSource.getBuffer(Beam2DRenderTypes.getBeam());
 
                 poseStack.pushPose();
                 poseStack.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
-                renderLensGlow(builder, poseStack, color, 0.18f);
+                renderLensGlow(builder, poseStack, color, 0.18f, intensity);
                 poseStack.popPose();
 
                 renderLens(bufferSource, poseStack, alpha, color,

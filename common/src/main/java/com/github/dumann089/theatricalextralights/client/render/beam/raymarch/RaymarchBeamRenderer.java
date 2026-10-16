@@ -44,6 +44,33 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
     private final Vector3f uVS = new Vector3f();
     private final Vector3f vVS = new Vector3f();
 
+    // --- otimizacoes (sem efeito visual) ---------------------------------------------------
+    /** Lados do poligono do volume proxy. Par, para poder triangular as tampas em quads. */
+    private static final int HULL_N = 12;
+    /** Fator para o poligono circunscrever (e nao so inscrever) a elipse da secao do cone. */
+    private static final float HULL_CIRC = (float) (1.0 / Math.cos(Math.PI / HULL_N));
+    private static final float[] HULL_COS = new float[HULL_N];
+    private static final float[] HULL_SIN = new float[HULL_N];
+    static {
+        for (int i = 0; i < HULL_N; i++) {
+            double a = Math.PI * 2.0 * i / HULL_N;
+            HULL_COS[i] = (float) Math.cos(a);
+            HULL_SIN[i] = (float) Math.sin(a);
+        }
+    }
+    private static final String[] OCC_MIN = new String[BeamShadowOccluders.MAX_BOXES];
+    private static final String[] OCC_MAX = new String[BeamShadowOccluders.MAX_BOXES];
+    static {
+        for (int i = 0; i < BeamShadowOccluders.MAX_BOXES; i++) {
+            OCC_MIN[i] = "OccMin" + i;
+            OCC_MAX[i] = "OccMax" + i;
+        }
+    }
+    /** Vertices do proxy em espaco de view: 2 aneis de HULL_N pontos (xyz). */
+    private final float[] hullView = new float[2 * HULL_N * 3];
+    private final double[] sortDist = new double[MAX_BEAMS];
+    private final Matrix4f projMat = new Matrix4f();
+
     private RaymarchBeamRenderer() {
         for (int i = 0; i < MAX_BEAMS; i++) {
             slots[i] = new BeamSlot();
@@ -120,7 +147,6 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 return;
             }
 
-            bufferSource.endBatch();
             SceneDepthCopy.capture();
             if (!SceneDepthCopy.hasDepth() || ModShaders.beamRaymarchShader == null) {
                 drawStackedFallback(bufferSource, poseStack, camera);
@@ -128,7 +154,8 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
             }
 
             Minecraft mc = Minecraft.getInstance();
-            invProj.set(RenderSystem.getProjectionMatrix());
+            projMat.set(RenderSystem.getProjectionMatrix());
+            invProj.set(projMat);
             invProj.invert();
 
             float time = (mc.level != null ? mc.level.getGameTime() : 0) + partialTick;
@@ -165,6 +192,14 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 double dy = midY - camPos.y;
                 double dz = midZ - camPos.z;
                 if (dx * look.x() + dy * look.y() + dz * look.z() < -s.scanLen) {
+                    continue;
+                }
+
+                // Volume proxy justo ao cone. Se os eixos nao forem ortonormais, cai na caixa antiga.
+                boolean hullOk = computeHull(s, viewMat);
+                // Feixe inteiramente fora do frustum: a GPU descartaria tudo mesmo, entao nem
+                // gastamos CPU com uniforms, sombras e estado.
+                if (hullOk && hullOutsideFrustum()) {
                     continue;
                 }
 
@@ -219,6 +254,12 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                             new Vec3(s.originX, s.originY, s.originZ), new Vec3(s.dirX, s.dirY, s.dirZ),
                             s.scanLen, endRadius);
                 }
+                // Grade sem nenhum bloco solido e sem entidades: o shader leria zero em todas as
+                // amostras e devolveria 1.0 (sem sombra). ShadowEnabled=0 devolve o mesmo 1.0, mas
+                // sem as ate 32 leituras de textura por passo do raymarch.
+                if (shadows != null && !shadows.anySolid() && shadows.boxes().isEmpty()) {
+                    shadows = null;
+                }
                 applyShadowUniforms(shader, shadows);
                 shader.safeGetUniform("Time").set(time);
                 shader.safeGetUniform("Ambient").set(daylight);
@@ -259,7 +300,11 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 Tesselator tess = Tesselator.getInstance();
                 BufferBuilder bb = tess.getBuilder();
                 bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-                drawConeProxy(bb, viewMat, s, endRadius);
+                if (hullOk) {
+                    emitHull(bb);
+                } else {
+                    drawConeProxy(bb, viewMat, s, endRadius);
+                }
                 BufferUploader.drawWithShader(bb.end());
                 renderType.clearRenderState();
             }
@@ -298,8 +343,8 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         shader.safeGetUniform("OccCount").set((float) n);
         for (int i = 0; i < n; i++) {
             var b = snap.boxes().get(i);
-            shader.safeGetUniform("OccMin" + i).set((float) b.minX, (float) b.minY, (float) b.minZ);
-            shader.safeGetUniform("OccMax" + i).set((float) b.maxX, (float) b.maxY, (float) b.maxZ);
+            shader.safeGetUniform(OCC_MIN[i]).set((float) b.minX, (float) b.minY, (float) b.minZ);
+            shader.safeGetUniform(OCC_MAX[i]).set((float) b.maxX, (float) b.maxY, (float) b.maxZ);
         }
     }
 
@@ -312,12 +357,13 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
     private void sortFarToNear(Vec3 camPos) {
         for (int i = 0; i < activeBeamCount; i++) {
             drawOrder[i] = i;
+            sortDist[i] = distSq(slots[i], camPos);
         }
         for (int i = 1; i < activeBeamCount; i++) {
             int key = drawOrder[i];
-            double keyD = distSq(slots[key], camPos);
+            double keyD = sortDist[key];
             int j = i - 1;
-            while (j >= 0 && distSq(slots[drawOrder[j]], camPos) < keyD) {
+            while (j >= 0 && sortDist[drawOrder[j]] < keyD) {
                 drawOrder[j + 1] = drawOrder[j];
                 j--;
             }
@@ -382,6 +428,141 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         if (out.lengthSquared() > 1.0e-12f) {
             out.normalize();
         }
+    }
+
+    /**
+     * Calcula, em espaco de view, um tronco convexo de {@link #HULL_N} lados que contem toda a
+     * regiao onde o shader pode produzir cor: zDist em [0, scanLen] e raio ate
+     * max(baseRadius, z * tan) * escala (elipse U/V). Rasterizar so este volume, em vez da caixa
+     * alinhada aos eixos do mundo, poupa o fragment shader de rodar em milhoes de pixels que ele
+     * descartaria. O shader nao muda, entao os pixels cobertos saem identicos.
+     *
+     * @return false se a base U/V/dir nao for ortonormal (usa-se entao a caixa antiga)
+     */
+    private boolean computeHull(BeamSlot s, Matrix4f viewMat) {
+        float dl = (float) Math.sqrt(s.dirX * s.dirX + s.dirY * s.dirY + s.dirZ * s.dirZ);
+        float ul = (float) Math.sqrt(s.uX * s.uX + s.uY * s.uY + s.uZ * s.uZ);
+        float vl = (float) Math.sqrt(s.vX * s.vX + s.vY * s.vY + s.vZ * s.vZ);
+        if (dl < 1.0e-4f || ul < 1.0e-4f || vl < 1.0e-4f) {
+            return false;
+        }
+        float dx = s.dirX / dl, dy = s.dirY / dl, dz = s.dirZ / dl;
+        float ux = s.uX / ul, uy = s.uY / ul, uz = s.uZ / ul;
+        float vx = s.vX / vl, vy = s.vY / vl, vz = s.vZ / vl;
+        if (Math.abs(ux * dx + uy * dy + uz * dz) > 0.02f
+                || Math.abs(vx * dx + vy * dy + vz * dz) > 0.02f
+                || Math.abs(ux * vx + uy * vy + uz * vz) > 0.02f) {
+            return false;
+        }
+
+        float k = Math.max(s.tanHalfAngle, 1.0e-5f);
+        float r0 = Math.max(s.baseRadius, 0.0f);
+        float wS = Math.max(s.widthScale, 0.05f);
+        float hS = Math.max(s.heightScale, 0.05f);
+        float pad = 0.1f;
+
+        for (int ring = 0; ring < 2; ring++) {
+            float z = ring == 0 ? -pad : s.scanLen + pad;
+            // Reta r0 + k*z deslocada por pad: majora max(baseRadius, z*k) em toda a faixa.
+            float r = Math.max(r0 + k * z, 0.0f) + pad;
+            float cx = s.originX + dx * z;
+            float cy = s.originY + dy * z;
+            float cz = s.originZ + dz * z;
+            for (int i = 0; i < HULL_N; i++) {
+                float a = r * wS * HULL_CIRC * HULL_COS[i];
+                float b = r * hS * HULL_CIRC * HULL_SIN[i];
+                tmpVec.set(cx + ux * a + vx * b, cy + uy * a + vy * b, cz + uz * a + vz * b, 1.0f);
+                viewMat.transform(tmpVec);
+                int o = (ring * HULL_N + i) * 3;
+                hullView[o] = tmpVec.x;
+                hullView[o + 1] = tmpVec.y;
+                hullView[o + 2] = tmpVec.z;
+            }
+        }
+        return true;
+    }
+
+    /** true se todos os vertices do tronco estao do lado de fora de um mesmo plano do frustum. */
+    private boolean hullOutsideFrustum() {
+        int allOut = 0x3F;
+        for (int i = 0; i < 2 * HULL_N; i++) {
+            tmpVec.set(hullView[i * 3], hullView[i * 3 + 1], hullView[i * 3 + 2], 1.0f);
+            projMat.transform(tmpVec);
+            float w = tmpVec.w;
+            int bits = 0;
+            if (tmpVec.x < -w) bits |= 1;
+            if (tmpVec.x > w) bits |= 2;
+            if (tmpVec.y < -w) bits |= 4;
+            if (tmpVec.y > w) bits |= 8;
+            if (tmpVec.z < -w) bits |= 16;
+            if (tmpVec.z > w) bits |= 32;
+            allOut &= bits;
+            if (allOut == 0) {
+                return false;
+            }
+        }
+        return allOut != 0;
+    }
+
+    /**
+     * Emite o tronco com as faces voltadas para dentro (so as faces de tras sao rasterizadas,
+     * como na caixa antiga), de modo que cada pixel dentro da silhueta recebe um unico fragmento,
+     * inclusive com a camera dentro do volume.
+     */
+    private void emitHull(BufferBuilder vc) {
+        float[] h = hullView;
+        float gx = 0, gy = 0, gz = 0;
+        int total = 2 * HULL_N;
+        for (int i = 0; i < total; i++) {
+            gx += h[i * 3];
+            gy += h[i * 3 + 1];
+            gz += h[i * 3 + 2];
+        }
+        gx /= total;
+        gy /= total;
+        gz /= total;
+
+        // Laterais.
+        for (int i = 0; i < HULL_N; i++) {
+            int j = (i + 1) % HULL_N;
+            emitFaceInward(vc, gx, gy, gz, i, j, HULL_N + j, HULL_N + i);
+        }
+        // Tampas (leque de quads: v0, v(2m-1), v(2m), v(2m+1)).
+        for (int m = 1; m + 2 < HULL_N + 1; m += 2) {
+            emitFaceInward(vc, gx, gy, gz, 0, m, m + 1, m + 2);
+            emitFaceInward(vc, gx, gy, gz, HULL_N, HULL_N + m, HULL_N + m + 1, HULL_N + m + 2);
+        }
+    }
+
+    private void emitFaceInward(BufferBuilder vc, float gx, float gy, float gz, int a, int b, int c, int d) {
+        float[] h = hullView;
+        float ax = h[a * 3], ay = h[a * 3 + 1], az = h[a * 3 + 2];
+        float bx = h[b * 3], by = h[b * 3 + 1], bz = h[b * 3 + 2];
+        float cx = h[c * 3], cy = h[c * 3 + 1], cz = h[c * 3 + 2];
+        float dx = h[d * 3], dy = h[d * 3 + 1], dz = h[d * 3 + 2];
+        float nx = (by - ay) * (cz - az) - (bz - az) * (cy - ay);
+        float ny = (bz - az) * (cx - ax) - (bx - ax) * (cz - az);
+        float nz = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+        float fx = (ax + bx + cx + dx) * 0.25f;
+        float fy = (ay + by + cy + dy) * 0.25f;
+        float fz = (az + bz + cz + dz) * 0.25f;
+        // Normal (regra da mao direita) apontando para o centro = face voltada para dentro.
+        boolean inward = nx * (gx - fx) + ny * (gy - fy) + nz * (gz - fz) > 0.0f;
+        if (inward) {
+            hullVertex(vc, ax, ay, az, 0f, 0f);
+            hullVertex(vc, bx, by, bz, 1f, 0f);
+            hullVertex(vc, cx, cy, cz, 1f, 1f);
+            hullVertex(vc, dx, dy, dz, 0f, 1f);
+        } else {
+            hullVertex(vc, dx, dy, dz, 0f, 0f);
+            hullVertex(vc, cx, cy, cz, 1f, 0f);
+            hullVertex(vc, bx, by, bz, 1f, 1f);
+            hullVertex(vc, ax, ay, az, 0f, 1f);
+        }
+    }
+
+    private static void hullVertex(BufferBuilder vc, float x, float y, float z, float u, float v) {
+        vc.vertex((double) x, (double) y, (double) z).color(255, 255, 255, 255).uv(u, v).endVertex();
     }
 
     private static void drawConeProxy(BufferBuilder vc, Matrix4f mat, BeamSlot s, float endRadius) {

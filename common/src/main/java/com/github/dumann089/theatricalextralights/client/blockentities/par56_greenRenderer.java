@@ -125,7 +125,7 @@ public class par56_greenRenderer extends ExtraLightsFixtureRenderer<par56_greenB
 
     @Override
     public void beforeRenderBeam(par56_greenBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockstate, boolean isHanging, int packedLight, int packedOverlay) {
-        if(blockEntity.getIntensity() <= 0) return;
+        if (blockEntity.getDisplayIntensity(partialTicks) <= 0) return;
 
         Vec3 localLensOffset = new Vec3(0.5f, 1.57f, 0.15f);
         float[] panPivot = blockEntity.getFixture().getPanRotationPosition();
@@ -193,8 +193,8 @@ public class par56_greenRenderer extends ExtraLightsFixtureRenderer<par56_greenB
                     zoomNorm,
                     (float) blockEntity.getDistance(),
                     tanHalfAngle,
-                    blockEntity.getColour(),
-                    blockEntity.getIntensity() / 255.0f,
+                    blockEntity.getDisplayColour(partialTicks),
+                    blockEntity.getDisplayIntensity(partialTicks) / 255.0f,
                     goboTex,
                     goboTex,
                     (float) blockEntity.getGoboRotation(),
@@ -219,8 +219,8 @@ public class par56_greenRenderer extends ExtraLightsFixtureRenderer<par56_greenB
 
                 preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
 
-                float intensity = blockEntity.getPrevIntensity() + ((blockEntity.getIntensity()) - blockEntity.getPrevIntensity()) * partialTicks;
-                int color = blockEntity.getColour();
+                float intensity = blockEntity.getDisplayIntensity(partialTicks);
+                int color = blockEntity.getDisplayColour(partialTicks);
                 float alpha = (intensity / 255f) * beamOpacity.floatValue();
 
                 VertexConsumer builder = multiBufferSource.getBuffer(Beam2DRenderTypes.getBeam());
@@ -243,7 +243,7 @@ public class par56_greenRenderer extends ExtraLightsFixtureRenderer<par56_greenB
 
                 poseStack.pushPose();
                 poseStack.translate(localLensOffset.x, localLensOffset.y, localLensOffset.z);
-                renderLensGlow(builder, poseStack, color, 0.25f);
+                renderLensGlow(builder, poseStack, color, 0.25f, intensity);
                 poseStack.popPose();
 
                 renderLens(bufferSource, poseStack, alpha, color, 0.25f, (float)localLensOffset.x, (float)localLensOffset.y, (float)localLensOffset.z);

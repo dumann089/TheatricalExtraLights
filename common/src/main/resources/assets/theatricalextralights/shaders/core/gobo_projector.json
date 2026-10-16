@@ -2,7 +2,7 @@
   "blend": {
     "func": "add",
     "srcrgb": "src_alpha",
-    "dstrgb": "one"
+    "dstrgb": "one_minus_src_alpha"
   },
   "cull": false,
   "vertex": "theatricalextralights:gobo_projector",
@@ -21,7 +21,8 @@
     },
     { "name": "Sampler2" },
     { "name": "Sampler3" },
-    { "name": "Sampler4" }
+    { "name": "Sampler4" },
+    { "name": "Sampler5" }
   ],
   "uniforms": [
     { "name": "ShadowEnabled", "type": "float", "count": 1, "values": [0.0] },
@@ -152,6 +153,18 @@
       "type": "float",
       "count": 1,
       "values": [1.0]
+    },
+    {
+      "name": "GoboBrightness",
+      "type": "float",
+      "count": 1,
+      "values": [1.0]
+    },
+    {
+      "name": "SurfaceTintStrength",
+      "type": "float",
+      "count": 1,
+      "values": [0.6]
     },
     {
       "name": "LightColor",

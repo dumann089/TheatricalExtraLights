@@ -132,7 +132,7 @@ public class WhiteStrobeRenderer extends ExtraLightsRenderer<WhiteStrobeBlockEnt
             int packedLight,
             int packedOverlay
     ) {
-        if (blockEntity.getIntensity() > 0) {
+        if (blockEntity.getDisplayIntensity(partialTicks) > 0) {
             LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
 
                 @Override
@@ -155,7 +155,7 @@ public class WhiteStrobeRenderer extends ExtraLightsRenderer<WhiteStrobeBlockEnt
 
                     float intensity = StrobeRenderHelper.renderedIntensity(blockEntity, partialTicks);
 
-                    int color = blockEntity.getColour();
+                    int color = blockEntity.getDisplayColour(partialTicks);
                     int r = (color >> 16) & 0xFF;
                     int g = (color >> 8) & 0xFF;
                     int b = color & 0xFF;

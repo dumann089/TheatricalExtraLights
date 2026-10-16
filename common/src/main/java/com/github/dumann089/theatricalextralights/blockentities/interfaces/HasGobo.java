@@ -31,6 +31,11 @@ public interface HasGobo extends HasExtendedBeamChannels {
     /** Intensidad interpolada 0-255. */
     float getPartialIntensity(float partialTicks);
 
+    /** Color RGB suavizado (transición), empaquetado. */
+    default int getPartialColour(float partialTicks) {
+        return getColour();
+    }
+
     /** Color RGB empaquetado. */
     int getColour();
 

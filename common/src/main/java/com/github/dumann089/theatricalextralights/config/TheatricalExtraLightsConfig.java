@@ -25,6 +25,10 @@ public class TheatricalExtraLightsConfig {
     private Float rgbBarBeamLength = 9.0f;
     private Boolean renderLens = true;
     private Float maxGoboDistance = 500.0f;
+    /** Multiplicador de brilho do gobo projetado (shader GoboBrightness). */
+    private Float goboBrightness = 1.0f;
+    /** Quanto o gobo toma a iluminacao da superficie (shader SurfaceTintStrength), 0..1. */
+    private Float goboSurfaceTint = 0.6f;
     private Boolean render2DBeam = true;
     private List<String> laserPassThroughBlocks = null;
 
@@ -66,6 +70,9 @@ public class TheatricalExtraLightsConfig {
     private Integer fireworkSmokeSpawnInterval = 3;
 
     private Integer ledFacadeMaxUniverses = 64;
+
+    /** Velocidad de la transición suave de color/intensidad por tick. 1.0 = instantáneo. */
+    private Float colorTransitionSpeed = 0.35f;
 
     private transient Set<String> laserPassThroughSet;
 
@@ -258,6 +265,14 @@ public class TheatricalExtraLightsConfig {
     public static float getRgbBarBeamLength() { return INSTANCE.rgbBarBeamLength; }
     public static boolean shouldRenderLens() { return INSTANCE.renderLens; }
     public static float getMaxGoboDistance() { return INSTANCE.maxGoboDistance; }
+    public static float getGoboBrightness() {
+        float v = INSTANCE.goboBrightness != null ? INSTANCE.goboBrightness : 1.0f;
+        return Math.max(0.0f, Math.min(4.0f, v));
+    }
+    public static float getGoboSurfaceTint() {
+        float v = INSTANCE.goboSurfaceTint != null ? INSTANCE.goboSurfaceTint : 0.6f;
+        return Math.max(0.0f, Math.min(1.0f, v));
+    }
     public static boolean shouldRender2DBeam() { return INSTANCE.render2DBeam; }
 
     public static int getMaxConcurrentRockets() { return INSTANCE.maxConcurrentRockets != null ? INSTANCE.maxConcurrentRockets : 768; }
@@ -269,6 +284,10 @@ public class TheatricalExtraLightsConfig {
     public static int getFireworkSmokeBudgetPerTick() { return INSTANCE.fireworkSmokeBudgetPerTick != null ? INSTANCE.fireworkSmokeBudgetPerTick : 24; }
     public static int getFireworkSmokeSpawnInterval() { return Math.max(1, INSTANCE.fireworkSmokeSpawnInterval != null ? INSTANCE.fireworkSmokeSpawnInterval : 3); }
     public static int getLedFacadeMaxUniverses() { return INSTANCE.ledFacadeMaxUniverses != null ? INSTANCE.ledFacadeMaxUniverses : 64; }
+    public static float getColorTransitionSpeed() {
+        float v = INSTANCE.colorTransitionSpeed != null ? INSTANCE.colorTransitionSpeed : 0.35f;
+        return Math.max(0.01f, Math.min(1.0f, v));
+    }
 
     /* ================= SETTERS ================= */
 
@@ -280,6 +299,18 @@ public class TheatricalExtraLightsConfig {
     public static void setRgbBarBeamLength(float value) { INSTANCE.rgbBarBeamLength = Math.max(1f, value); save(); }
     public static void setRenderLens(boolean value) { INSTANCE.renderLens = value; save(); }
     public static void setMaxGoboDistance(float value) { INSTANCE.maxGoboDistance = value; save(); }
+    public static void setGoboBrightness(float value) {
+        INSTANCE.goboBrightness = Math.max(0.0f, Math.min(4.0f, value));
+        save();
+    }
+    public static void setGoboSurfaceTint(float value) {
+        INSTANCE.goboSurfaceTint = Math.max(0.0f, Math.min(1.0f, value));
+        save();
+    }
+    public static void setColorTransitionSpeed(float value) {
+        INSTANCE.colorTransitionSpeed = Math.max(0.01f, Math.min(1.0f, value));
+        save();
+    }
 
     public static boolean isLaserPassThrough(String blockId) {
         if (INSTANCE.laserPassThroughSet == null) {
