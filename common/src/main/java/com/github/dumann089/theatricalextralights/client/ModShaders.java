@@ -33,13 +33,11 @@ public class ModShaders {
     public static final RenderStateShard.ShaderStateShard RAYMARCH_SHADER_STATE =
             new RenderStateShard.ShaderStateShard(() -> beamRaymarchShader);
 
-    // Blend aditivo modulado por el color del destino (Jugador / Bloque)
-    // Resultado = ColorPixel * (1.0 + ColorLuz)
-    public static final RenderStateShard.TransparencyStateShard MODULATED_SPOTLIGHT_TRANSPARENCY =
-            new RenderStateShard.TransparencyStateShard("modulated_spotlight_transparency", () -> {
+    public static final RenderStateShard.TransparencyStateShard ADDITIVE_TRANSPARENCY =
+            new RenderStateShard.TransparencyStateShard("additive_transparency", () -> {
                 RenderSystem.enableBlend();
                 RenderSystem.blendFunc(
-                        GlStateManager.SourceFactor.DST_COLOR,
+                        GlStateManager.SourceFactor.SRC_ALPHA,
                         GlStateManager.DestFactor.ONE
                 );
             }, () -> {
@@ -47,12 +45,21 @@ public class ModShaders {
                 RenderSystem.defaultBlendFunc();
             });
 
-    public static final RenderStateShard.TransparencyStateShard ADDITIVE_TRANSPARENCY =
-            new RenderStateShard.TransparencyStateShard("additive_transparency", () -> {
+    /**
+     * Normal "over" alpha blending (dest*(1-a) + src*a), used only for the gobo projector.
+     * ADDITIVE_TRANSPARENCY above just adds colour on top of whatever is already on screen, so in a
+     * pitch-black room a fully-open gobo pixel (alpha ~1) only ever reaches LightColor*GoboBrightness -
+     * it never actually overwrites the dark destination. DECAL_TRANSPARENCY instead replaces the
+     * destination in proportion to alpha, so a fully-open gobo pixel (alpha -> 1) becomes exactly
+     * LightColor, i.e. the surface reads as fully, brightly lit in the gobo's colour and shape, the
+     * same way a real profile spot overpowers whatever a wall looked like before it was lit.
+     */
+    public static final RenderStateShard.TransparencyStateShard DECAL_TRANSPARENCY =
+            new RenderStateShard.TransparencyStateShard("gobo_decal_transparency", () -> {
                 RenderSystem.enableBlend();
                 RenderSystem.blendFunc(
                         GlStateManager.SourceFactor.SRC_ALPHA,
-                        GlStateManager.DestFactor.ONE
+                        GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA
                 );
             }, () -> {
                 RenderSystem.disableBlend();
@@ -111,29 +118,77 @@ public class ModShaders {
     }
 
     public static void updateRaymarchConfig() {
-        if (beamRaymarchShader == null) return;
+        if (beamRaymarchShader == null) {
+            return;
+        }
 
         configDensity = com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getVolumetricBeamDensity();
         configMaxAlpha = com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getVolumetricBeamMaxAlpha();
 
         ShaderInstance shader = beamRaymarchShader;
 
-        if (shader.getUniform("Density") != null) shader.getUniform("Density").set(configDensity);
-        if (shader.getUniform("MaxAlpha") != null) shader.getUniform("MaxAlpha").set(configMaxAlpha);
-        if (shader.getUniform("Anisotropy") != null) shader.getUniform("Anisotropy").set(com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getRaymarchAnisotropy());
-        if (shader.getUniform("DustAmount") != null) shader.getUniform("DustAmount").set(com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getRaymarchDustAmount());
-        if (shader.getUniform("RaymarchSteps") != null) shader.getUniform("RaymarchSteps").set(com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getRaymarchSteps());
-        if (shader.getUniform("MaxBeamsPerFrame") != null) shader.getUniform("MaxBeamsPerFrame").set(com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getRaymarchMaxBeamsPerFrame());
-        if (shader.getUniform("BeamDistance") != null) shader.getUniform("BeamDistance").set(com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getVolumetricBeamDistance());
-        if (shader.getUniform("Brightness") != null) shader.getUniform("Brightness").set(com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getVolumetricBeamBrightness());
-        if (shader.getUniform("FadeLength") != null) shader.getUniform("FadeLength").set(com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getVolumetricBeamFadeLength());
+        if (shader.getUniform("Density") != null) {
+            shader.getUniform("Density").set(configDensity);
+        }
+
+        if (shader.getUniform("MaxAlpha") != null) {
+            shader.getUniform("MaxAlpha").set(configMaxAlpha);
+        }
+
+        if (shader.getUniform("Anisotropy") != null) {
+            shader.getUniform("Anisotropy").set(
+                    com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getRaymarchAnisotropy()
+            );
+        }
+
+        if (shader.getUniform("DustAmount") != null) {
+            shader.getUniform("DustAmount").set(
+                    com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getRaymarchDustAmount()
+            );
+        }
+
+        if (shader.getUniform("RaymarchSteps") != null) {
+            shader.getUniform("RaymarchSteps").set(
+                    com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getRaymarchSteps()
+            );
+        }
+
+        if (shader.getUniform("MaxBeamsPerFrame") != null) {
+            shader.getUniform("MaxBeamsPerFrame").set(
+                    com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getRaymarchMaxBeamsPerFrame()
+            );
+        }
+
+        if (shader.getUniform("BeamDistance") != null) {
+            shader.getUniform("BeamDistance").set(
+                    com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getVolumetricBeamDistance()
+            );
+        }
+
+        if (shader.getUniform("Brightness") != null) {
+            shader.getUniform("Brightness").set(
+                    com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getVolumetricBeamBrightness()
+            );
+        }
+
+        if (shader.getUniform("FadeLength") != null) {
+            shader.getUniform("FadeLength").set(
+                    com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getVolumetricBeamFadeLength()
+            );
+        }
     }
 
     public static RenderType getRaymarchRenderType(ResourceLocation texture) {
         return RAYMARCH_TYPE_CACHE.computeIfAbsent(texture, tex -> {
             RenderType.CompositeState state = RenderType.CompositeState.builder()
                     .setShaderState(RAYMARCH_SHADER_STATE)
-                    .setTextureState(new RenderStateShard.TextureStateShard(tex, false, false))
+                    .setTextureState(
+                            new RenderStateShard.TextureStateShard(
+                                    tex,
+                                    false,
+                                    false
+                            )
+                    )
                     .setTransparencyState(PURE_ADDITIVE_TRANSPARENCY)
                     .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
                     .setCullState(RenderStateShard.CULL)
@@ -141,7 +196,15 @@ public class ModShaders {
                     .setWriteMaskState(RenderStateShard.COLOR_WRITE)
                     .createCompositeState(false);
 
-            return RenderType.create("beam_raymarch", DefaultVertexFormat.POSITION_COLOR_TEX, VertexFormat.Mode.QUADS, 65536, false, true, state);
+            return RenderType.create(
+                    "beam_raymarch",
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    VertexFormat.Mode.QUADS,
+                    65536,
+                    false,
+                    true,
+                    state
+            );
         });
     }
 
@@ -151,34 +214,72 @@ public class ModShaders {
         }
 
         return RENDER_TYPE_CACHE.computeIfAbsent(texture, tex -> {
-            RenderType.CompositeState state = RenderType.CompositeState.builder()
-                    .setShaderState(GOBO_SHADER_STATE)
-                    .setTextureState(new RenderStateShard.TextureStateShard(tex, false, false))
-                    .setTransparencyState(MODULATED_SPOTLIGHT_TRANSPARENCY) // DST_COLOR, ONE
-                    .setCullState(RenderStateShard.NO_CULL)
-                    .setLightmapState(RenderStateShard.NO_LIGHTMAP)
-                    .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
-                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                    .createCompositeState(false);
+            RenderType.CompositeState state =
+                    RenderType.CompositeState.builder()
+                            .setShaderState(GOBO_SHADER_STATE)
+                            .setTextureState(
+                                    new RenderStateShard.TextureStateShard(
+                                            tex,
+                                            false,
+                                            false
+                                    )
+                            )
+                            .setTransparencyState(DECAL_TRANSPARENCY)
+                            .setCullState(RenderStateShard.NO_CULL)
+                            .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                            .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
+                            .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                            .createCompositeState(false);
 
-            return RenderType.create("gobo_projector", DefaultVertexFormat.POSITION_COLOR_TEX,
-                    VertexFormat.Mode.QUADS, 65536, false, true, state);
+            return RenderType.create(
+                    "gobo_projector",
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    VertexFormat.Mode.QUADS,
+                    65536,
+                    false,
+                    true,
+                    state
+            );
         });
     }
 
     public static RenderType getGoboFallbackRenderType(ResourceLocation texture) {
         return GOBO_FALLBACK_CACHE.computeIfAbsent(texture, tex -> {
-            RenderType.CompositeState state = RenderType.CompositeState.builder()
-                    .setShaderState(RenderStateShard.RENDERTYPE_BEACON_BEAM_SHADER)
-                    .setTextureState(new RenderStateShard.TextureStateShard(tex, false, false))
-                    .setTexturingState(CLAMP_TEXTURING)
-                    .setTransparencyState(ADDITIVE_TRANSPARENCY)
-                    .setDepthTestState(new RenderStateShard.DepthTestStateShard("lequal_depth", 515))
-                    .setCullState(new RenderStateShard.CullStateShard(false))
-                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                    .createCompositeState(false);
+            RenderType.CompositeState state =
+                    RenderType.CompositeState.builder()
+                            .setShaderState(
+                                    RenderStateShard.RENDERTYPE_BEACON_BEAM_SHADER
+                            )
+                            .setTextureState(
+                                    new RenderStateShard.TextureStateShard(
+                                            tex,
+                                            false,
+                                            false
+                                    )
+                            )
+                            .setTexturingState(CLAMP_TEXTURING)
+                            .setTransparencyState(DECAL_TRANSPARENCY)
+                            .setDepthTestState(
+                                    new RenderStateShard.DepthTestStateShard(
+                                            "lequal_depth",
+                                            515
+                                    )
+                            )
+                            .setCullState(
+                                    new RenderStateShard.CullStateShard(false)
+                            )
+                            .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                            .createCompositeState(false);
 
-            return RenderType.create("gobo_projector_fallback", DefaultVertexFormat.POSITION_COLOR_TEX, VertexFormat.Mode.QUADS, 256, false, true, state);
+            return RenderType.create(
+                    "gobo_projector_fallback",
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    VertexFormat.Mode.QUADS,
+                    256,
+                    false,
+                    true,
+                    state
+            );
         });
     }
 
@@ -188,33 +289,79 @@ public class ModShaders {
         }
 
         return VOLUMETRIC_TYPE_CACHE.computeIfAbsent(texture, tex -> {
-            RenderType.CompositeState state = RenderType.CompositeState.builder()
-                    .setShaderState(VOLUMETRIC_SHADER_STATE)
-                    .setTextureState(new RenderStateShard.TextureStateShard(tex, false, false))
-                    .setTexturingState(CLAMP_TEXTURING)
-                    .setTransparencyState(ADDITIVE_TRANSPARENCY)
-                    .setDepthTestState(new RenderStateShard.DepthTestStateShard("lequal_depth", 515))
-                    .setCullState(new RenderStateShard.CullStateShard(false))
-                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                    .createCompositeState(false);
+            RenderType.CompositeState state =
+                    RenderType.CompositeState.builder()
+                            .setShaderState(VOLUMETRIC_SHADER_STATE)
+                            .setTextureState(
+                                    new RenderStateShard.TextureStateShard(
+                                            tex,
+                                            false,
+                                            false
+                                    )
+                            )
+                            .setTexturingState(CLAMP_TEXTURING)
+                            .setTransparencyState(ADDITIVE_TRANSPARENCY)
+                            .setDepthTestState(
+                                    new RenderStateShard.DepthTestStateShard(
+                                            "lequal_depth",
+                                            515
+                                    )
+                            )
+                            .setCullState(
+                                    new RenderStateShard.CullStateShard(false)
+                            )
+                            .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                            .createCompositeState(false);
 
-            return RenderType.create("volumetric_beam", DefaultVertexFormat.POSITION_COLOR_TEX, VertexFormat.Mode.QUADS, 65536, false, true, state);
+            return RenderType.create(
+                    "volumetric_beam",
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    VertexFormat.Mode.QUADS,
+                    65536,
+                    false,
+                    true,
+                    state
+            );
         });
     }
 
     public static RenderType getVolumetricFallbackRenderType(ResourceLocation texture) {
         return VOLUMETRIC_FALLBACK_CACHE.computeIfAbsent(texture, tex -> {
-            RenderType.CompositeState state = RenderType.CompositeState.builder()
-                    .setShaderState(RenderStateShard.RENDERTYPE_BEACON_BEAM_SHADER)
-                    .setTextureState(new RenderStateShard.TextureStateShard(tex, false, false))
-                    .setTexturingState(CLAMP_TEXTURING)
-                    .setTransparencyState(ADDITIVE_TRANSPARENCY)
-                    .setDepthTestState(new RenderStateShard.DepthTestStateShard("lequal_depth", 515))
-                    .setCullState(new RenderStateShard.CullStateShard(false))
-                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                    .createCompositeState(false);
+            RenderType.CompositeState state =
+                    RenderType.CompositeState.builder()
+                            .setShaderState(
+                                    RenderStateShard.RENDERTYPE_BEACON_BEAM_SHADER
+                            )
+                            .setTextureState(
+                                    new RenderStateShard.TextureStateShard(
+                                            tex,
+                                            false,
+                                            false
+                                    )
+                            )
+                            .setTexturingState(CLAMP_TEXTURING)
+                            .setTransparencyState(ADDITIVE_TRANSPARENCY)
+                            .setDepthTestState(
+                                    new RenderStateShard.DepthTestStateShard(
+                                            "lequal_depth",
+                                            515
+                                    )
+                            )
+                            .setCullState(
+                                    new RenderStateShard.CullStateShard(false)
+                            )
+                            .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                            .createCompositeState(false);
 
-            return RenderType.create("volumetric_beam_fallback", DefaultVertexFormat.POSITION_COLOR_TEX, VertexFormat.Mode.QUADS, 65536, false, true, state);
+            return RenderType.create(
+                    "volumetric_beam_fallback",
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    VertexFormat.Mode.QUADS,
+                    65536,
+                    false,
+                    true,
+                    state
+            );
         });
     }
 }

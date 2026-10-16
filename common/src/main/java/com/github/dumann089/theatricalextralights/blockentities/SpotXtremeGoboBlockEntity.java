@@ -279,7 +279,12 @@ public class SpotXtremeGoboBlockEntity extends ExtraLightsLightBlockEntity
 
     @Override
     public float getPartialIntensity(float partialTicks) {
-        return getPrevIntensity() + (getIntensity() - getPrevIntensity()) * partialTicks;
+        return getDisplayIntensity(partialTicks);
+    }
+
+    @Override
+    public int getPartialColour(float partialTicks) {
+        return getDisplayColour(partialTicks);
     }
 
     @Override

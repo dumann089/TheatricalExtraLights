@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -21,8 +22,10 @@ import java.util.Map;
  *
  * <ul>
  *   <li>une grille d'occupation des blocs autour du faisceau, envoyee au GPU comme texture 2D
- *       de {@code N} tranches empilees ({@code N x N*N}, rouge = solide), reconstruite toutes
- *       les {@link #REBUILD_TICKS} ou quand le faisceau sort de la grille ;</li>
+ *       de {@code N} tranches empilees ({@code N x N*N}, rouge = solide ; vert/bleu/alpha =
+ *       couleur de carte du bloc, utilisee par le gobo pour teinter sa tache projetee avec la
+ *       vraie couleur de la surface touchee), reconstruite toutes les {@link #REBUILD_TICKS}
+ *       ou quand le faisceau sort de la grille ;</li>
  *   <li>jusqu'a {@link #MAX_BOXES} boites d'entites qui traversent le cone, rafraichies a
  *       chaque appel.</li>
  * </ul>
@@ -38,7 +41,26 @@ public final class BeamShadowOccluders {
     private static final long EXPIRE_TICKS = 200;
 
     /** Ce que le renderer pousse dans les uniforms. */
-    public record Snapshot(int textureId, Vec3 gridOrigin, float cell, int size, List<AABB> boxes) {
+    public record Snapshot(int textureId, Vec3 gridOrigin, float cell, int size, List<AABB> boxes, boolean anySolid) {
+    }
+
+    private static final class Variant {
+        long tick = Long.MIN_VALUE;
+        long used;
+        double ox, oy, oz, dx, dy, dz;
+        float len, rad;
+        final List<AABB> boxes = new ArrayList<>();
+
+        boolean matches(Vec3 o, Vec3 d, float l, float r) {
+            return ox == o.x && oy == o.y && oz == o.z && dx == d.x && dy == d.y && dz == d.z
+                    && len == l && rad == r;
+        }
+
+        void set(Vec3 o, Vec3 d, float l, float r) {
+            ox = o.x; oy = o.y; oz = o.z;
+            dx = d.x; dy = d.y; dz = d.z;
+            len = l; rad = r;
+        }
     }
 
     private static final class Entry {
@@ -48,7 +70,29 @@ public final class BeamShadowOccluders {
         int cell = 1;
         long lastBuildTick = Long.MIN_VALUE;
         long lastUseTick;
-        final List<AABB> boxes = new ArrayList<>();
+        /** true se a grade tem ao menos uma celula solida (grade vazia = sem sombra de blocos). */
+        boolean anySolid;
+        /**
+         * Caixas de entidades por conjunto de parametros de chamada (o projetor de gobo e o feixe
+         * volumetrico pedem o mesmo projetor com comprimentos diferentes). Cada variante guarda a
+         * ultima consulta, valida durante o tick em que foi feita.
+         */
+        final Variant[] variants = {new Variant(), new Variant()};
+        long variantClock;
+
+        Variant variantFor(Vec3 o, Vec3 d, float len, float rad) {
+            for (Variant v : variants) {
+                if (v.matches(o, d, len, rad)) {
+                    v.used = ++variantClock;
+                    return v;
+                }
+            }
+            Variant pick = variants[0].used <= variants[1].used ? variants[0] : variants[1];
+            pick.set(o, d, len, rad);
+            pick.tick = Long.MIN_VALUE;
+            pick.used = ++variantClock;
+            return pick;
+        }
 
         boolean contains(Vec3 min, Vec3 max) {
             double ext = (double) cell * GRID;
@@ -80,16 +124,24 @@ public final class BeamShadowOccluders {
         Vec3 bbMax = new Vec3(Math.max(origin.x, end.x) + margin, Math.max(origin.y, end.y) + margin, Math.max(origin.z, end.z) + margin);
 
         if (e.texture == null || tick - e.lastBuildTick >= REBUILD_TICKS || !e.contains(bbMin, bbMax)) {
+            boolean first = e.texture == null;
             rebuildBlocks(level, fixture, e, origin, dir, length, endRadius, bbMin, bbMax);
-            e.lastBuildTick = tick;
+            // Fase propria por projetor: sem isso todos reconstroem no mesmo tick e causam picos.
+            e.lastBuildTick = first ? tick - Math.floorMod(fixture.hashCode(), REBUILD_TICKS) : tick;
         }
-        collectEntities(level, e, origin, dir, length, endRadius, bbMin, bbMax);
+        // O mundo cliente so muda entre ticks: com origem, direcao e alcance identicos, a consulta
+        // de entidades do tick atual ja vale para os demais frames dele.
+        Variant variant = e.variantFor(origin, dir, length, endRadius);
+        if (variant.tick != tick) {
+            collectEntities(level, variant.boxes, origin, dir, length, endRadius, bbMin, bbMax);
+            variant.tick = tick;
+        }
 
         if (tick - lastSweepTick > 100) {
             lastSweepTick = tick;
             sweep(tick);
         }
-        return new Snapshot(e.texture.getId(), e.gridOrigin, e.cell, GRID, e.boxes);
+        return new Snapshot(e.texture.getId(), e.gridOrigin, e.cell, GRID, variant.boxes, e.anySolid);
     }
 
     private static void rebuildBlocks(Level level, BlockPos fixture, Entry e, Vec3 origin, Vec3 dir, float length,
@@ -111,13 +163,27 @@ public final class BeamShadowOccluders {
         }
         NativeImage img = e.image;
         img.fillRect(0, 0, GRID, GRID * GRID, 0);
+        e.anySolid = false;
 
         float tan = endRadius / Math.max(length, 0.001f);
         BlockPos.MutableBlockPos mp = new BlockPos.MutableBlockPos();
         double half = cell * 0.5;
-        for (int iz = 0; iz < GRID; iz++) {
-            for (int iy = 0; iy < GRID; iy++) {
-                for (int ix = 0; ix < GRID; ix++) {
+        // Caixa que contem todo centro de celula aceito pelo filtro de cone abaixo: o eixo vai de
+        // -cell a length+cell e o raio permitido nunca passa de rMax. Celulas fora dela seriam
+        // descartadas pelo filtro de qualquer jeito, entao o resultado e identico.
+        double rMax = (length + cell) * tan + cell * 1.5;
+        double ax = origin.x - dir.x * cell, ay = origin.y - dir.y * cell, az = origin.z - dir.z * cell;
+        double bx = origin.x + dir.x * (length + cell), by = origin.y + dir.y * (length + cell),
+                bz = origin.z + dir.z * (length + cell);
+        int ixLo = cellIndexLo(Math.min(ax, bx) - rMax, gridOrigin.x, cell);
+        int ixHi = cellIndexHi(Math.max(ax, bx) + rMax, gridOrigin.x, cell);
+        int iyLo = cellIndexLo(Math.min(ay, by) - rMax, gridOrigin.y, cell);
+        int iyHi = cellIndexHi(Math.max(ay, by) + rMax, gridOrigin.y, cell);
+        int izLo = cellIndexLo(Math.min(az, bz) - rMax, gridOrigin.z, cell);
+        int izHi = cellIndexHi(Math.max(az, bz) + rMax, gridOrigin.z, cell);
+        for (int iz = izLo; iz <= izHi; iz++) {
+            for (int iy = iyLo; iy <= iyHi; iy++) {
+                for (int ix = ixLo; ix <= ixHi; ix++) {
                     double cx = gridOrigin.x + ix * cell + half;
                     double cy = gridOrigin.y + iy * cell + half;
                     double cz = gridOrigin.z + iz * cell + half;
@@ -138,7 +204,19 @@ public final class BeamShadowOccluders {
                     boolean solid = state.isSolidRender(level, mp)
                             || (!state.getCollisionShape(level, mp).isEmpty() && state.getLightBlock(level, mp) > 0);
                     if (solid) {
-                        img.setPixelRGBA(ix, iz * GRID + iy, 0xFFFFFFFF);
+                        // Red = occlusion flag (both shaders only ever read .r, so this stays exactly as
+                        // before). Green/Blue/Alpha are unused by both shaders otherwise, so we stash the
+                        // block's own map colour there (same colour vanilla maps use to represent it) -
+                        // the gobo shader can then tint its projected light with the real colour of
+                        // whatever it is actually landing on, instead of a flat, unrelated colour.
+                        int rgb = state.getMapColor(level, mp).calculateRGBColor(MapColor.Brightness.NORMAL);
+                        int rgbR = (rgb >> 16) & 0xFF;
+                        int rgbG = (rgb >> 8) & 0xFF;
+                        int rgbB = rgb & 0xFF;
+                        // NativeImage/GL texture byte order is R,G,B,A (R = lowest byte of the packed int).
+                        int packed = 0xFF | (rgbR << 8) | (rgbG << 16) | (rgbB << 24);
+                        img.setPixelRGBA(ix, iz * GRID + iy, packed);
+                        e.anySolid = true;
                     }
                 }
             }
@@ -146,17 +224,31 @@ public final class BeamShadowOccluders {
         e.texture.upload();
     }
 
-    private static void collectEntities(Level level, Entry e, Vec3 origin, Vec3 dir, float length, float endRadius,
+    /** Menor indice de celula (com folga de 1) cujo centro pode ficar em >= {@code lo}. */
+    private static int cellIndexLo(double lo, double gridMin, int cell) {
+        int i = (int) Math.floor((lo - gridMin) / cell) - 1;
+        return Math.max(0, Math.min(GRID, i));
+    }
+
+    /** Maior indice de celula (com folga de 1) cujo centro pode ficar em <= {@code hi}. */
+    private static int cellIndexHi(double hi, double gridMin, int cell) {
+        int i = (int) Math.ceil((hi - gridMin) / cell) + 1;
+        return Math.max(-1, Math.min(GRID - 1, i));
+    }
+
+    private static void collectEntities(Level level, List<AABB> out, Vec3 origin, Vec3 dir, float length, float endRadius,
                                         Vec3 bbMin, Vec3 bbMax) {
-        e.boxes.clear();
+        out.clear();
         Minecraft mc = Minecraft.getInstance();
         Entity camera = mc.getCameraEntity();
         boolean firstPerson = mc.options.getCameraType().isFirstPerson();
         float tan = endRadius / Math.max(length, 0.001f);
         List<Entity> found = level.getEntities((Entity) null, new AABB(bbMin, bbMax),
                 en -> en.isAlive() && !en.isSpectator() && !en.isInvisible() && !(firstPerson && en == camera));
-        List<AABB> candidates = new ArrayList<>();
-        List<Double> dists = new ArrayList<>();
+        int cap = found.size();
+        AABB[] candidates = new AABB[cap];
+        double[] dists = new double[cap];
+        int count = 0;
         for (Entity en : found) {
             AABB box = en.getBoundingBox();
             Vec3 c = box.getCenter();
@@ -167,15 +259,20 @@ public final class BeamShadowOccluders {
             double radial = Math.sqrt(px * px + py * py + pz * pz);
             double reach = Math.max(box.getXsize(), Math.max(box.getYsize(), box.getZsize())) * 0.5;
             if (radial > z * tan + reach) continue;
-            candidates.add(box);
-            dists.add(z);
+            // Insercao estavel por distancia crescente (mesma ordem do sort anterior).
+            int j = count - 1;
+            while (j >= 0 && dists[j] > z) {
+                candidates[j + 1] = candidates[j];
+                dists[j + 1] = dists[j];
+                j--;
+            }
+            candidates[j + 1] = box;
+            dists[j + 1] = z;
+            count++;
         }
-        // Les plus proches de la source d'abord : ce sont elles qui ombrent le plus de volume.
-        Integer[] order = new Integer[candidates.size()];
-        for (int i = 0; i < order.length; i++) order[i] = i;
-        java.util.Arrays.sort(order, (a, b) -> Double.compare(dists.get(a), dists.get(b)));
-        for (int i = 0; i < Math.min(MAX_BOXES, order.length); i++) {
-            e.boxes.add(candidates.get(order[i]));
+        // Os mais proximos da fonte primeiro: sao os que sombreiam mais volume.
+        for (int i = 0; i < Math.min(MAX_BOXES, count); i++) {
+            out.add(candidates[i]);
         }
     }
 

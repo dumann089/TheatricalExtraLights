@@ -2,6 +2,7 @@ package com.github.dumann089.theatricalextralights.client.entities;
 
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
 import com.github.dumann089.theatricalextralights.entities.FireworkRocketEntity;
+import com.github.dumann089.theatricalextralights.client.firework.FireworkRocketLateRender;
 import com.github.dumann089.theatricalextralights.firework.BurstPattern;
 import com.github.dumann089.theatricalextralights.firework.FireworkRenderDistances;
 import com.github.dumann089.theatricalextralights.firework.Spark;
@@ -25,8 +26,16 @@ public class FireworkRocketRenderer extends EntityRenderer<FireworkRocketEntity>
         super(context);
     }
 
-    @Override
+     @Override
     public void render(FireworkRocketEntity entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        // Fallback: se o hook tardio já está rodando, ele desenha depois dos block entities.
+        if (FireworkRocketLateRender.isActive()) {
+            return;
+        }
+        renderEffects(entity, partialTick, poseStack, buffer);
+    }
+
+    public void renderEffects(FireworkRocketEntity entity, float partialTick, PoseStack poseStack, MultiBufferSource buffer) {
         VertexConsumer lensConsumer = buffer.getBuffer(LensRenderTypes.FLAME);
         BurstPattern pattern = entity.getPreset().getPattern();
         int color = entity.getLaunchColor();

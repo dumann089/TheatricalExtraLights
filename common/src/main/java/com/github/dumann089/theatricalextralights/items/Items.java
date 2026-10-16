@@ -451,6 +451,10 @@ public class Items {
             "fixture_wrench",
             FixtureWrenchItem::new
     );
+    public static final RegistrySupplier<Item> FIXTURE_TRACKER = ITEMS.register(
+            "fixture_tracker",
+            FixtureTrackerItem::new
+    );
     public static final RegistrySupplier<Item> TRUSS_3LIGHTS = ITEMS.register(
         "truss_3lights",
         () -> new BlockItem(Blocks.TRUSS_3LIGHTS.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))

@@ -298,7 +298,7 @@ public class StrobeRenderer extends ExtraLightsFixtureRenderer<StrobeBlockEntity
 
 
 
-                int color = blockEntity.getColour();
+                int color = blockEntity.getDisplayColour(partialTick);
 
                 int r = (color >> 16) & 0xFF;
 

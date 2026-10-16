@@ -175,7 +175,7 @@ public class MovingVL2CBeamsRenderer extends ExtraLightsFixtureRenderer<MovingVL
             int packedLight,
             int packedOverlay
     ) {
-        if (blockEntity.getIntensity() <= 0) return;
+        if (blockEntity.getDisplayIntensity(partialTicks) <= 0) return;
 
         if (blockEntity.getGobo() >= 0) {
             Vec3 localLensOffset = new Vec3(0.5f, 0.781f, 0.2f);
@@ -270,8 +270,8 @@ public class MovingVL2CBeamsRenderer extends ExtraLightsFixtureRenderer<MovingVL
                         zoomNorm,
                         (float) blockEntity.getDistance(),
                         tanHalfAngle,
-                        blockEntity.getColour(),
-                        blockEntity.getIntensity() / 255.0f,
+                        blockEntity.getDisplayColour(partialTicks),
+                        blockEntity.getDisplayIntensity(partialTicks) / 255.0f,
                         goboTex,
                         nextGoboTex,     // Añadido
                         (float) blockEntity.getGoboRotation(),
@@ -312,9 +312,8 @@ public class MovingVL2CBeamsRenderer extends ExtraLightsFixtureRenderer<MovingVL
                 preparePoseStack(blockEntity, poseStack, facing, partialTick,
                         isFlipped, blockstate, isHanging);
 
-                float intensity = blockEntity.getPrevIntensity()
-                        + (blockEntity.getIntensity() - blockEntity.getPrevIntensity()) * partialTick;
-                int   color     = blockEntity.getColour();
+                float intensity = blockEntity.getDisplayIntensity(partialTick);
+                int color = blockEntity.getDisplayColour(partialTick);
                 float alpha     = (intensity / 255f) * beamOpacity.floatValue();
 
                 VertexConsumer builder  = multiBufferSource.getBuffer(Beam2DRenderTypes.getBeam());
@@ -338,7 +337,7 @@ public class MovingVL2CBeamsRenderer extends ExtraLightsFixtureRenderer<MovingVL
 
                 poseStack.pushPose();
                 poseStack.translate(0.5f, 0.781f, 0.2f);
-                renderLensGlow(builder, poseStack, color, 0.08f);
+                renderLensGlow(builder, poseStack, color, 0.08f, intensity);
                 poseStack.popPose();
 
                 renderLens(bufferSource, poseStack, alpha, color,

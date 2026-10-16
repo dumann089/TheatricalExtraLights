@@ -114,7 +114,7 @@ public class Blinder2x2warmRenderer extends ExtraLightsRenderer<Blinder2x2warmBl
             int packedLight,
             int packedOverlay
     ) {
-        if (blockEntity.getIntensity() > 0) {
+        if (blockEntity.getDisplayIntensity(partialTicks) > 0) {
             LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
 
                 @Override
@@ -132,7 +132,7 @@ public class Blinder2x2warmRenderer extends ExtraLightsRenderer<Blinder2x2warmBl
                             blockstate,
                             isHanging
                     );
-                    BlinderRenderHelper.renderFace(
+                    BlinderRenderHelper.renderFaceWithGlow(
                             blockEntity,
                             bufferSource,
                             poseStack,

@@ -3,6 +3,7 @@ package com.github.dumann089.theatricalextralights.client.blockentities;
 import com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGobo;
 import com.github.dumann089.theatricalextralights.client.render.beam.ProfileHeadRender;
+import java.util.ArrayList;
 import java.util.List;
 import com.github.dumann089.theatricalextralights.client.CustomGoboLoader;
 import com.github.dumann089.theatricalextralights.client.ModShaders;
@@ -32,19 +33,103 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.platform.TextureUtil;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 
 public class GoboGPUProjector {
     private final Vector4f tmpPos = new Vector4f();
     private final Vector4f tmpDir = new Vector4f();
     private final Vector4f tmpU = new Vector4f();
     private final Vector4f tmpV = new Vector4f();
+
+    // ── Scene colour capture ────────────────────────────────────────────────
+    // The gobo is projected onto whatever the camera sees: blocks, mobs, players, armor stands,
+    // dropped items, anything. There is no single API that returns "the colour of the thing at this
+    // screen position" across all of those at once - but by the time this lazy render runs, the game
+    // has already drawn all of it (terrain, entities, item frames, everything) into the main render
+    // target. Copying that into our own small texture lets the gobo's shader sample "whatever is
+    // really there" directly, regardless of what kind of thing it is, instead of guessing from block
+    // data alone (which only ever covers blocks).
+    private static int sceneColorTextureId = -1;
+    private static int sceneColorWidth = -1;
+    private static int sceneColorHeight = -1;
+
+    private static int ensureSceneColorTexture(int width, int height) {
+        if (sceneColorTextureId == -1) {
+            sceneColorTextureId = TextureUtil.generateTextureId();
+            GlStateManager._bindTexture(sceneColorTextureId);
+            GlStateManager._texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+            GlStateManager._texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+            GlStateManager._texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
+            GlStateManager._texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
+        }
+        if (sceneColorWidth != width || sceneColorHeight != height) {
+            GlStateManager._bindTexture(sceneColorTextureId);
+            TextureUtil.prepareImage(sceneColorTextureId, width, height);
+            sceneColorWidth = width;
+            sceneColorHeight = height;
+        }
+        return sceneColorTextureId;
+    }
+
+    /**
+     * Snapshots whatever is currently in the colour buffer we are about to draw the gobo into. Must be
+     * called BEFORE the gobo's own translucent quad is drawn (so the gobo itself isn't captured) and
+     * while that same render target is still the active one (so the copy actually grabs this frame's
+     * terrain/entities, not a stale or unrelated buffer). This does not create a read/write hazard:
+     * glCopyTexSubImage2D reads the active framebuffer into a *different*, plain texture object - we
+     * are not reading from and writing to the same attachment at once.
+     */
+    private static int captureSceneColor(int width, int height) {
+        int id = ensureSceneColorTexture(width, height);
+        GlStateManager._bindTexture(id);
+        GlStateManager._glCopyTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+        return id;
+    }
+    /**
+     * Resultado do raycast de oclusao por faceta. O mundo cliente so muda entre ticks, e para um
+     * fixture parado origem e direcao saem identicas de um frame para o outro: refazer um clip de
+     * ate maxGoboDistance blocos a cada frame era trabalho repetido. Qualquer mudanca de origem,
+     * direcao, tick ou mundo invalida a entrada.
+     */
+    private static final class ClipSlot {
+        long tick = Long.MIN_VALUE;
+        Level level;
+        Vec3 start;
+        Vec3 end;
+        BlockHitResult hit;
+    }
+
+    private final List<ClipSlot> clipSlots = new ArrayList<>();
+
+    private BlockHitResult cachedClip(Level level, int facet, Vec3 start, Vec3 end) {
+        while (clipSlots.size() <= facet) {
+            clipSlots.add(new ClipSlot());
+        }
+        ClipSlot c = clipSlots.get(facet);
+        long tick = level.getGameTime();
+        if (c.hit != null && c.tick == tick && c.level == level && c.start.equals(start) && c.end.equals(end)) {
+            return c.hit;
+        }
+        BlockHitResult r = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
+        c.tick = tick;
+        c.level = level;
+        c.start = start;
+        c.end = end;
+        c.hit = r;
+        return r;
+    }
+
     public <T extends BlockEntity & HasGobo> void render(T be, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging, Vec3 localLensOffset, float[] panPivot, float[] tiltPivot, float[] structuralTransform, float minAngle, float maxAngle, float smoothPan, float smoothTilt, float baseRadius) {
         if (be.getLevel() == null) return;
         float intensity = be.getPartialIntensity(partialTicks) / 255.0f;
@@ -112,14 +197,16 @@ public class GoboGPUProjector {
         // Prisme (personnalite Profile) : une projection par facette, comme pour le faisceau.
         List<Vec3[]> frames = ProfileHeadRender.prismFrames(baseDir, baseU, baseV, be, partialTicks);
         intensity *= ProfileHeadRender.prismIntensity(frames.size());
+        int facetIdx = 0;
         for (Vec3[] frame : frames) {
+        final int facet = facetIdx++;
         final Vec3 beamDir = frame[0];
         final Vec3 axisU = frame[1];
         final Vec3 axisV = frame[2];
 
         Vec3 rayStart = origin.add(beamDir.scale(0.35f));
         Vec3 rayEnd = origin.add(beamDir.scale(maxDistance));
-        BlockHitResult hitResult = be.getLevel().clip(new ClipContext(rayStart, rayEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
+        BlockHitResult hitResult = cachedClip(be.getLevel(), facet, rayStart, rayEnd);
 
         final boolean hasOcclusion = hitResult.getType() != HitResult.Type.MISS;
         final Vec3 finalOcclusionPos = hasOcclusion ? hitResult.getLocation() : Vec3.ZERO;
@@ -150,7 +237,7 @@ public class GoboGPUProjector {
                                 (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance),
                                 (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance) * tanHalfAngle + finalBaseRadius)
                         : null;
-        final int finalColor = be.getColour() == 0 ? 0xFFFFFF : be.getColour();
+        final int finalColor = be.getPartialColour(partialTicks) == 0 ? 0xFFFFFF : be.getPartialColour(partialTicks);
 
         LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
             @Override
@@ -188,6 +275,8 @@ public class GoboGPUProjector {
                 shader.safeGetUniform("WheelTransition").set(finalWheelTransition);
                 shader.safeGetUniform("Intensity").set(finalIntensity);
                 shader.safeGetUniform("Focus").set(finalFocus);
+                shader.safeGetUniform("GoboBrightness").set(TheatricalExtraLightsConfig.getGoboBrightness());
+                shader.safeGetUniform("SurfaceTintStrength").set(TheatricalExtraLightsConfig.getGoboSurfaceTint());
                 shader.safeGetUniform("BaseRadius").set(finalBaseRadius);
                 FramingShutterRender.applyUniforms(shader, finalShutters);
                 com.github.dumann089.theatricalextralights.client.render.beam.raymarch.RaymarchBeamRenderer.applyAnimationUniforms(shader, finalAnimation);
@@ -248,6 +337,10 @@ public class GoboGPUProjector {
                 int shadowTextureId = finalShadows != null ? finalShadows.textureId() : goboTexture;
                 RenderSystem.setShaderTexture(4, shadowTextureId);
                 shader.setSampler("Sampler4", shadowTextureId);
+
+                int sceneColorTexture = captureSceneColor(mc.getMainRenderTarget().width, mc.getMainRenderTarget().height);
+                RenderSystem.setShaderTexture(5, sceneColorTexture);
+                shader.setSampler("Sampler5", sceneColorTexture);
 
                 shader.apply();
 
@@ -356,25 +449,25 @@ public class GoboGPUProjector {
 
             if (pitch != 0.0f) {
                 ps.mulPose(
-                        Axis.ZP.rotationDegrees(pitch)
+                        Axis.ZP.rotationDegrees(-pitch)
                 );
             }
 
             if (yaw != 0.0f) {
                 ps.mulPose(
-                        Axis.YP.rotationDegrees(-yaw)
+                        Axis.YP.rotationDegrees(yaw)
                 );
             }
 
             if (roll != 0.0f) {
                 ps.mulPose(
-                        Axis.XP.rotationDegrees(roll)
+                        Axis.XP.rotationDegrees(-roll)
                 );
             }
             ps.translate(
-                    mountable.getMountOffsetZ(),
-                    mountable.getMountOffsetY(),
-                    mountable.getMountOffsetX()
+                    -mountable.getMountOffsetZ(),
+                    -mountable.getMountOffsetY(),
+                    -mountable.getMountOffsetX()
             );
 
             ps.translate(-0.5f, -0.5f, -0.5f);

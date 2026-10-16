@@ -115,7 +115,7 @@ public class VerticalbarRenderer extends ExtraLightsRenderer<VerticalbarBlockEnt
     }
     @Override
     public void beforeRenderBeam(VerticalbarBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockstate, boolean isHanging, int packedLight, int packedOverlay) {
-        if(blockEntity.getIntensity() > 0){
+        if (blockEntity.getDisplayIntensity(partialTicks) > 0){
             LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
                 @Override
                 public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
@@ -126,9 +126,9 @@ public class VerticalbarRenderer extends ExtraLightsRenderer<VerticalbarBlockEnt
 
                     VertexConsumer builder = multiBufferSource.getBuffer(Beam2DRenderTypes.getBeam());
 
-                    float intensity = (blockEntity.getPrevIntensity() + ((blockEntity.getIntensity()) - blockEntity.getPrevIntensity()) * partialTicks);
+                    float intensity = blockEntity.getDisplayIntensity(partialTicks);
                     float alpha = intensity / 255f;
-                    int color = blockEntity.getColour();
+                    int color = blockEntity.getDisplayColour(partialTicks);
                     int r = (color >> 16) & 0xFF;
                     int g = (color >> 8) & 0xFF;
                     int b = color & 0xFF;

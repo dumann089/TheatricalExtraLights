@@ -121,7 +121,7 @@ public class VL6000Renderer extends ExtraLightsFixtureRenderer<VL6000BlockEntity
 
     @Override
     public void beforeRenderBeam(VL6000BlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockstate, boolean isHanging, int packedLight, int packedOverlay) {
-        if(blockEntity.getIntensity() <= 0) return;
+        if (blockEntity.getDisplayIntensity(partialTicks) <= 0) return;
 
         float focusInterpolated = blockEntity.getPrevFocus() + (blockEntity.getFocus() - blockEntity.getPrevFocus()) * partialTicks;
         float focusNorm = focusInterpolated / 255f;
@@ -143,8 +143,8 @@ public class VL6000Renderer extends ExtraLightsFixtureRenderer<VL6000BlockEntity
                 1.0f,
                 1.0f,
                 0,
-                blockEntity.getColour(),
-                blockEntity.getIntensity() / 255.0f,
+                blockEntity.getDisplayColour(partialTicks),
+                blockEntity.getDisplayIntensity(partialTicks) / 255.0f,
                 0.4f
         );
 
@@ -157,15 +157,15 @@ public class VL6000Renderer extends ExtraLightsFixtureRenderer<VL6000BlockEntity
                 poseStack.translate(offset.x, offset.y, offset.z);
                 preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
 
-                float intensity = (blockEntity.getPrevIntensity() + ((blockEntity.getIntensity()) - blockEntity.getPrevIntensity()) * partialTick);
-                int color = blockEntity.getColour();
+                float intensity = blockEntity.getDisplayIntensity(partialTick);
+                int color = blockEntity.getDisplayColour(partialTick);
                 float alpha = (intensity / 255f) * beamOpacity.floatValue();
 
                 VertexConsumer builder = bufferSource.getBuffer(Beam2DRenderTypes.getBeam());
 
                 poseStack.pushPose();
                 poseStack.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
-                renderLensGlow(builder, poseStack, color, 0.25f);
+                renderLensGlow(builder, poseStack, color, 0.25f, intensity);
                 poseStack.popPose();
 
                 renderLens(bufferSource, poseStack, alpha, color, 0.30f, (float) LENS_OFFSET.x, (float) LENS_OFFSET.y, (float) LENS_OFFSET.z);

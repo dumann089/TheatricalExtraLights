@@ -5,6 +5,7 @@ import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import com.github.dumann089.theatricalextralights.client.LensBloomCompat;
 import dev.imabad.theatrical.TheatricalExpectPlatform;
 import dev.imabad.theatrical.blocks.HangableBlock;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -151,7 +152,15 @@ public class DWTPanelRenderer extends ExtraLightsRenderer<DWTPanelBlockEntity> {
 
     @Override
     public void beforeRenderBeam(DWTPanelBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockstate, boolean isHanging, int packedLight, int packedOverlay) {
-        if (blockEntity.getWarmSectionIntensity() > 0) {
+        boolean anyWhiteZoneLit = false;
+        for (int i = 0; i < 4; i++) {
+            if (blockEntity.getSectionIntensity(i) > 0) {
+                anyWhiteZoneLit = true;
+                break;
+            }
+        }
+
+        if (blockEntity.getWarmSectionIntensity() > 0 || anyWhiteZoneLit) {
             LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
                 @Override
                 public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
@@ -193,6 +202,54 @@ public class DWTPanelRenderer extends ExtraLightsRenderer<DWTPanelBlockEntity> {
                         float centerY = offs[1] + (quadH / 2f);
                         drawBeamAtOffset(poseStack, builder, blockEntity, facing, partialTick, isFlipped, blockstate, isHanging, offset, centerX, centerY, z, beamWidth, beamHeight, beamLength, warmR, warmG, warmB, alpha);
                     }
+
+                    final float BLOOM_Z_NUDGE = 0.03f; // empurra o quad do bloom pra frente, evitando z-fighting com o modelo
+
+                    final float[][] mainOffsets = {
+                            { 7f,  2f }, { 7f,  10f }, { 7f, 17f }, { 7f, 25f }
+                    };
+                    final float zWhite = (21.5f / 16f) + 0.002f;
+                    final float whiteW = 3f;
+                    final float whiteH = 4f;
+
+                    LensBloomCompat.renderBloomedQuads(poseStack, (bloomConsumer, bloomStack) -> {
+                        if (warmInt > 0) {
+                            for (float[] offs : leftWarmOffsets) {
+                                float centerX = offs[0] + (quadW / 2f);
+                                float centerY = offs[1] + (quadH / 2f);
+                                bloomStack.pushPose();
+                                bloomStack.translate(offset.x, offset.y, offset.z);
+                                preparePoseStack(blockEntity, bloomStack, facing, partialTick, isFlipped, blockstate, isHanging);
+                                bloomStack.translate(centerX / 16f, centerY / 16f, z + BLOOM_Z_NUDGE);
+                                LensBloomCompat.emitQuadReversed(bloomConsumer, bloomStack, warmR, warmG, warmB, beamWidth, beamHeight);
+                                bloomStack.popPose();
+                            }
+                            for (float[] offs : rightWarmOffsets) {
+                                float centerX = offs[0] + (quadW / 2f);
+                                float centerY = offs[1] + (quadH / 2f);
+                                bloomStack.pushPose();
+                                bloomStack.translate(offset.x, offset.y, offset.z);
+                                preparePoseStack(blockEntity, bloomStack, facing, partialTick, isFlipped, blockstate, isHanging);
+                                bloomStack.translate(centerX / 16f, centerY / 16f, z + BLOOM_Z_NUDGE);
+                                LensBloomCompat.emitQuadReversed(bloomConsumer, bloomStack, warmR, warmG, warmB, beamWidth, beamHeight);
+                                bloomStack.popPose();
+                            }
+                        }
+                        for (int i = 0; i < 4; i++) {
+                            int intensity = blockEntity.getSectionIntensity(i);
+                            if (intensity <= 0) continue;
+                            float ox = mainOffsets[i][0];
+                            float oy = mainOffsets[i][1];
+                            float centerX = ox + (whiteW / 2f);
+                            float centerY = oy + (whiteH / 2f);
+                            bloomStack.pushPose();
+                            bloomStack.translate(offset.x, offset.y, offset.z);
+                            preparePoseStack(blockEntity, bloomStack, facing, partialTick, isFlipped, blockstate, isHanging);
+                            bloomStack.translate(centerX / 16f, centerY / 16f, zWhite + 0.001f);
+                            LensBloomCompat.emitQuadReversed(bloomConsumer, bloomStack, intensity, intensity, intensity, (whiteW / 2f) / 16f, (whiteH / 2f) / 16f);
+                            bloomStack.popPose();
+                        }
+                    });
                 }
 
                 @Override
@@ -212,10 +269,15 @@ public class DWTPanelRenderer extends ExtraLightsRenderer<DWTPanelBlockEntity> {
         Matrix3f normal = poseStack.last().normal();
         int a = (int) (alpha * 255);
 
-        addVertex(builder, m, normal, r, g, b, a, -beamWidth, beamHeight, 0f);
-        addVertex(builder, m, normal, r, g, b, a, beamWidth, beamHeight, 0f);
-        addVertex(builder, m, normal, r, g, b, a, beamWidth, -beamHeight, 0f);
-        addVertex(builder, m, normal, r, g, b, a, -beamWidth, -beamHeight, 0f);
+        final float GLOW_WHITEN = 0.80f;
+        int wr = LensBloomCompat.whiten(r, GLOW_WHITEN);
+        int wg = LensBloomCompat.whiten(g, GLOW_WHITEN);
+        int wb = LensBloomCompat.whiten(b, GLOW_WHITEN);
+
+        addVertex(builder, m, normal, wr, wg, wb, a, -beamWidth, beamHeight, 0f);
+        addVertex(builder, m, normal, wr, wg, wb, a, beamWidth, beamHeight, 0f);
+        addVertex(builder, m, normal, wr, wg, wb, a, beamWidth, -beamHeight, 0f);
+        addVertex(builder, m, normal, wr, wg, wb, a, -beamWidth, -beamHeight, 0f);
 
         renderLightBeam(builder, poseStack, alpha, beamWidth, beamHeight, length, r, g, b);
 

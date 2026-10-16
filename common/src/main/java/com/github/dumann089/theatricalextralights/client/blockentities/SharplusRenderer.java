@@ -123,11 +123,11 @@ public class SharplusRenderer extends ExtraLightsFixtureRenderer<SharplusBlockEn
             boolean isFlipped, BlockState blockstate, boolean isHanging,
             int packedLight, int packedOverlay
     ) {
-        if (blockEntity.getIntensity() <= 0) return;
+        if (blockEntity.getDisplayIntensity(partialTicks) <= 0) return;
 
         int goboValue = blockEntity.getGobo();
-        int color = blockEntity.getColour();
-        float intensityNorm = blockEntity.getIntensity() / 255f;
+        int color = blockEntity.getDisplayColour(partialTicks);
+        float intensityNorm = blockEntity.getDisplayIntensity(partialTicks) / 255f;
 
         float zoomT = (blockEntity.getPrevZoom() + (blockEntity.getZoom() - blockEntity.getPrevZoom()) * partialTicks) / 255f;
         float spreadAngleDeg = 1.0f + (45.0f - 1.0f) * zoomT;
@@ -172,15 +172,15 @@ public class SharplusRenderer extends ExtraLightsFixtureRenderer<SharplusBlockEn
                 poseStack.translate(offset.x, offset.y, offset.z);
                 preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
 
-                float intensity = blockEntity.getPrevIntensity() + (blockEntity.getIntensity() - blockEntity.getPrevIntensity()) * partialTick;
-                int color = blockEntity.getColour();
+                float intensity = blockEntity.getDisplayIntensity(partialTick);
+                int color = blockEntity.getDisplayColour(partialTick);
                 float alpha = (intensity / 255f) * beamOpacity.floatValue();
 
                 VertexConsumer builder = multiBufferSource.getBuffer(Beam2DRenderTypes.getBeam());
 
                 poseStack.pushPose();
                 poseStack.translate(LENS_OFFSET.x, LENS_OFFSET.y, LENS_OFFSET.z);
-                renderLensGlow(builder, poseStack, color, 0.1f);
+                renderLensGlow(builder, poseStack, color, 0.1f, intensity);
                 poseStack.popPose();
 
                 renderLens(bufferSource, poseStack, alpha, color, 0.1f, (float) LENS_OFFSET.x, (float) LENS_OFFSET.y, (float) LENS_OFFSET.z);

@@ -2,7 +2,6 @@ package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.bigscrollerBlockEntity;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
-import com.lowdragmc.shimmer.client.postprocessing.PostProcessing;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -10,6 +9,9 @@ import dev.imabad.theatrical.TheatricalExpectPlatform;
 import dev.imabad.theatrical.blocks.HangableBlock;
 import dev.imabad.theatrical.client.LazyRenderers;
 import dev.imabad.theatrical.client.TheatricalRenderTypes;
+
+import com.github.dumann089.theatricalextralights.client.LensBloomCompat;
+import com.github.dumann089.theatricalextralights.client.blockentities.ExtraLightsRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -17,8 +19,6 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import java.util.ArrayList;
-import java.util.List;
 
 import java.util.Optional;
 
@@ -105,107 +105,86 @@ public class bigscrollerRenderer extends ExtraLightsRenderer<bigscrollerBlockEnt
         minecraftRenderModel(poseStack, vertexConsumer, blockState, cachedTiltModel,  packedLight, packedOverlay);
         //#endregion
     }
-
-
     @Override
-    public void beforeRenderBeam(
-            bigscrollerBlockEntity blockEntity,
-            PoseStack poseStack,
-            VertexConsumer vertexConsumer,
-            MultiBufferSource multiBufferSource,
-            Direction facing,
-            float partialTicks,
-            boolean isFlipped,
-            BlockState blockstate,
-            boolean isHanging,
-            int packedLight,
-            int packedOverlay
-    ) {
-        if (blockEntity.getIntensity() <= 0) return;
+    public void beforeRenderBeam(bigscrollerBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockstate, boolean isHanging, int packedLight, int packedOverlay) {
+        if (blockEntity.getDisplayIntensity(partialTicks) > 0) {
+            LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
+                @Override
+                public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
+                    float intensity = blockEntity.getDisplayIntensity(partialTick);
+                    int color = blockEntity.getDisplayColour(partialTick);
+                    int r = (color >> 16) & 0xFF;
+                    int g = (color >> 8) & 0xFF;
+                    int b = color & 0xFF;
+                    int a = (int) ((intensity / 255f) * 255);
 
-        LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
-            @Override
-            public void render(
-                    MultiBufferSource.BufferSource bufferSource,
-                    PoseStack renderStack,
-                    Camera camera,
-                    float partialTick
-            ) {
-                float intensity = blockEntity.getPrevIntensity()
-                        + (blockEntity.getIntensity() - blockEntity.getPrevIntensity()) * partialTick;
+                    Vec3 offset = Vec3.atLowerCornerOf(blockEntity.getBlockPos()).subtract(camera.getPosition());
+                    VertexConsumer beamConsumer = bufferSource.getBuffer(TheatricalRenderTypes.BEAM);
 
-                if (intensity <= 0) return;
+                    float[][] beamPositions = {
+                            {0.625F, -0.625F, 0.812F},
+                            {0.625F, -0.1875F, 0.812F},
+                            {0.625F, 0.25F, 0.812F},
+                            {0.625F, 0.6875F, 0.812F},   // Beam 4
+                            {0.625F, 1.125F, 0.812F},   // Beam 5
+                            {0.625F, 1.5625F, 0.812F},   // Beam 6
+                            {0.0F, -0.625F, 0.812F},   // Beam 7
+                            {0.0F, -0.1875F, 0.812F},   // Beam 8
+                            {0.0F, 0.25F, 0.812F},   // Beam 9
+                            {0.0F, 0.6875F, 0.812F},   // Beam 10
+                            {0.0F, 1.125F, 0.812F},   // Beam 11
+                            {0.0F, 1.5625F, 0.812F},   // Beam 12
+                            {-0.618F, -0.625F, 0.812F},   // Beam 13
+                            {-0.618F, -0.1875F, 0.812F},   // Beam 14
+                            {-0.618F, 0.25F, 0.812F},   // Beam 15
+                            {-0.618F, 0.6875F, 0.812F},   // Beam 16
+                            {-0.618F, 1.125F, 0.812F},   // Beam 17
+                            {-0.618F, 1.5625F, 0.812F},   // Beam 18
+                    };
 
-                int color = blockEntity.getColour();
-                int r = (color >> 16) & 0xFF;
-                int g = (color >> 8) & 0xFF;
-                int b = color & 0xFF;
-                int a = Math.min(255, Math.max(0, (int) intensity));
+                    final float GLOW_WHITEN = 0.80f;
+                    int wr = LensBloomCompat.whiten(r, GLOW_WHITEN);
+                    int wg = LensBloomCompat.whiten(g, GLOW_WHITEN);
+                    int wb = LensBloomCompat.whiten(b, GLOW_WHITEN);
 
-                Vec3 offset = Vec3.atLowerCornerOf(blockEntity.getBlockPos())
-                        .subtract(camera.getPosition());
+                    for (float[] pos : beamPositions) {
+                        poseStack.pushPose();
+                        poseStack.translate(offset.x, offset.y, offset.z);
+                        preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
+                        poseStack.translate(pos[0], pos[1], pos[2]);
 
-                float[][] beamPositions = {
-                        {0.625F, -0.625F, 0.812F},
-                        {0.625F, -0.1875F, 0.812F},
-                        {0.625F, 0.25F, 0.812F},
-                        {0.625F, 0.6875F, 0.812F},
-                        {0.625F, 1.125F, 0.812F},
-                        {0.625F, 1.5625F, 0.812F},
-                        {0.0F, -0.625F, 0.812F},
-                        {0.0F, -0.1875F, 0.812F},
-                        {0.0F, 0.25F, 0.812F},
-                        {0.0F, 0.6875F, 0.812F},
-                        {0.0F, 1.125F, 0.812F},
-                        {0.0F, 1.5625F, 0.812F},
-                        {-0.618F, -0.625F, 0.812F},
-                        {-0.618F, -0.1875F, 0.812F},
-                        {-0.618F, 0.25F, 0.812F},
-                        {-0.618F, 0.6875F, 0.812F},
-                        {-0.618F, 1.125F, 0.812F},
-                        {-0.618F, 1.5625F, 0.812F}
-                };
+                        Matrix4f matrix = poseStack.last().pose();
+                        Matrix3f normal = poseStack.last().normal();
 
-                List<Matrix4f> matrices = new ArrayList<>(beamPositions.length);
-                List<Matrix3f> normals = new ArrayList<>(beamPositions.length);
-                VertexConsumer normalConsumer =
-                        bufferSource.getBuffer(TheatricalRenderTypes.BEAM);
+                        addVertex(beamConsumer, matrix, normal, wr, wg, wb, a, -0.1333f,  0.1333f, 0f);
+                        addVertex(beamConsumer, matrix, normal, wr, wg, wb, a,  0.1333f,  0.1333f, 0f);
+                        addVertex(beamConsumer, matrix, normal, wr, wg, wb, a,  0.1333f, -0.1333f, 0f);
+                        addVertex(beamConsumer, matrix, normal, wr, wg, wb, a, -0.1333f, -0.1333f, 0f);
 
-                for (float[] pos : beamPositions) {
-                    renderStack.pushPose();
-                    try {
-                        renderStack.translate(offset.x, offset.y, offset.z);
-                        preparePoseStack(
-                                blockEntity, renderStack, facing, partialTick,
-                                isFlipped, blockstate, isHanging
-                        );
-                        renderStack.translate(pos[0], pos[1], pos[2]);
-
-                        Matrix4f matrix = new Matrix4f(renderStack.last().pose());
-                        Matrix3f normal = new Matrix3f(renderStack.last().normal());
-
-                        matrices.add(matrix);
-                        normals.add(normal);
-
-                        addVertex(normalConsumer, matrix, normal, r, g, b, a,
-                                -0.1333f, 0.1333f, 0f);
-                        addVertex(normalConsumer, matrix, normal, r, g, b, a,
-                                0.1333f, 0.1333f, 0f);
-                        addVertex(normalConsumer, matrix, normal, r, g, b, a,
-                                0.1333f, -0.1333f, 0f);
-                        addVertex(normalConsumer, matrix, normal, r, g, b, a,
-                                -0.1333f, -0.1333f, 0f);
-                    } finally {
-                        renderStack.popPose();
+                        poseStack.popPose();
                     }
-                }
-            }
 
-            @Override
-            public Vec3 getPos(float partialTick) {
-                return blockEntity.getBlockPos().getCenter();
-            }
-        });
+                    LensBloomCompat.renderBloomedQuads(poseStack, (bloomConsumer, bloomStack) -> {
+                        int br = (int) (r * (a / 255f));
+                        int bg = (int) (g * (a / 255f));
+                        int bb = (int) (b * (a / 255f));
+                        for (float[] pos : beamPositions) {
+                            bloomStack.pushPose();
+                            bloomStack.translate(offset.x, offset.y, offset.z);
+                            preparePoseStack(blockEntity, bloomStack, facing, partialTick, isFlipped, blockstate, isHanging);
+                            bloomStack.translate(pos[0], pos[1], pos[2]);
+                            LensBloomCompat.emitQuad(bloomConsumer, bloomStack, br, bg, bb, 0.1333f, 0.1333f);
+                            bloomStack.popPose();
+                        }
+                    });
+                }
+
+                @Override
+                public Vec3 getPos(float partialTick) {
+                    return blockEntity.getBlockPos().getCenter();
+                }
+            });
+        }
     }
 
 

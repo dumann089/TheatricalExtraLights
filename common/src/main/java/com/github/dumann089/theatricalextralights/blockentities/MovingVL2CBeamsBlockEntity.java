@@ -283,7 +283,12 @@ public class MovingVL2CBeamsBlockEntity extends ExtraLightsLightBlockEntity impl
 
     @Override
     public float getPartialIntensity(float partialTicks) {
-        return getPrevIntensity() + (getIntensity() - getPrevIntensity()) * partialTicks;
+        return getDisplayIntensity(partialTicks);
+    }
+
+    @Override
+    public int getPartialColour(float partialTicks) {
+        return getDisplayColour(partialTicks);
     }
 
     @Override
