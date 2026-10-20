@@ -294,7 +294,7 @@ public class horizontalscrollerBlockEntity extends ExtraLightsLightBlockEntity
                 MIN_GEL_SIZE,
                 Math.min(
                         MAX_GEL_SIZE,
-                        tag.contains("GelWidth") ? tag.getFloat("GelWidth") : 0.4375F
+                        tag.contains("GelWidth") ? tag.getFloat("GelWidth") : 2.0F
                 )
         );
 

@@ -109,21 +109,42 @@ public class verticalscrollerBlock extends ExtraLightsLightBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if(super.use(state, level, pos, player, hand, hit) == InteractionResult.PASS) {
+    public InteractionResult use(
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Player player,
+            InteractionHand hand,
+            BlockHitResult hit
+    ) {
+        if (super.use(state, level, pos, player, hand, hit) == InteractionResult.PASS) {
             if (!level.isClientSide) {
+                if (player.isCrouching() && player.getItemInHand(hand).isEmpty()) {
+                    new OpenExtraLightsScreenPacket(
+                            pos,
+                            TheatricalExtraLightsScreens.BIGSCROLLER_GELS
+                    ).sendTo((ServerPlayer) player);
+
+                    return InteractionResult.SUCCESS;
+                }
+
                 if (player.isCrouching()) {
                     if (TheatricalClient.DEBUG_BLOCKS.contains(pos)) {
                         TheatricalClient.DEBUG_BLOCKS.remove(pos);
                     } else {
                         TheatricalClient.DEBUG_BLOCKS.add(pos);
                     }
+
                     return InteractionResult.SUCCESS;
                 }
-                new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.CHANNEL_PANTILT)
-                        .sendTo((ServerPlayer) player);
+
+                new OpenExtraLightsScreenPacket(
+                        pos,
+                        TheatricalExtraLightsScreens.CHANNEL_PANTILT
+                ).sendTo((ServerPlayer) player);
             }
         }
+
         return InteractionResult.SUCCESS;
     }
 

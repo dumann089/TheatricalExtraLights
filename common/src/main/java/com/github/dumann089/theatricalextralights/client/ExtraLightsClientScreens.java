@@ -124,8 +124,7 @@ public class ExtraLightsClientScreens {
                     ? new PyroConfigScreen(lightBE, safety, pos)
                     : new ExtraLightsConfigScreen(lightBE, pos, lightBE.getTranslationKey(), false);
 
-            case MOUNT_WRENCH, FOLLOWSPOT_CONSOLE, LED_FACADE, LASER_PROJECTOR -> null;
-            case BIGSCROLLER_GELS, MOUNT_WRENCH, FOLLOWSPOT_CONSOLE, LED_FACADE -> null;
+            case MOUNT_WRENCH, FOLLOWSPOT_CONSOLE, LED_FACADE, LASER_PROJECTOR, BIGSCROLLER_GELS -> null;
         };
 
         if (screen != null) {

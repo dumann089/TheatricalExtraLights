@@ -1,7 +1,6 @@
 package com.github.dumann089.theatricalextralights.fixtures;
 
 import com.github.dumann089.theatricalextralights.TheatricalExtraLights;
-import dev.imabad.theatrical.Theatrical;
 import dev.imabad.theatrical.api.Fixture;
 import dev.imabad.theatrical.api.HangType;
 import dev.imabad.theatrical.api.dmx.DMXPersonality;
@@ -11,31 +10,34 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.Collections;
 import java.util.List;
 
 public class verticalscrollerFixture extends Fixture {
-
-    private static final List<DMXPersonality> PERSONALITIES = Collections.singletonList(
-            new DMXPersonality(4, "4-Channel Mode")
+    private static final List<DMXPersonality> PERSONALITIES = List.of(
+            new DMXPersonality(4, "iRGB")
                     .addSlot(SharedSlots.INTENSITY)
                     .addSlot(SharedSlots.RED)
                     .addSlot(SharedSlots.GREEN)
-                    .addSlot(SharedSlots.BLUE)
-
+                    .addSlot(SharedSlots.BLUE),
+            new DMXPersonality(2, "2-Channel Gel Scroller")
+                    .addSlot(SharedSlots.INTENSITY)
+                    .addSlot(SharedSlots.INTENSITY)
     );
 
-    private static final ResourceLocation TILT_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/scrollers/miniscrollers/scrollervertical_whole");
-    private static final ResourceLocation PAN_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/scrollers/miniscrollers/scrollerhorizontal_static");
-    private static final ResourceLocation STATIC_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/scrollers/miniscrollers/scrollerhorizontal_static");
+    private static final ResourceLocation TILT_MODEL =
+            new ResourceLocation(TheatricalExtraLights.MOD_ID,
+                    "block/scrollers/miniscrollers/scrollervertical_whole");
+
+    private static final ResourceLocation PAN_MODEL =
+            new ResourceLocation(TheatricalExtraLights.MOD_ID,
+                    "block/scrollers/miniscrollers/scrollerhorizontal_static");
+
+    private static final ResourceLocation STATIC_MODEL =
+            new ResourceLocation(TheatricalExtraLights.MOD_ID,
+                    "block/scrollers/miniscrollers/scrollerhorizontal_static");
 
     private final float[] tiltRotation = new float[]{0.0F, 0.531F, 0.731F};
     private final float[] panRotation = new float[]{0.0F, 0.5F, 0.731F};
-//  private final float[] beamStartPosition = new float[]{ 0.56F, 1.43F, 0.226F };
-// private final float[] beamStartPosition2 = new float[]{ -0.56F, 1.43F, 0.226F };
-// private final float[] beamStartPosition3 = new float[]{ 0.56F, 0.43F, 0.226F };
-// private final float[] beamStartPosition4 = new float[]{ -0.56F, 0.43F, 0.226F };
-
 
     @Override
     public ResourceLocation getTiltModel() {
@@ -64,18 +66,17 @@ public class verticalscrollerFixture extends Fixture {
 
     @Override
     public float[] getBeamStartPosition() {
-    return new float[]{
-        0.687F, 0.390F, 0.5F,   // Beam 1
-        0.687F, 0.765F, 0.5F,   // Beam 2
-        0.687F, 1.140F, 0.5F,   // Beam 3
-       0.687F, 1.515F, 0.5F,   // Beam 4
-       0.25F, 0.390F, 0.5F,   // Beam 5
-       0.25F, 0.765F, 0.5F,   // Beam 6
-       0.25F, 1.140F, 0.5F,   // Beam 7
-       0.25F, 1.515F, 0.5F,   // Beam 8
+        return new float[]{
+                0.687F, 0.390F, 0.5F,
+                0.687F, 0.765F, 0.5F,
+                0.687F, 1.140F, 0.5F,
+                0.687F, 1.515F, 0.5F,
+                0.25F, 0.390F, 0.5F,
+                0.25F, 0.765F, 0.5F,
+                0.25F, 1.140F, 0.5F,
+                0.25F, 1.515F, 0.5F
         };
     }
-    
 
     @Override
     public float getDefaultRotation() {
@@ -84,12 +85,12 @@ public class verticalscrollerFixture extends Fixture {
 
     @Override
     public float getBeamWidth() {
-        return 0.0f;
+        return 0.0F;
     }
 
     @Override
     public float getRayTraceRotation() {
-        return 180f;
+        return 180F;
     }
 
     @Override
@@ -99,8 +100,8 @@ public class verticalscrollerFixture extends Fixture {
 
     @Override
     public float[] getTransforms(BlockState fixtureBlockState, BlockState supportBlockState) {
-        if(fixtureBlockState.getValue(BaseLightBlock.HANG_DIRECTION) == Direction.UP){
-            return new float[]{0, .5f, 0};
+        if (fixtureBlockState.getValue(BaseLightBlock.HANG_DIRECTION) == Direction.UP) {
+            return new float[]{0, 0.5F, 0};
         }
         return new float[]{0, 0.5F, 0};
     }
