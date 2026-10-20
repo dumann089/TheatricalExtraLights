@@ -16,7 +16,18 @@ public class ModKeybinds {
             "category.theatricalextralights"
     );
 
+    private static boolean registered;
+
+    /**
+     * Idempotent : Forge l'appelle des la construction du mod (avant RegisterKeyMappingsEvent, sinon
+     * Architectury avertit « registered after event »), puis TheatricalExtraLightsClient.init() le
+     * rappelle sans effet.
+     */
     public static void register() {
+        if (registered) {
+            return;
+        }
+        registered = true;
         KeyMappingRegistry.register(CONFIG_MENU);
         ClientTickEvent.CLIENT_POST.register(minecraft -> {
             while (CONFIG_MENU.consumeClick()) {
