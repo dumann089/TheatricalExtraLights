@@ -71,6 +71,14 @@ Client-side virtual DAC used by the **Ether Dream Laser Projector** block, see [
 | `fireworkRenderDistance` | `2048.0` | Ceiling for the pyro render distance. |
 | `fireworkDynamicRenderDistance` | `true` | Follow the client render distance (or server view distance), capped by the value above. |
 | `fireworkDynamicLightEnabled` | `true` | Dynamic light on bursts. |
+| `flameBloom` | `true` | | Glow around the flame particles of the flame thrower and flame projector, drawn as soft additive halos that follow the jet (no post-process). Works with Shimmer installed; off automatically under an Iris shader pack. Also in the *Flames* tab. |
+| `flameBloomStrength` | `1.0` | 0.1 to 3 | Intensity of that glow. |
+| `volumetricFlames` | `false` | | Experimental: flame projector and flame thrower drawn as a raymarched volume instead of particles. Off automatically under Iris. |
+| `flameQuality` | `"HIGH"` | `LOW`, `MEDIUM`, `HIGH`, `ULTRA` | March steps and turbulence detail of the flames: 12/2, 18/3, 26/4, 40/5. Reduced automatically for distant flames. |
+| `flameBrightness` | `1.0` | 0.2 to 3 | Brightness of the flames. |
+| `flameHeatDistortion` | `true` | | Air shimmers in and above the flames. Volumetric flames only. Copies the screen once per frame while a flame is visible. |
+| `flameHeatStrength` | `1.0` | 0 to 3 | Strength of that shimmer. |
+| `flameLightFlicker` | `true` | | Room light flickers with the flame, about six changes a second (each one rebuilds the chunk sections around it). |
 | `fireworkSmokeEnabled` | `true` | Smoke trails on comets. |
 | `fireworkSmokeBudgetPerTick` | `24` | Smoke particles per tick. |
 | `fireworkSmokeSpawnInterval` | `3` | Ticks between smoke spawns, minimum 1. |

@@ -62,6 +62,10 @@ public final class FlameThrowerClientEffects {
         Direction facing = blockEntity.getBlockState().getValue(BaseLightBlock.FACING);
         float headRenderAngle = blockEntity.getHeadRenderAngle(minecraft.getFrameTime());
 
+        // Flammes en volume : le jet est dessine par FlameVolumeRenderer, plus de particules.
+        if (com.github.dumann089.theatricalextralights.client.render.pyro.FlameVolumeRenderer.isAvailable()) {
+            return;
+        }
         FlameThrowerParticleSpawner.spawnJet(
                 level,
                 pos,

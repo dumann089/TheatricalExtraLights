@@ -11,11 +11,11 @@ Vertical flame column.
 
 | Ch | Function | Values |
 |---|---|---|
-| 1 | Flame length | 0 off to 255 full |
-| 2 | Head angle | 0 to 255 |
+| 1 | Flame | 0 off to 255 full |
+| 2 | Flame height | 0 to 255 |
 
 ### Channel by channel
 
-**1 · Flame length** — Height of the flame and the trigger: 0 is off.
+**1 · Flame** — Trigger and brightness of the flame column: 0 is off.
 
-**2 · Head angle** — Tilt of the flame head.
+**2 · Flame height** — Height of the column, about 1 block at 0 to 6 blocks at 255.

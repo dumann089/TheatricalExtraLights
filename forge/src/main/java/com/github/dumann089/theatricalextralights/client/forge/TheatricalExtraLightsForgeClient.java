@@ -155,6 +155,24 @@ public final class TheatricalExtraLightsForgeClient {
             event.registerShader(
                     new ShaderInstance(
                             event.getResourceProvider(),
+                            new ResourceLocation("theatricalextralights", "flame_volume"),
+                            DefaultVertexFormat.POSITION_COLOR_TEX
+                    ),
+                    shader -> ModShaders.flameVolumeShader = shader
+            );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            new ResourceLocation("theatricalextralights", "flame_heat"),
+                            DefaultVertexFormat.POSITION_COLOR_TEX
+                    ),
+                    shader -> ModShaders.flameHeatShader = shader
+            );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
                             new ResourceLocation("theatricalextralights", "co2_plume"),
                             DefaultVertexFormat.POSITION_COLOR_TEX
                     ),

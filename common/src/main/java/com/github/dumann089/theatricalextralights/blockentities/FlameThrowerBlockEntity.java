@@ -14,7 +14,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
 
-public class FlameThrowerBlockEntity extends ExtraLightsLightBlockEntity implements DmxFrameFlamePanSync, HasSafetyArm {
+public class FlameThrowerBlockEntity extends ExtraLightsLightBlockEntity implements DmxFrameFlamePanSync, HasSafetyArm,
+        com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFlameStyle {
     private static final int FLAME_HOT_COLOR = 0xFF8434;
 
     private boolean clientWasActive;
@@ -176,6 +177,48 @@ public class FlameThrowerBlockEntity extends ExtraLightsLightBlockEntity impleme
     protected boolean needsContinuousClientRender() {
         return intensity > 0;
     }
+
+    // ── Style de flamme (menu de la machine) ────────────────────────────────
+
+    private int flameStyle = com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFlameStyle.STYLE_JET;
+
+    @Override
+    public int getFlameStyle() {
+        return flameStyle;
+    }
+
+    @Override
+    public void setFlameStyle(int style) {
+        int clamped = Mth.clamp(style, 0, com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFlameStyle.STYLE_COUNT - 1);
+        if (clamped == flameStyle) {
+            return;
+        }
+        flameStyle = clamped;
+        if (level != null && !level.isClientSide) {
+            setChanged();
+            com.github.dumann089.theatricalextralights.util.BlockEntitySync.sendData(this);
+        }
+    }
+
+    @Override
+    public void write(net.minecraft.nbt.CompoundTag tag) {
+        super.write(tag);
+        tag.putInt("FlameStyle", flameStyle);
+    }
+
+    @Override
+    public void read(net.minecraft.nbt.CompoundTag tag) {
+        super.read(tag);
+        flameStyle = Mth.clamp(tag.getInt("FlameStyle"), 0,
+                com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFlameStyle.STYLE_COUNT - 1);
+    }
+
+    /** Lumiere qui vacille avec la flamme, au rythme borne de {@link com.github.dumann089.theatricalextralights.util.FlameFlicker}. */
+    @Override
+    public int getLightLuminance() {
+        return com.github.dumann089.theatricalextralights.util.FlameFlicker.luminance(level, worldPosition, super.getLightLuminance());
+    }
+
 
     @Override
     public void setRemoved() {
