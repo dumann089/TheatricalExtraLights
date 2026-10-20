@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MA xmlns:xml="http://www.w3.org/XML/1998/namespace" major_vers="3" minor_vers="2" stream_vers="2">
+  <Info datetime="2026-9-26T22:00:00" showfile="ma fixture builder"/>
+  <FixtureType index="0" name="THEATRICAL DENSE MOVING BAR" mode="7CH">
+    <InfoItems>
+      <Info>Theatrical Extra Lights Dense Moving RGB Bar in the 7-channel personality: Dim, Red, Green, Blue, Focus, Pan, Tilt for the whole bar. Requires mod personality "7-Channel Mode".</Info>
+    </InfoItems>
+    <short_name>TEL-DMBar</short_name>
+    <manufacturer>Nailec</manufacturer>
+    <short_manufacturer>Nailec</short_manufacturer>
+    <Modules index="0">
+      <Module index="0" name="MAIN" class="LED" beamtype="Wash" beam_angle="28" beam_intensity="3000">
+        <Body>
+          <Size x="1.5" y="0.19" z="0.08"/>
+        </Body>
+        <ChannelType index="0" attribute="DIM" feature="DIMMER" preset="DIMMER" coarse="1" default="0" highlight_value="100" react_to_master="1">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="DIM" subattribute_user_name="Dim" attribute="DIM" attribute_user_name="Dim" feature="DIMMER" feature_user_name="Dimmer" preset="DIMMER" preset_user_name="Dimmer">
+            <ChannelSet index="0" name="closed" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="open" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="1" attribute="COLORRGB1" feature="COLORRGB" preset="COLOR" coarse="2" default="255" highlight_value="100" color="ff0000">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB1" subattribute_user_name="Red" attribute="COLORRGB1" attribute_user_name="Red" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="2" attribute="COLORRGB2" feature="COLORRGB" preset="COLOR" coarse="3" default="255" highlight_value="100" color="00ff00">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB2" subattribute_user_name="Green" attribute="COLORRGB2" attribute_user_name="Green" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="3" attribute="COLORRGB3" feature="COLORRGB" preset="COLOR" coarse="4" default="255" highlight_value="100" color="0000ff">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB3" subattribute_user_name="Blue" attribute="COLORRGB3" attribute_user_name="Blue" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="4" attribute="FOCUS" feature="FOCUS" preset="FOCUS" coarse="5" default="128" highlight_value="50">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="FOCUS" subattribute_user_name="Focus" attribute="FOCUS" attribute_user_name="Focus" feature="FOCUS" feature_user_name="Focus" preset="FOCUS" preset_user_name="Focus">
+            <ChannelSet index="0" name="near" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="mid" from_dmx="128" to_dmx="128"/>
+            <ChannelSet index="2" name="far" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="5" attribute="PAN" feature="POSITION" preset="POSITION" coarse="6" default="128" highlight_value="50">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="-180" physto="180" subattribute="PAN" subattribute_user_name="Pan" attribute="PAN" attribute_user_name="Pan" feature="POSITION" feature_user_name="Position" preset="POSITION" preset_user_name="Position">
+            <ChannelSet index="0" name="center" from_dmx="128" to_dmx="128"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="6" attribute="TILT" feature="POSITION" preset="POSITION" coarse="7" default="212" highlight_value="50">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="-225" physto="45" subattribute="TILT" subattribute_user_name="Tilt" attribute="TILT" attribute_user_name="Tilt" feature="POSITION" feature_user_name="Position" preset="POSITION" preset_user_name="Position">
+            <ChannelSet index="0" name="center" from_dmx="212" to_dmx="212"/>
+          </ChannelFunction>
+        </ChannelType>
+      </Module>
+    </Modules>
+    <Instances index="1">
+      <Instance index="0" patch="1" module_index="0" name="Main"/>
+    </Instances>
+    <Wheels index="2"/>
+    <VirtualFunctionBlocks index="3"/>
+    <FixtureMacroCollect index="5"/>
+  </FixtureType>
+</MA>

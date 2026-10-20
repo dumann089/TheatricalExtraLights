@@ -237,13 +237,23 @@ public final class StrobeVisualEffects {
      */
     public static void renderGlowDot(MultiBufferSource.BufferSource bufferSource, PoseStack viewPose, Camera camera,
                                      Vector3f centre, int color, float radius, float strength) {
+        renderGlowDot(bufferSource, viewPose, camera, centre, color, radius, strength, false);
+    }
+
+    /**
+     * @param lowDetail trois anneaux de douze segments au lieu de six de vingt-quatre : pour les LED
+     *                  minuscules des barres denses, ou des dizaines de disques se chevauchent.
+     */
+    public static void renderGlowDot(MultiBufferSource.BufferSource bufferSource, PoseStack viewPose, Camera camera,
+                                     Vector3f centre, int color, float radius, float strength, boolean lowDetail) {
         if (strength <= 0f) {
             return;
         }
         VertexConsumer vc = bufferSource.getBuffer(ExtraLightsRenderTypes.GLOW);
         Vector3f right = new Vector3f(camera.getLeftVector());
         Vector3f up = new Vector3f(camera.getUpVector());
-        softDisc(vc, viewPose.last().pose(), centre, right, up, radius, whiten(color, 0.35f), color, strength);
+        softDisc(vc, viewPose.last().pose(), centre, right, up, radius, whiten(color, 0.35f), color, strength,
+                lowDetail ? 3 : DISC_RINGS, lowDetail ? 12 : DISC_SEGMENTS);
     }
 
     /**
@@ -253,6 +263,11 @@ public final class StrobeVisualEffects {
      */
     private static void softDisc(VertexConsumer vc, Matrix4f view, Vector3f centre, Vector3f right, Vector3f up,
                                  float radius, int[] core, int ring, float strength) {
+        softDisc(vc, view, centre, right, up, radius, core, ring, strength, DISC_RINGS, DISC_SEGMENTS);
+    }
+
+    private static void softDisc(VertexConsumer vc, Matrix4f view, Vector3f centre, Vector3f right, Vector3f up,
+                                 float radius, int[] core, int ring, float strength, int rings, int segments) {
         int a0 = alpha(strength);
         if (a0 <= 0) {
             return;
@@ -260,18 +275,18 @@ public final class StrobeVisualEffects {
         int rr = (ring >> 16) & 0xFF;
         int rg = (ring >> 8) & 0xFF;
         int rb = ring & 0xFF;
-        for (int k = 0; k < DISC_RINGS; k++) {
-            float t0 = (float) k / DISC_RINGS;
-            float t1 = (float) (k + 1) / DISC_RINGS;
+        for (int k = 0; k < rings; k++) {
+            float t0 = (float) k / rings;
+            float t1 = (float) (k + 1) / rings;
             float r0 = radius * t0;
             float r1 = radius * t1;
             int a0k = alpha(strength * (float) Math.pow(1f - t0, 2.4));
-            int a1k = k + 1 == DISC_RINGS ? 0 : alpha(strength * (float) Math.pow(1f - t1, 2.4));
+            int a1k = k + 1 == rings ? 0 : alpha(strength * (float) Math.pow(1f - t1, 2.4));
             // Le centre porte la couleur du coeur ; des le premier anneau, celle de la haze.
             int cr = k == 0 ? core[0] : rr, cg = k == 0 ? core[1] : rg, cb = k == 0 ? core[2] : rb;
-            for (int i = 0; i < DISC_SEGMENTS; i++) {
-                double p0 = i * (Math.PI * 2.0) / DISC_SEGMENTS;
-                double p1 = (i + 1) * (Math.PI * 2.0) / DISC_SEGMENTS;
+            for (int i = 0; i < segments; i++) {
+                double p0 = i * (Math.PI * 2.0) / segments;
+                double p1 = (i + 1) * (Math.PI * 2.0) / segments;
                 float c0 = (float) Math.cos(p0), s0 = (float) Math.sin(p0);
                 float c1 = (float) Math.cos(p1), s1 = (float) Math.sin(p1);
                 haloVertex(vc, view, centre, right, up, c0 * r0, s0 * r0, cr, cg, cb, a0k);

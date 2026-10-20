@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MA xmlns:xml="http://www.w3.org/XML/1998/namespace" major_vers="3" minor_vers="2" stream_vers="2">
+  <Info datetime="2026-9-26T22:00:00" showfile="ma fixture builder"/>
+  <FixtureType index="0" name="THEATRICAL DENSE RGB BAR" mode="184CH Pixel">
+    <InfoItems>
+      <Info>Theatrical Extra Lights Dense RGB Bar in the 184-channel pixel personality: Dimmer/Red/Green/Blue for each of the 46 pixels, left to right, no master dimmer. The pixels are sub-fixtures 1.1 to 1.46, each with its own dimmer and colour; the main fixture has no channels, and selecting it addresses all pixels. Requires mod personality "184-Channel Pixel Mode (46x Dim/RGB)".</Info>
+    </InfoItems>
+    <short_name>TEL-DBarPx</short_name>
+    <manufacturer>Nailec</manufacturer>
+    <short_manufacturer>Nailec</short_manufacturer>
+    <Modules index="0">
+      <Module index="0" name="MAIN" class="LED" beamtype="Wash" beam_angle="28" beam_intensity="3000">
+        <Body>
+          <Size x="2.9" y="0.25" z="0.08"/>
+        </Body>
+      </Module>
+      <Module index="1" name="PIXEL" class="LED" beamtype="Wash" beam_angle="28" beam_intensity="3000">
+        <Body>
+          <Size x="0.063" y="0.25" z="0.08"/>
+        </Body>
+        <ChannelType index="0" attribute="DIM" feature="DIMMER" preset="DIMMER" coarse="1" default="0" highlight_value="100" react_to_master="1">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="DIM" subattribute_user_name="Dim" attribute="DIM" attribute_user_name="Dim" feature="DIMMER" feature_user_name="Dimmer" preset="DIMMER" preset_user_name="Dimmer">
+            <ChannelSet index="0" name="closed" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="open" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="1" attribute="COLORRGB1" feature="COLORRGB" preset="COLOR" coarse="2" default="255" highlight_value="100" color="ff0000">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB1" subattribute_user_name="Red" attribute="COLORRGB1" attribute_user_name="Red" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="2" attribute="COLORRGB2" feature="COLORRGB" preset="COLOR" coarse="3" default="255" highlight_value="100" color="00ff00">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB2" subattribute_user_name="Green" attribute="COLORRGB2" attribute_user_name="Green" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="3" attribute="COLORRGB3" feature="COLORRGB" preset="COLOR" coarse="4" default="255" highlight_value="100" color="0000ff">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB3" subattribute_user_name="Blue" attribute="COLORRGB3" attribute_user_name="Blue" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+      </Module>
+    </Modules>
+    <Instances index="1">
+      <Instance index="0" patch="1" module_index="0" name="Main"/>
+      <Instance index="1" patch="1" module_index="1" name="Pixel 1"/>
+      <Instance index="2" patch="5" module_index="1" name="Pixel 2"/>
+      <Instance index="3" patch="9" module_index="1" name="Pixel 3"/>
+      <Instance index="4" patch="13" module_index="1" name="Pixel 4"/>
+      <Instance index="5" patch="17" module_index="1" name="Pixel 5"/>
+      <Instance index="6" patch="21" module_index="1" name="Pixel 6"/>
+      <Instance index="7" patch="25" module_index="1" name="Pixel 7"/>
+      <Instance index="8" patch="29" module_index="1" name="Pixel 8"/>
+      <Instance index="9" patch="33" module_index="1" name="Pixel 9"/>
+      <Instance index="10" patch="37" module_index="1" name="Pixel 10"/>
+      <Instance index="11" patch="41" module_index="1" name="Pixel 11"/>
+      <Instance index="12" patch="45" module_index="1" name="Pixel 12"/>
+      <Instance index="13" patch="49" module_index="1" name="Pixel 13"/>
+      <Instance index="14" patch="53" module_index="1" name="Pixel 14"/>
+      <Instance index="15" patch="57" module_index="1" name="Pixel 15"/>
+      <Instance index="16" patch="61" module_index="1" name="Pixel 16"/>
+      <Instance index="17" patch="65" module_index="1" name="Pixel 17"/>
+      <Instance index="18" patch="69" module_index="1" name="Pixel 18"/>
+      <Instance index="19" patch="73" module_index="1" name="Pixel 19"/>
+      <Instance index="20" patch="77" module_index="1" name="Pixel 20"/>
+      <Instance index="21" patch="81" module_index="1" name="Pixel 21"/>
+      <Instance index="22" patch="85" module_index="1" name="Pixel 22"/>
+      <Instance index="23" patch="89" module_index="1" name="Pixel 23"/>
+      <Instance index="24" patch="93" module_index="1" name="Pixel 24"/>
+      <Instance index="25" patch="97" module_index="1" name="Pixel 25"/>
+      <Instance index="26" patch="101" module_index="1" name="Pixel 26"/>
+      <Instance index="27" patch="105" module_index="1" name="Pixel 27"/>
+      <Instance index="28" patch="109" module_index="1" name="Pixel 28"/>
+      <Instance index="29" patch="113" module_index="1" name="Pixel 29"/>
+      <Instance index="30" patch="117" module_index="1" name="Pixel 30"/>
+      <Instance index="31" patch="121" module_index="1" name="Pixel 31"/>
+      <Instance index="32" patch="125" module_index="1" name="Pixel 32"/>
+      <Instance index="33" patch="129" module_index="1" name="Pixel 33"/>
+      <Instance index="34" patch="133" module_index="1" name="Pixel 34"/>
+      <Instance index="35" patch="137" module_index="1" name="Pixel 35"/>
+      <Instance index="36" patch="141" module_index="1" name="Pixel 36"/>
+      <Instance index="37" patch="145" module_index="1" name="Pixel 37"/>
+      <Instance index="38" patch="149" module_index="1" name="Pixel 38"/>
+      <Instance index="39" patch="153" module_index="1" name="Pixel 39"/>
+      <Instance index="40" patch="157" module_index="1" name="Pixel 40"/>
+      <Instance index="41" patch="161" module_index="1" name="Pixel 41"/>
+      <Instance index="42" patch="165" module_index="1" name="Pixel 42"/>
+      <Instance index="43" patch="169" module_index="1" name="Pixel 43"/>
+      <Instance index="44" patch="173" module_index="1" name="Pixel 44"/>
+      <Instance index="45" patch="177" module_index="1" name="Pixel 45"/>
+      <Instance index="46" patch="181" module_index="1" name="Pixel 46"/>
+    </Instances>
+    <Wheels index="2"/>
+    <VirtualFunctionBlocks index="3"/>
+    <FixtureMacroCollect index="5"/>
+  </FixtureType>
+</MA>

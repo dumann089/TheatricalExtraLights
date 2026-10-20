@@ -16,9 +16,11 @@
     { "name": "Sampler1" },
     { "name": "Sampler2" },
     { "name": "Sampler3" },
-    { "name": "Sampler4" }
+    { "name": "Sampler4" },
+    { "name": "Sampler5" }
   ],
   "uniforms": [
+    { "name": "ColorRamp", "type": "float", "count": 1, "values": [0.0] },
     { "name": "ShadowEnabled", "type": "float", "count": 1, "values": [0.0] },
     { "name": "VoxelOrigin", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
     { "name": "VoxelCell", "type": "float", "count": 1, "values": [1.0] },

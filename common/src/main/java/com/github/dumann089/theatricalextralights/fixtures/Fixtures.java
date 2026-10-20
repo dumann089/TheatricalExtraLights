@@ -248,6 +248,12 @@ public class Fixtures {
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "washled"), washledFixture::new);
     public static final RegistrySupplier<Fixture> MOVING_BAR =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "moving_bar"), MovingbarFixture::new);
+    public static final RegistrySupplier<Fixture> DENSE_RGB_BAR =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "dense_rgb_bar"), DenseRGBbarFixture::new);
+    public static final RegistrySupplier<Fixture> DENSE_VERTICAL_BAR =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "dense_vertical_bar"), DenseVerticalbarFixture::new);
+    public static final RegistrySupplier<Fixture> DENSE_MOVING_BAR =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "dense_moving_bar"), DenseMovingbarFixture::new);
     public static final RegistrySupplier<Fixture> MOVING_MINI_BAR =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "moving_mini_bar"), MovingMiniBarFixture::new);
 

@@ -114,6 +114,10 @@
         "link": "/fixtures/moving_bar"
       },
       {
+        "text": "Dense Moving RGB Bar",
+        "link": "/fixtures/dense_moving_bar"
+      },
+      {
         "text": "Atomic Tilt",
         "link": "/fixtures/atomictilt"
       },
@@ -384,6 +388,14 @@
       {
         "text": "Mini RGB Bar",
         "link": "/fixtures/mini_bar"
+      },
+      {
+        "text": "Dense RGB Bar",
+        "link": "/fixtures/dense_rgb_bar"
+      },
+      {
+        "text": "Dense Vertical RGB Bar",
+        "link": "/fixtures/dense_vertical_bar"
       },
       {
         "text": "Truss 3x3 Lights",

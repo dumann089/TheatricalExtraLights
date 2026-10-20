@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MA xmlns:xml="http://www.w3.org/XML/1998/namespace" major_vers="3" minor_vers="2" stream_vers="2">
+  <Info datetime="2026-9-26T22:00:00" showfile="ma fixture builder"/>
+  <FixtureType index="0" name="THEATRICAL VERTICAL RGB BAR" mode="4CH">
+    <InfoItems>
+      <Info>Theatrical Extra Lights Vertical RGB Bar in the 4-channel personality: Dim, Red, Green, Blue for the whole bar. Requires mod personality "4-Channel Mode".</Info>
+    </InfoItems>
+    <short_name>TEL-VBar</short_name>
+    <manufacturer>Nailec</manufacturer>
+    <short_manufacturer>Nailec</short_manufacturer>
+    <Modules index="0">
+      <Module index="0" name="MAIN" class="LED" beamtype="Wash" beam_angle="28" beam_intensity="3000">
+        <Body>
+          <Size x="0.25" y="2.9" z="0.08"/>
+        </Body>
+        <ChannelType index="0" attribute="DIM" feature="DIMMER" preset="DIMMER" coarse="1" default="0" highlight_value="100" react_to_master="1">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="DIM" subattribute_user_name="Dim" attribute="DIM" attribute_user_name="Dim" feature="DIMMER" feature_user_name="Dimmer" preset="DIMMER" preset_user_name="Dimmer">
+            <ChannelSet index="0" name="closed" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="open" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="1" attribute="COLORRGB1" feature="COLORRGB" preset="COLOR" coarse="2" default="255" highlight_value="100" color="ff0000">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB1" subattribute_user_name="Red" attribute="COLORRGB1" attribute_user_name="Red" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="2" attribute="COLORRGB2" feature="COLORRGB" preset="COLOR" coarse="3" default="255" highlight_value="100" color="00ff00">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB2" subattribute_user_name="Green" attribute="COLORRGB2" attribute_user_name="Green" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="3" attribute="COLORRGB3" feature="COLORRGB" preset="COLOR" coarse="4" default="255" highlight_value="100" color="0000ff">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB3" subattribute_user_name="Blue" attribute="COLORRGB3" attribute_user_name="Blue" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+      </Module>
+    </Modules>
+    <Instances index="1">
+      <Instance index="0" patch="1" module_index="0" name="Main"/>
+    </Instances>
+    <Wheels index="2"/>
+    <VirtualFunctionBlocks index="3"/>
+    <FixtureMacroCollect index="5"/>
+  </FixtureType>
+</MA>
