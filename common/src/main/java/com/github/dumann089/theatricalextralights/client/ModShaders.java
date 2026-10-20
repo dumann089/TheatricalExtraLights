@@ -20,6 +20,8 @@ public class ModShaders {
     public static ShaderInstance volumetricBeamShader;
     public static ShaderInstance beamRaymarchShader;
     public static ShaderInstance laserRaymarchShader;
+    public static ShaderInstance flameVolumeShader;
+    public static ShaderInstance flameHeatShader;
     public static ShaderInstance co2PlumeShader;
 
     public static float configDensity = 0.15f;
@@ -139,6 +141,11 @@ public class ModShaders {
     }
 
     /** Le laser realiste partage les prerequis du raymarch : shader charge, pas d'Iris. */
+    /** Flammes en volume : shader charge et pas de shaderpack (Iris remplace les shaders core). */
+    public static boolean canUseFlames() {
+        return flameVolumeShader != null && !isIrisShaderpackActive();
+    }
+
     public static boolean canUseLaserRaymarch() {
         return laserRaymarchShader != null && !isIrisShaderpackActive();
     }

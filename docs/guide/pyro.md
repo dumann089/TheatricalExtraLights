@@ -29,10 +29,18 @@ Each launcher is a fixed effect: comets, long comets, peonies, willows, chrysant
 
 ![Gold confetti burst on a stage](/images/pyro-confetti.png)
 
-- **Flame projector**: continuous flame column driven by intensity.
-- **Flame thrower**: directed jet with pan.
+- **Flame projector**: vertical flame column. Channel 1 fires it and sets its brightness, channel 2 its height (about 1 to 6 blocks).
+- **Flame thrower**: directed jet with pan, length set by the flame channel (about 1.5 to 6.5 blocks).
 - **Gold gerb**: stage fountain.
 - **Confetti cannon**: one channel, a burst on trigger.
+
+## Flame rendering
+
+Both flame machines throw the same flame particles: the flame thrower along its head, the flame projector straight up from the top of the unit. A **bloom** glow travels with the jet: large soft additive halos drawn with the particles, no post-process, so it works the same with or without Shimmer (only an Iris shader pack turns it off, since the pack has its own bloom). Bloom and its strength are in the Extra Lights settings, *General* and *Flames* tabs.
+
+- **Style**: each machine's screen has a **Style** button, *Jet* or *Burst*. It shapes the experimental volumetric flame.
+- **Volumetric flames (experimental)**, *Flames* tab, off by default: draws the flame as a raymarched volume with heat distortion. Quality, brightness and distortion strength apply to it.
+- **Flickering light** changes the room light about six times a second. Every change rebuilds the chunk sections around the flame, so switch it off with many flame machines on slow machines.
 
 ## Tips
 

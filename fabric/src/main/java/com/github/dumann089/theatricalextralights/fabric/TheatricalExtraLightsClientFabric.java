@@ -123,6 +123,18 @@ public class TheatricalExtraLightsClientFabric implements ClientModInitializer {
             );
 
             context.register(
+                    new ResourceLocation("theatricalextralights", "flame_volume"),
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    shader -> ModShaders.flameVolumeShader = shader
+            );
+
+            context.register(
+                    new ResourceLocation("theatricalextralights", "flame_heat"),
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    shader -> ModShaders.flameHeatShader = shader
+            );
+
+            context.register(
                     new ResourceLocation("theatricalextralights", "co2_plume"),
                     DefaultVertexFormat.POSITION_COLOR_TEX,
                     shader -> ModShaders.co2PlumeShader = shader

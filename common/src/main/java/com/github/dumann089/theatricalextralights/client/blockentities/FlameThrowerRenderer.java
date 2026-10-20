@@ -121,6 +121,36 @@ public class FlameThrowerRenderer extends ExtraLightsRenderer<FlameThrowerBlockE
         }
     }
 
+    /** Le jet en volume, a chaque image ; l'etat d'allumage vit dans {@code FlameVolumeRenderer}. */
+    @Override
+    public void beforeRenderBeam(FlameThrowerBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer,
+                                 net.minecraft.client.renderer.MultiBufferSource multiBufferSource, Direction facing,
+                                 float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging,
+                                 int packedLight, int packedOverlay) {
+        if (!com.github.dumann089.theatricalextralights.client.render.pyro.FlameVolumeRenderer.isAvailable()) {
+            return;
+        }
+        float headAngle = blockEntity.getHeadRenderAngle(partialTicks);
+        Vec3 nozzle = DirectionOffset.flameNozzlePosition(facing, headAngle);
+        Vec3 dir = DirectionOffset.headJetDirection(facing, headAngle);
+        float level = Math.max(0f, Math.min(255f, blockEntity.getIntensity())) / 255f;
+        boolean on = blockEntity.getIntensity() > 0;
+        com.github.dumann089.theatricalextralights.client.render.pyro.FlameVolumeRenderer.submit(
+                blockEntity.getBlockPos(),
+                Vec3.atLowerCornerOf(blockEntity.getBlockPos()).add(nozzle),
+                dir,
+                1.5f + 5.0f * level,
+                blockEntity.getFlameStyle(),
+                0.65f + 0.35f * level,
+                on,
+                partialTicks);
+    }
+
+    @Override
+    public boolean shouldRenderOffScreen(FlameThrowerBlockEntity blockEntity) {
+        return true;
+    }
+
     @Override
     public void preparePoseStack(
             FlameThrowerBlockEntity blockEntity,
