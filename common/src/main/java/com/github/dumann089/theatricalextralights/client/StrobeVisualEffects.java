@@ -380,8 +380,11 @@ public final class StrobeVisualEffects {
     /**
      * Blanchit la couleur puis la tire vers la teinte de la haze : plus le blanchiment est fort,
      * plus la teinte froide prend, comme le halo bleu-blanc autour d'un strobe blanc sur la video.
+     * Reserve aux lumieres deja blanches : un strobe colore (LED) garde sa couleur pure dans le
+     * halo, sinon un bleu ou un rouge ressort delave, avec un voile blanc par-dessus.
      */
     private static int[] hazeTint(int color, float whiteAmount) {
+        whiteAmount *= whiteness(color);
         int[] w = whiten(color, whiteAmount);
         float k = HAZE_TINT_AMOUNT * whiteAmount;
         int hr = (HAZE_TINT >> 16) & 0xFF;
@@ -392,6 +395,20 @@ public final class StrobeVisualEffects {
                 (int) (w[1] + (hg - w[1]) * k),
                 (int) (w[2] + (hb - w[2]) * k)
         };
+    }
+
+    /** 1 pour un blanc (canaux egaux), 0 pour une couleur saturee (un canal a zero). */
+    private static float whiteness(int color) {
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+        int max = Math.max(r, Math.max(g, b));
+        if (max == 0) {
+            return 0f;
+        }
+        float t = Math.min(r, Math.min(g, b)) / (float) max;
+        // Un blanc chaud ou froid (un canal un peu en retrait) reste traite comme un blanc.
+        return Mth.clamp((t - 0.35f) / 0.5f, 0f, 1f);
     }
 
     private static int packed(int[] rgb) {
