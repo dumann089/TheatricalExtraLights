@@ -424,6 +424,10 @@
         "link": "/fixtures/blinder1x1"
       },
       {
+        "text": "Blinder 1x2",
+        "link": "/fixtures/blinder1x2"
+      },
+      {
         "text": "Blinder (warm)",
         "link": "/fixtures/blinder_warm"
       },

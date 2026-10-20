@@ -119,27 +119,13 @@ public class Blinder2x2warmRenderer extends ExtraLightsRenderer<Blinder2x2warmBl
 
                 @Override
                 public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
-                    poseStack.pushPose();
-                    Vec3 offset = Vec3.atLowerCornerOf(blockEntity.getBlockPos())
-                            .subtract(camera.getPosition());
-                    poseStack.translate(offset.x, offset.y, offset.z);
-                    preparePoseStack(
-                            blockEntity,
-                            poseStack,
-                            facing,
-                            partialTick,
-                            isFlipped,
-                            blockstate,
-                            isHanging
-                    );
-                    BlinderRenderHelper.renderFaceWithGlow(
-                            blockEntity,
-                            bufferSource,
-                            poseStack,
-                            partialTick,
-                            BlinderRenderHelper.FaceQuad.DOUBLE_2X2
-                    );
-                    poseStack.popPose();
+                    Vec3 offset = Vec3.atLowerCornerOf(blockEntity.getBlockPos()).subtract(camera.getPosition());
+                    BlinderRenderHelper.renderLamps(blockEntity, bufferSource, poseStack, camera, partialTick,
+                            pose -> {
+                                pose.translate(offset.x, offset.y, offset.z);
+                                preparePoseStack(blockEntity, pose, facing, partialTick, isFlipped, blockstate, isHanging);
+                            }, BlinderRenderHelper.Lamps.DOUBLE_2X2,
+                            BlinderRenderHelper.warmLampWeights(blockEntity));
                 }
                 @Override
                 public Vec3 getPos(float partialTick) {
