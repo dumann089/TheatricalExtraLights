@@ -4,6 +4,7 @@ import com.github.dumann089.theatricalextralights.client.particle.Co2JetCorePart
 import com.github.dumann089.theatricalextralights.client.particle.Co2JetPuffParticle;
 import com.github.dumann089.theatricalextralights.client.particle.ConfettiParticle;
 import com.github.dumann089.theatricalextralights.client.particle.FireworkSparkParticle;
+import com.github.dumann089.theatricalextralights.client.particle.FlameGlowParticle;
 import com.github.dumann089.theatricalextralights.client.particle.FlameThrowerJetParticle;
 import com.github.dumann089.theatricalextralights.client.particle.FlameThrowerPuffParticle;
 import com.github.dumann089.theatricalextralights.client.particle.WaterFanParticle;
@@ -42,6 +43,10 @@ public class ModParticleClientImpl {
         ParticleProviderRegistry.register(
                 ModParticle.FLAME_THROWER_PUFF,
                 FlameThrowerPuffParticle.Provider::new
+        );
+        ParticleProviderRegistry.register(
+                ModParticle.FLAME_GLOW,
+                FlameGlowParticle.Provider::new
         );
         ParticleProviderRegistry.register(
                 ModParticle.CO2_JET_CORE,

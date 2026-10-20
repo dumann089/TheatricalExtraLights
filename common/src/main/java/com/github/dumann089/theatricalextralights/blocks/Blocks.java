@@ -25,9 +25,11 @@ public class Blocks {
     public static final RegistrySupplier<Block> PAR_LED = BLOCKS.register("par_led", ParLedBlock::new);
     public static final RegistrySupplier<Block> LED_FOUNTAIN = BLOCKS.register("led_fountain", LEDfountainBlock::new);
     public static final RegistrySupplier<Block> RGB_BAR = BLOCKS.register("rgb_bar", RGBbarBlock::new);
+    public static final RegistrySupplier<Block> CHCB4 = BLOCKS.register("chcb4", Chcb4Block::new);
     public static final RegistrySupplier<Block> BIG_PANEL = BLOCKS.register("big_panel", BigPanelBlock::new);
     public static final RegistrySupplier<Block> BIG_PANEL2 = BLOCKS.register("big_panel2", BigPanel2Block::new);
     public static final RegistrySupplier<Block> LASER_BLOCK = BLOCKS.register("laser", LaserBlock::new);
+    public static final RegistrySupplier<Block> LASER_PROJECTOR_BLOCK = BLOCKS.register("laser_projector", LaserProjectorBlock::new);
     public static final RegistrySupplier<Block> BLINDER = BLOCKS.register("blinder", BlinderBlock::new);
     public static final RegistrySupplier<Block> STROBE = BLOCKS.register("strobe", StrobeBlock::new);
     public static final RegistrySupplier<Block> ATOMIC_STROBE = BLOCKS.register("atomic_strobe", AtomicStrobeBlock::new);
@@ -98,6 +100,9 @@ public class Blocks {
     public static final RegistrySupplier<Block> VERTICALSCROLLER_BLOCK = BLOCKS.register("verticalscroller", verticalscrollerBlock::new);
     public static final RegistrySupplier<Block> WASHLED_BLOCK = BLOCKS.register("washled", washledBlock::new);
     public static final RegistrySupplier<Block> MOVING_BAR_BLOCK = BLOCKS.register("moving_bar", MovingbarBlock::new);
+    public static final RegistrySupplier<Block> DENSE_RGB_BAR_BLOCK = BLOCKS.register("dense_rgb_bar", DenseRGBbarBlock::new);
+    public static final RegistrySupplier<Block> DENSE_VERTICAL_BAR_BLOCK = BLOCKS.register("dense_vertical_bar", DenseVerticalbarBlock::new);
+    public static final RegistrySupplier<Block> DENSE_MOVING_BAR_BLOCK = BLOCKS.register("dense_moving_bar", DenseMovingbarBlock::new);
     public static final RegistrySupplier<Block> MOVING_MINI_BAR_BLOCK = BLOCKS.register("moving_mini_bar", MovingMiniBarBlock::new);
 
     public static final RegistrySupplier<Block> SPOT_XTREME_GOBO_BLOCK = BLOCKS.register("spot_xtreme_gobo", SpotXtremeGoboBlock::new);
@@ -217,6 +222,7 @@ public class Blocks {
     public static final RegistrySupplier<Block> BLINDER2X2_BLOCK = BLOCKS.register("blinder2x2", Blinder2x2Block::new);
     public static final RegistrySupplier<Block> BLINDER2X2WARM_BLOCK = BLOCKS.register("blinder2x2warm", Blinder2x2warmBlock::new);
     public static final RegistrySupplier<Block> BLINDER1X1_BLOCK = BLOCKS.register("blinder1x1", Blinder1x1Block::new);
+    public static final RegistrySupplier<Block> BLINDER1X2_BLOCK = BLOCKS.register("blinder1x2", Blinder1x2Block::new);
     public static final RegistrySupplier<Block> MINI_BAR_BLOCK = BLOCKS.register("mini_bar", MiniBarBlock::new);
     public static final RegistrySupplier<Block> MOVING_VL2C_BEAMS_BLOCK = BLOCKS.register("moving_vl2c_beams", MovingVL2CBeamsBlock::new);
     public static final RegistrySupplier<Block> MOVING_SCAN_BEAMS_BLOCK = BLOCKS.register("moving_scan_beams", MovingScanBeamsBlock::new);

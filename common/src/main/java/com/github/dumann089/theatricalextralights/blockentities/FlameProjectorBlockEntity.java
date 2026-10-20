@@ -19,7 +19,8 @@ import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.Arrays;
 
-public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity implements HasSafetyArm {
+public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity implements HasSafetyArm,
+        com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFlameStyle {
     private static final int FLAME_HOT_COLOR = 0xFF8434;
 
     @Override
@@ -57,7 +58,11 @@ public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity imple
             T blockEntity
     ) {
         if (blockEntity instanceof FlameProjectorBlockEntity flame) {
-            flame.tickServer();
+            if (level.isClientSide) {
+                com.github.dumann089.theatricalextralights.client.FlameProjectorClientEffects.tick(flame);
+            } else {
+                flame.tickServer();
+            }
         }
     }
 
@@ -82,27 +87,8 @@ public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity imple
         double baseY = worldPosition.getY() + 0.55;
         double baseZ = worldPosition.getZ() + 0.5 + dirZ * 0.35;
 
-        for (int i = 0; i < flameCount; i++) {
-            double t = serverLevel.random.nextDouble();
-            double sideJitter = (serverLevel.random.nextDouble() - 0.5) * 0.18;
-            double upJitter = (serverLevel.random.nextDouble() - 0.5) * 0.12;
-            double speed = (0.55 + serverLevel.random.nextDouble() * 0.30) * length;
-
-            double mx = dirX * speed + sideX * sideJitter;
-            double my = upJitter + 0.05;
-            double mz = dirZ * speed + sideZ * sideJitter;
-
-            double startSpread = 0.10 * t;
-            double sx = baseX + sideX * (serverLevel.random.nextDouble() - 0.5) * startSpread;
-            double sy = baseY + (serverLevel.random.nextDouble() - 0.5) * startSpread;
-            double sz = baseZ + sideZ * (serverLevel.random.nextDouble() - 0.5) * startSpread;
-
-            serverLevel.sendParticles(ParticleTypes.FLAME, sx, sy, sz, 1, mx, my, mz, 0.0);
-            if (serverLevel.random.nextFloat() < 0.4f) {
-                serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE, sx + mx * 1.4, sy + my * 1.4, sz + mz * 1.4, 1, mx * 0.4, my * 0.4 + 0.06, mz * 0.4, 0.0);
-            }
-        }
-
+        // Les flammes se dessinent cote client (volume, ou particules si le volume est indisponible) :
+        // FlameProjectorClientEffects. Le serveur ne garde que le son.
         if (soundCooldown <= 0) {
             serverLevel.playSound(null, baseX, baseY, baseZ, SoundEvents.BLAZE_SHOOT, SoundSource.BLOCKS, 0.35f * intensityFactor, 1.6f + serverLevel.random.nextFloat() * 0.2f);
             soundCooldown = 4 + serverLevel.random.nextInt(4);
@@ -171,4 +157,46 @@ public class FlameProjectorBlockEntity extends ExtraLightsLightBlockEntity imple
     public String getTranslationKey() {
         return getBlockState().getBlock().getDescriptionId();
     }
+
+    // ── Style de flamme (menu de la machine) ────────────────────────────────
+
+    private int flameStyle = com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFlameStyle.STYLE_JET;
+
+    @Override
+    public int getFlameStyle() {
+        return flameStyle;
+    }
+
+    @Override
+    public void setFlameStyle(int style) {
+        int clamped = Mth.clamp(style, 0, com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFlameStyle.STYLE_COUNT - 1);
+        if (clamped == flameStyle) {
+            return;
+        }
+        flameStyle = clamped;
+        if (level != null && !level.isClientSide) {
+            setChanged();
+            com.github.dumann089.theatricalextralights.util.BlockEntitySync.sendData(this);
+        }
+    }
+
+    @Override
+    public void write(net.minecraft.nbt.CompoundTag tag) {
+        super.write(tag);
+        tag.putInt("FlameStyle", flameStyle);
+    }
+
+    @Override
+    public void read(net.minecraft.nbt.CompoundTag tag) {
+        super.read(tag);
+        flameStyle = Mth.clamp(tag.getInt("FlameStyle"), 0,
+                com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFlameStyle.STYLE_COUNT - 1);
+    }
+
+    /** Lumiere qui vacille avec la flamme, au rythme borne de {@link com.github.dumann089.theatricalextralights.util.FlameFlicker}. */
+    @Override
+    public int getLightLuminance() {
+        return com.github.dumann089.theatricalextralights.util.FlameFlicker.luminance(level, worldPosition, super.getLightLuminance());
+    }
+
 }

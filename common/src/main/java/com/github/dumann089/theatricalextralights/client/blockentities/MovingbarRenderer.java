@@ -2,36 +2,35 @@ package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.MovingbarBlockEntity;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
-import com.github.dumann089.theatricalextralights.blockentities.RGBBarBlockEntity;
-import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
-import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import dev.imabad.theatrical.TheatricalExpectPlatform;
 import dev.imabad.theatrical.blocks.HangableBlock;
-import dev.imabad.theatrical.client.LazyRenderers;
-import dev.imabad.theatrical.client.TheatricalRenderTypes;
-import com.github.dumann089.theatricalextralights.client.blockentities.ExtraLightsRenderer;
-import dev.imabad.theatrical.config.TheatricalConfig;
-import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 import java.util.Optional;
 
-public class MovingbarRenderer extends ExtraLightsRenderer<MovingbarBlockEntity> {
+/** Barre LED mobile : le rendu des pixels est dans {@link PixelBarRenderer}. */
+public class MovingbarRenderer extends PixelBarRenderer<MovingbarBlockEntity> {
     private BakedModel cachedPanModel, cachedTiltModel, cachedStaticModel;
+
+    // Geometrie relevee sur movingbar_tilt.json : huit cellules contigues de 3/16, de x=-4.1 a
+    // x=19.9 (centre en x=7.9/16), hautes de 3/16 autour de y=14.75/16, face avant a z=5.25/16
+    // (-Z devant ; la face est posee un peu devant pour ne pas se battre avec le modele).
+    private static final Strip STRIP = new Strip(false, -10.5f / 16f, 3f / 16f, 1.5f / 16f, 1.5f / 16f,
+            0.9f / 16f, 7.9f / 16f, 14.75f / 16f, 0.318f);
 
     public MovingbarRenderer(BlockEntityRendererProvider.Context context) {
         super(context);
+    }
+
+    @Override
+    protected Strip strip() {
+        return STRIP;
     }
 
     @Override
@@ -114,102 +113,6 @@ public class MovingbarRenderer extends ExtraLightsRenderer<MovingbarBlockEntity>
         poseStack.translate(-tilts[0], -tilts[1], -tilts[2]);
         minecraftRenderModel(poseStack, vertexConsumer, blockState, cachedTiltModel, packedLight, packedOverlay);
         //#endregion
-    }
-    @Override
-    public void beforeRenderBeam(MovingbarBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockstate, boolean isHanging, int packedLight, int packedOverlay) {
-        if (blockEntity.getDisplayIntensity(partialTicks) > 0){
-            LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
-                @Override
-                public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
-                    poseStack.pushPose();
-                    Vec3 offset = Vec3.atLowerCornerOf(blockEntity.getBlockPos()).subtract(camera.getPosition());
-                    poseStack.translate(offset.x, offset.y, offset.z);
-                    preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
-
-                    VertexConsumer builder = multiBufferSource.getBuffer(Beam2DRenderTypes.getBeam());
-
-                    float intensity = blockEntity.getDisplayIntensity(partialTicks);
-                    float alpha = intensity / 255f;
-                    int color = blockEntity.getDisplayColour(partialTicks);
-                    int r = (color >> 16) & 0xFF;
-                    int g = (color >> 8) & 0xFF;
-                    int b = color & 0xFF;
-                    int a = (int) (alpha * 255);
-
-                    poseStack.translate(0.496f, 0.93f, 0.318f);
-
-                    Matrix4f m = poseStack.last().pose();
-                    Matrix3f normal = poseStack.last().normal();
-
-                    addVertex(builder, m, normal, r, g, b, a, -0.725f, 0.0718f, 0f);
-                    addVertex(builder, m, normal, r, g, b, a, 0.725f, 0.0718f, 0f);
-                    addVertex(builder, m, normal, r, g, b, a, 0.725f, -0.0718f, 0f);
-                    addVertex(builder, m, normal, r, g, b, a, -0.725f, -0.0718f, 0f);
-
-                    float beamLength = TheatricalExtraLightsConfig.getRgbBarBeamLength();
-
-                    renderLightBeam(builder, poseStack, blockEntity, partialTicks, alpha, 0.725f, 0.0718f, beamLength, color);
-                    poseStack.popPose();
-                }
-
-                @Override
-                public Vec3 getPos(float partialTick) {
-                    return blockEntity.getBlockPos().getCenter();
-                }
-            });
-        }
-    }
-
-    @Override
-    protected void addVertex(VertexConsumer builder, Matrix4f m, Matrix3f nm,
-                             int r, int g, int b, int a,
-                             float x, float y, float z) {
-        if (Beam2DRenderTypes.isShadersActive()) {
-            builder.vertex(m, x, y, z)
-                    .color(r, g, b, a)
-                    .uv(0f, 0f)
-                    .uv2(LightTexture.FULL_BRIGHT)
-                    .endVertex();
-        } else {
-            super.addVertex(builder, m, nm, r, g, b, a, x, y, z);
-        }
-    }
-
-    protected void renderLightBeam(VertexConsumer builder, PoseStack stack, MovingbarBlockEntity tileEntityFixture, float partialTicks, float alpha, float beamWidth, float beamHeight, float length, int color) {
-        alpha *= (float) TheatricalConfig.INSTANCE.CLIENT.beamOpacity;
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
-        int a = (int) (alpha * 255);
-        Matrix4f m = stack.last().pose();
-        Matrix3f normal = stack.last().normal();
-        float focus = 1.0f;
-        float endWidth = beamWidth * focus;
-        float endHeight = beamHeight * focus;
-
-        // Right Face
-        addVertex(builder, m, normal, r, g, b, 0, endWidth, endHeight, -length);
-        addVertex(builder, m, normal, r, g, b, a, beamWidth, beamHeight, 0);
-        addVertex(builder, m, normal, r, g, b, a, beamWidth, -beamHeight, 0);
-        addVertex(builder, m, normal, r, g, b, 0, endWidth, -endHeight, -length);
-
-        // Left Face
-        addVertex(builder, m, normal, r, g, b, 0, -endWidth, -endHeight, -length);
-        addVertex(builder, m, normal, r, g, b, a, -beamWidth, -beamHeight, 0);
-        addVertex(builder, m, normal, r, g, b, a, -beamWidth, beamHeight, 0);
-        addVertex(builder, m, normal, r, g, b, 0, -endWidth, endHeight, -length);
-
-        // UP Face
-        addVertex(builder, m, normal, r, g, b, 0, -endWidth, endHeight, -length);
-        addVertex(builder, m, normal, r, g, b, a, -beamWidth, beamHeight, 0);
-        addVertex(builder, m, normal, r, g, b, a, beamWidth, beamHeight, 0);
-        addVertex(builder, m, normal, r, g, b, 0, endWidth, endHeight, -length);
-
-        // Down Face
-        addVertex(builder, m, normal, r, g, b, 0, endWidth, -endHeight, -length);
-        addVertex(builder, m, normal, r, g, b, a, beamWidth, -beamHeight, 0);
-        addVertex(builder, m, normal, r, g, b, a, -beamWidth, -beamHeight, 0);
-        addVertex(builder, m, normal, r, g, b, 0, -endWidth, -endHeight, -length);
     }
 
     @Override

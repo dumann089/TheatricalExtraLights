@@ -60,8 +60,8 @@ Hundreds of placeable fixtures across creative tabs **Theatrical: Extra Lights**
 - **Moving heads** — Moving 500, Beam 7R, Mac VIP, Sharpy+, Robit Spot, Verve Spot, VL2/VL6, scans, gobo variants…
 - **Wash & spot** — Source Four, followspot, searchlight, wash LED, mini wash, VL 6000
 - **PAR & panels** — LED Par, Par 1000, x8 Par64, 2×2 / 2×8 / 6×3 Par64 arrays, big panels, shaped LED panels
-- **Blinders & strobes** — 4×2 blinder, atomic strobe (34ch), atomic tilt, white strobe
-- **Effects** — laser, laser mirror, LED fountain, RGB / vertical bars, scrollers, invisible light
+- **Blinders & strobes** — 4×2, 2×2, 1×2 and 1×1 blinders, atomic strobe (1 to 400ch, Atomic-style duration/rate/effects, pixel bar, RGB plate and a 96-pixel map), atomic tilt (RGB or Atomic modes), white strobe
+- **Effects** — laser, laser mirror, LED fountain, RGB / vertical bars and their dense 46-pixel versions, scrollers, invisible light
 - **Water jets** — jets, cones, bloom, fog, organ pipes, moving fan, and more
 - **Pyro** — 50+ firework launchers, Pyro Fan, RGB launcher, confetti, gerbs, flame projector, **flame thrower**, daytime powder *(see [Pyro](#pyro-theatrical-pyro-tab) below)*
 - **Rig** — mini truss, corner, T-corner, cross joint
@@ -71,7 +71,7 @@ All DMX fixtures work with Theatrical’s **Configuration Card**, **Art-Net netw
 
 ### Improved patching & configuration *(recent)*
 
-- **Configuration card** — automatically jumps to the **next universe at address 1** when a fixture no longer fits in the remaining 512 channels (e.g. Universe 1 @ 500 + 34ch Atomic → Universe 2 @ 1)
+- **Configuration card** — automatically jumps to the **next universe at address 1** when a fixture no longer fits in the remaining 512 channels (e.g. Universe 1 @ 500 + 40ch Atomic → Universe 2 @ 1)
 - **Clear chat feedback** — fixture name, network, channel range, wrap notice, and next card address
 - **Fixture config screen** — clean UI with labels above fields, Save / Cancel, live **DMX footprint** preview, and personality-aware channel count
 - **Keyboard shortcuts** — Enter to save, Escape to cancel
@@ -155,7 +155,9 @@ Extra Lights creates `config/theatricalextralights.json` in your Minecraft insta
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `laserBeamLength` | float | `400.0` | Maximum laser beam length in blocks (minimum `20`). |
-| `rgbBarBeamLength` | float | `9.0` | RGB bar light reach in blocks (minimum `1`). |
+| `rgbBarBeamLength` | float | `9.0` | Length of the LED bar beams in blocks, flat and volumetric, for every RGB, vertical, moving and dense bar (minimum `1`). A beam that hits a block first stops there. |
+| `rgbBarBeamIntensity` | float | `1.0` | Brightness multiplier for the haze sheets of the LED bars, `0` to `4`. Also on the **Bar beam intensity** slider in the settings screen. |
+| `co2JetReach` | float | `1.0` | Reach multiplier for the Flow2Jet CO2 plume, `0.5` to `3`. Also on the **CO2 jet reach** slider in the settings screen. |
 | `renderLens` | boolean | `true` | Draw lens glow on compatible fixtures. |
 | `maxGoboDistance` | float | `500.0` | Maximum distance for gobo projection (minimum `10`). |
 | `render2DBeam` | boolean | `false` | Use flat 2D beam rendering instead of volumetric beams where supported. |
@@ -171,6 +173,8 @@ Add scenic blocks (backdrops, decor) so laser beams continue to a wall behind th
 {
   "laserBeamLength": 400.0,
   "rgbBarBeamLength": 9.0,
+  "rgbBarBeamIntensity": 1.0,
+  "co2JetReach": 1.0,
   "renderLens": true,
   "maxGoboDistance": 500.0,
   "render2DBeam": false,

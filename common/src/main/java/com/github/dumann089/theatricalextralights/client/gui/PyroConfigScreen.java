@@ -25,6 +25,8 @@ public class PyroConfigScreen extends ExtraLightsConfigScreen {
     private final HasSafetyArm safety;
 
     private TelUi.FlatButton armButton;
+    private TelUi.FlatButton styleButton;
+    private static final int STYLE_H = 20;
     private int sectionY;
     private int statusCardY;
 
@@ -51,8 +53,31 @@ public class PyroConfigScreen extends ExtraLightsConfigScreen {
 
         armButton = addRenderableWidget(new TelUi.FlatButton(contentLeft, y, contentWidth, ARM_H,
                 armLabel(), armStyle(), b -> toggleArmed()));
-        y += ARM_H + SECTION_GAP;
+        y += ARM_H + ROW_GAP;
+
+        if (fixture instanceof com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFlameStyle flame) {
+            styleButton = addRenderableWidget(new TelUi.FlatButton(contentLeft, y, contentWidth, STYLE_H,
+                    styleLabel(flame.getFlameStyle()), TelUi.ButtonStyle.PRIMARY, b -> cycleStyle(flame)));
+            y += STYLE_H + ROW_GAP;
+        }
+        y += SECTION_GAP - ROW_GAP;
         return y;
+    }
+
+    private static Component styleLabel(int style) {
+        String key = style == com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFlameStyle.STYLE_BURST
+                ? "screen.pyro.flame_style.burst" : "screen.pyro.flame_style.jet";
+        return Component.translatable("screen.pyro.flame_style", Component.translatable(key));
+    }
+
+    /** Jet / burst : applique tout de suite cote client pour l'apercu, puis au serveur. */
+    private void cycleStyle(com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFlameStyle flame) {
+        int next = (flame.getFlameStyle() + 1) % com.github.dumann089.theatricalextralights.blockentities.interfaces.HasFlameStyle.STYLE_COUNT;
+        flame.setFlameStyle(next);
+        ModNetworkHandler.CHANNEL.sendToServer(new com.github.dumann089.theatricalextralights.net.SetFlameStylePacket(pos, next));
+        if (styleButton != null) {
+            styleButton.setMessage(styleLabel(next));
+        }
     }
 
     private Component armLabel() {

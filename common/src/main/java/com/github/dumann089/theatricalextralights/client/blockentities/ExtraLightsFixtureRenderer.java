@@ -2,6 +2,7 @@ package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
+import com.github.dumann089.theatricalextralights.client.StrobeVisualEffects;
 import com.github.dumann089.theatricalextralights.client.LensBloomCompat;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData;
@@ -29,6 +30,7 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.WeakHashMap;
+import java.util.function.Consumer;
 
 public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity> extends FixtureRenderer<T> {
     /**
@@ -131,6 +133,29 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
             float customIntensity,
             float baseRadius
     ) {
+        submitVolumetricBeam(blockEntity, beamPose, partialTicks, minAngleDeg, maxAngleDeg, goboLibrary, goboSlot,
+                focusNorm, widthScale, heightScale, beamIndex, customColor, customIntensity, baseRadius,
+                (float) blockEntity.getDistance());
+    }
+
+    /** Meme chose, avec une longueur de faisceau imposee (bornee par l'appelant a la distance de l'obstacle). */
+    protected void submitVolumetricBeam(
+            T blockEntity,
+            PoseStack beamPose,
+            float partialTicks,
+            float minAngleDeg,
+            float maxAngleDeg,
+            GoboLibrary goboLibrary,
+            int goboSlot,
+            float focusNorm,
+            float widthScale,
+            float heightScale,
+            int beamIndex,
+            int customColor,
+            float customIntensity,
+            float baseRadius,
+            float length
+    ) {
         if (!TheatricalExtraLightsConfig.isVolumetricBeamEnabled() || customIntensity <= 0.0f) return;
 
         org.joml.Matrix4f headMatrix = beamPose.last().pose();
@@ -149,7 +174,7 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
                 axisU,
                 axisV,
                 focusNorm,
-                (float) blockEntity.getDistance(),
+                length,
                 tanHalfAngle,
                 customColor,
                 customIntensity,
@@ -173,6 +198,40 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
                 .render(renderData, new PoseStack());
     }
 
+
+    // ── Strobes ─────────────────────────────────────────────────────────────
+
+    /**
+     * Flash vu de la camera : face emissive et coeur surexpose (si {@code drawFace}), puis halo.
+     * A appeler depuis un LazyRenderer.
+     *
+     * @param headTransform place une pose locale au bloc sur la tete (preparePoseStack, etc.)
+     */
+    protected void renderStrobeFlash(MultiBufferSource.BufferSource bufferSource, PoseStack viewPose, Camera camera,
+                                     T blockEntity, Consumer<PoseStack> headTransform,
+                                     StrobeVisualEffects.Face face, int color, float level, boolean drawFace) {
+        if (level <= 0f) return;
+        Vec3 blockOffset = Vec3.atLowerCornerOf(blockEntity.getBlockPos()).subtract(camera.getPosition());
+
+        if (drawFace) {
+            int r = (color >> 16) & 0xFF;
+            int g = (color >> 8) & 0xFF;
+            int b = color & 0xFF;
+            viewPose.pushPose();
+            viewPose.translate(blockOffset.x, blockOffset.y, blockOffset.z);
+            headTransform.accept(viewPose);
+            face.apply(viewPose);
+            StrobeVisualEffects.renderFace(bufferSource, viewPose, face, r, g, b, (int) (Math.min(1f, level) * 255f));
+            StrobeVisualEffects.renderHotCore(bufferSource, viewPose, face, color, level);
+            viewPose.popPose();
+        }
+
+        PoseStack faceWorld = new PoseStack();
+        faceWorld.translate(blockOffset.x, blockOffset.y, blockOffset.z);
+        headTransform.accept(faceWorld);
+        face.apply(faceWorld);
+        StrobeVisualEffects.renderHalo(bufferSource, viewPose, camera, faceWorld, color, level);
+    }
 
     // ── Vertex helpers ──────────────────────────────────────────────────────
 

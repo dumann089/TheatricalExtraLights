@@ -1,4 +1,3 @@
-
 package com.github.dumann089.theatricalextralights.client;
 
 import com.github.dumann089.theatricalextralights.TheatricalExtraLightsScreens;
@@ -7,10 +6,13 @@ import com.github.dumann089.theatricalextralights.blockentities.FollowspotConsol
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.GelScrollerConfigurable;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.blockentities.LaserBlockEntity;
+import com.github.dumann089.theatricalextralights.blockentities.LaserProjectorBlockEntity;
+import com.github.dumann089.theatricalextralights.client.gui.PyroConfigScreen;
 import com.github.dumann089.theatricalextralights.blockentities.LedFacadeBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.bigscrollerBlockEntity;
 import com.github.dumann089.theatricalextralights.client.gui.BigScrollerGelScreen;
 import com.github.dumann089.theatricalextralights.client.gui.ExtraLightsConfigScreen;
+import com.github.dumann089.theatricalextralights.client.gui.LaserProjectorScreen;
 import com.github.dumann089.theatricalextralights.client.gui.FixtureMountScreen;
 import com.github.dumann089.theatricalextralights.client.gui.FollowspotConsoleScreen;
 import com.github.dumann089.theatricalextralights.client.gui.LaserConfigScreen;
@@ -70,7 +72,11 @@ public class ExtraLightsClientScreens {
                 return;
             }
 
-            default -> {
+            case LASER_PROJECTOR -> {
+                if (blockEntity instanceof LaserProjectorBlockEntity projector) {
+                    mc.setScreen(new LaserProjectorScreen(projector, pos));
+                }
+                return;
             }
         }
 
@@ -112,14 +118,13 @@ public class ExtraLightsClientScreens {
 
             case LASER -> lightBE instanceof LaserBlockEntity laser
                     ? new LaserConfigScreen(laser, pos)
-                    : new ExtraLightsConfigScreen(
-                    lightBE, pos, lightBE.getTranslationKey(), false);
+                    : new ExtraLightsConfigScreen(lightBE, pos, lightBE.getTranslationKey(), false);
 
             case PYRO -> lightBE instanceof HasSafetyArm safety
                     ? new PyroConfigScreen(lightBE, safety, pos)
-                    : new ExtraLightsConfigScreen(
-                    lightBE, pos, lightBE.getTranslationKey(), false);
+                    : new ExtraLightsConfigScreen(lightBE, pos, lightBE.getTranslationKey(), false);
 
+            case MOUNT_WRENCH, FOLLOWSPOT_CONSOLE, LED_FACADE, LASER_PROJECTOR -> null;
             case BIGSCROLLER_GELS, MOUNT_WRENCH, FOLLOWSPOT_CONSOLE, LED_FACADE -> null;
         };
 

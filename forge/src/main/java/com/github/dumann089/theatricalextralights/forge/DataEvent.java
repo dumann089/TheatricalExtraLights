@@ -46,6 +46,9 @@ public class DataEvent {
             withExistingParent(Blocks.MOVING_BEAM_BLOCK.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/moving_beam/moving_beam_whole"));
             withExistingParent(Blocks.MOVING_SCAN_BLOCK.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/moving_scan/moving_scan_whole"));
             withExistingParent(Blocks.RGB_BAR.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/ledbar/ledbar_whole"));
+            withExistingParent(Blocks.DENSE_RGB_BAR_BLOCK.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/ledbar/ledbar_dense_whole"));
+            withExistingParent(Blocks.DENSE_VERTICAL_BAR_BLOCK.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/barvertical/barvertical_dense_whole"));
+            withExistingParent(Blocks.DENSE_MOVING_BAR_BLOCK.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/movingbar/movingbar_dense_whole"));
             withExistingParent(Blocks.MOVING_VL6_BLOCK.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/moving_vl6/moving_vl6_whole"));
             withExistingParent(Blocks.LED_FOUNTAIN.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/fountain_lamp/fountain_lamp_whole"));
             withExistingParent(Blocks.LED_PANEL_2.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/ledpanel/led_panel_body"));
@@ -54,6 +57,7 @@ public class DataEvent {
             withExistingParent(Blocks.PAR_LED.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/parled/parled_body_whole"));
             withExistingParent(Blocks.BLINDER.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/4x2_blinder/4x2_blinder_whole"));
             withExistingParent(Blocks.BLINDER1X1_BLOCK.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/blinder1x1/blinder1x1_whole"));
+            withExistingParent(Blocks.BLINDER1X2_BLOCK.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/blinder1x2/blinder1x2_whole"));
             withExistingParent(Blocks.LASER_BLOCK.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/laser/laser_whole"));
             withExistingParent(Blocks.TRUSS_3LIGHTS.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/truss3x3lights/truss3x3light_whole"));
             withExistingParent(Blocks.STROBE.getId().getPath(), new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/strobe/strobe_whole"));
@@ -104,9 +108,13 @@ public class DataEvent {
             addBlock(Blocks.PAR_LED, "LED Pair");
             addBlock(Blocks.RGB_BAR, "RGB Bar");
             addBlock(Blocks.VERTICALBAR_BLOCK, "Vertical RGB Bar");
+            addBlock(Blocks.DENSE_RGB_BAR_BLOCK, "Dense RGB Bar");
+            addBlock(Blocks.DENSE_VERTICAL_BAR_BLOCK, "Dense Vertical RGB Bar");
+            addBlock(Blocks.DENSE_MOVING_BAR_BLOCK, "Dense Moving RGB Bar");
             addBlock(Blocks.BLINDER, "Blinder 4x2");
             addBlock(Blocks.BLINDER_WARM_BLOCK, "Blinder 4x2 Warm");
             addBlock(Blocks.BLINDER1X1_BLOCK, "Blinder 1x1");
+            addBlock(Blocks.BLINDER1X2_BLOCK, "Blinder 1x2");
             addBlock(Blocks.LASER_BLOCK, "Laser");
             addBlock(Blocks.TRUSS_3LIGHTS, "Truss 3x3 Lights");
             addBlock(Blocks.STROBE, "Strobe");

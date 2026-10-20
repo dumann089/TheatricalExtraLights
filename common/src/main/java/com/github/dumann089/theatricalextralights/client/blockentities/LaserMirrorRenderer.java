@@ -10,7 +10,7 @@ import com.mojang.math.Axis;
 import dev.imabad.theatrical.TheatricalExpectPlatform;
 import dev.imabad.theatrical.blocks.HangableBlock;
 import dev.imabad.theatrical.client.LazyRenderers;
-import dev.imabad.theatrical.client.TheatricalRenderTypes;
+import com.github.dumann089.theatricalextralights.client.ExtraLightsRenderTypes;
 import com.github.dumann089.theatricalextralights.client.blockentities.ExtraLightsRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -129,7 +129,7 @@ public class LaserMirrorRenderer extends ExtraLightsRenderer<LaserMirrorBlockEnt
 
                     preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
 
-                    VertexConsumer beamConsumer = bufferSource.getBuffer(TheatricalRenderTypes.BEAM);
+                    VertexConsumer beamConsumer = bufferSource.getBuffer(ExtraLightsRenderTypes.BEAM);
 
                     float intensity = blockEntity.getDisplayIntensity(partialTick);
                     int color = blockEntity.getDisplayColour(partialTick);

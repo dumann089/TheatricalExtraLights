@@ -43,6 +43,9 @@ dependencies {
         modImplementation("com.lowdragmc.shimmer:Shimmer-fabric:${shimmer_version}") {
             exclude group: "maven.modrinth"
             exclude group: "com.jozufozu.flywheel"
+            exclude group: "dev.engine-room.flywheel"
+            exclude group: "dev.engine-room"
+            exclude group: "org.embeddedt"
         }
     }
 }

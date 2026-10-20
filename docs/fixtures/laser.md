@@ -2,7 +2,7 @@
 
 `theatricalextralights:laser` · family: [Lasers & effects](/fixtures/lasers-effects)
 
-Pattern laser with three colour groups, fourteen shapes and a persistence trail. Its screen carries the [emergency stop](/guide/lasers).
+Pattern laser with three colour groups, fourteen shapes and a realistic beam: thin collimated beams and scanned sheets that only show up in haze, with hot impacts on the geometry. See [Lasers](/guide/lasers#realistic-rendering). Its screen carries the [emergency stop](/guide/lasers).
 
 - Beam length and pass-through blocks: `laserBeamLength`, `laserPassThroughBlocks` in the [config file](/guide/config-file).
 - The emergency stop blocks the output whatever the DMX, is saved with the world and shown to every player.
@@ -67,6 +67,6 @@ Pattern laser with three colour groups, fourteen shapes and a persistence trail.
 
 **17 · Tilt** — Vertical aim, centred on 127. Higher values point down.
 
-**18 · Focus** — Beam sharpness. 0 is a hard-edged beam and a crisp projected image; 255 is soft. On fixtures without a separate zoom channel it also widens the cone slightly.
+**18 · Focus** — Beam divergence. 0 is a tight, collimated beam (about 1 mrad, a pinpoint impact even at 30 blocks); 255 opens it to a soft, wide beam with a blurred impact.
 
-**19 · Persistence** — Length of the trail left by moving beams on the client. 0 is a clean beam, higher values leave a longer afterglow like a slow camera shutter.
+**19 · Persistence** — Scan speed as the eye sees it. 0 shows the pattern as separate beams with a bright scan head running along them; 255 is a fast scan the eye fuses into a continuous sheet (cones, planes) with brighter corners where the scanner dwells.

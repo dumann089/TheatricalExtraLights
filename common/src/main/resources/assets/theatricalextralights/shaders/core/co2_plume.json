@@ -1,0 +1,43 @@
+{
+    "blend": {
+        "func": "add",
+        "srcrgb": "1",
+        "dstrgb": "1-srcalpha",
+        "srcalpha": "1",
+        "dstalpha": "1-srcalpha"
+    },
+    "vertex": "theatricalextralights:co2_plume",
+    "fragment": "theatricalextralights:co2_plume",
+    "attributes": [
+        "Position",
+        "Color",
+        "UV0"
+    ],
+    "samplers": [
+        { "name": "Sampler1" }
+    ],
+    "uniforms": [
+        { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+        { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+        { "name": "InvProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+        { "name": "ScreenSize", "type": "float", "count": 2, "values": [ 1920.0, 1080.0 ] },
+        { "name": "StepCount", "type": "int", "count": 1, "values": [ 32 ] },
+        { "name": "Time", "type": "float", "count": 1, "values": [ 0.0 ] },
+        { "name": "Nozzle", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
+        { "name": "Axis", "type": "float", "count": 3, "values": [ 0.0, 1.0, 0.0 ] },
+        { "name": "SideU", "type": "float", "count": 3, "values": [ 1.0, 0.0, 0.0 ] },
+        { "name": "SideV", "type": "float", "count": 3, "values": [ 0.0, 0.0, 1.0 ] },
+        { "name": "UpV", "type": "float", "count": 3, "values": [ 0.0, 1.0, 0.0 ] },
+        { "name": "PlumeLength", "type": "float", "count": 1, "values": [ 1.0 ] },
+        { "name": "CutFront", "type": "float", "count": 1, "values": [ -1.0 ] },
+        { "name": "Pressure", "type": "float", "count": 1, "values": [ 1.0 ] },
+        { "name": "Dissipate", "type": "float", "count": 1, "values": [ 0.0 ] },
+        { "name": "FlowClock", "type": "float", "count": 1, "values": [ 0.0 ] },
+        { "name": "ExitSpeed", "type": "float", "count": 1, "values": [ 0.85 ] },
+        { "name": "BaseFlow", "type": "float", "count": 1, "values": [ 1.0 ] },
+        { "name": "NozzleRadius", "type": "float", "count": 1, "values": [ 0.06 ] },
+        { "name": "FlashRadius", "type": "float", "count": 1, "values": [ 0.22 ] },
+        { "name": "ConeTan", "type": "float", "count": 1, "values": [ 0.105 ] },
+        { "name": "Brightness", "type": "float", "count": 1, "values": [ 1.0 ] }
+    ]
+}

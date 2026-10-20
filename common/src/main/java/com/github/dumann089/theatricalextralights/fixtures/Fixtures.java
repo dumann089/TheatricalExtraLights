@@ -27,8 +27,14 @@ public class Fixtures {
     public static final RegistrySupplier<Fixture> LASER =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "laser"), LaserFixture::new);
 
+    public static final RegistrySupplier<Fixture> LASER_PROJECTOR =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "laser_projector"), LaserProjectorFixture::new);
+
     public static final RegistrySupplier<Fixture> RGB_BAR =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "rgb_bar"), RGBbarFixture::new);
+
+    public static final RegistrySupplier<Fixture> CHCB4 =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "chcb4"), Chcb4Fixture::new);
       
     public static final RegistrySupplier<Fixture> VERTICAL_BAR =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "vertical_bar"), VerticalbarFixture::new);
@@ -242,6 +248,12 @@ public class Fixtures {
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "washled"), washledFixture::new);
     public static final RegistrySupplier<Fixture> MOVING_BAR =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "moving_bar"), MovingbarFixture::new);
+    public static final RegistrySupplier<Fixture> DENSE_RGB_BAR =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "dense_rgb_bar"), DenseRGBbarFixture::new);
+    public static final RegistrySupplier<Fixture> DENSE_VERTICAL_BAR =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "dense_vertical_bar"), DenseVerticalbarFixture::new);
+    public static final RegistrySupplier<Fixture> DENSE_MOVING_BAR =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "dense_moving_bar"), DenseMovingbarFixture::new);
     public static final RegistrySupplier<Fixture> MOVING_MINI_BAR =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "moving_mini_bar"), MovingMiniBarFixture::new);
 
@@ -437,6 +449,8 @@ public class Fixtures {
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "blinder2x2warm"), Blinder2x2warmFixture::new);
     public static final RegistrySupplier<Fixture> BLINDER1X1 =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "blinder1x1"), Blinder1x1Fixture::new);
+    public static final RegistrySupplier<Fixture> BLINDER1X2 =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "blinder1x2"), Blinder1x2Fixture::new);
     public static final RegistrySupplier<Fixture> MINI_BAR =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "mini_bar"), MiniBarFixture::new);
     public static final RegistrySupplier<Fixture> A1X1PAR64 =

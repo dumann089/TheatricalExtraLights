@@ -2,18 +2,25 @@ package com.github.dumann089.theatricalextralights.client.forge;
 
 import com.github.dumann089.theatricalextralights.TheatricalExtraLightsClient;
 import com.github.dumann089.theatricalextralights.client.ConfettiCannonClientSetup;
+import com.github.dumann089.theatricalextralights.client.ModKeybinds;
 import com.github.dumann089.theatricalextralights.client.ModShaders;
 import com.github.dumann089.theatricalextralights.client.gui.ExtraLightsSettingsScreen;
+import com.github.dumann089.theatricalextralights.client.render.beam.raymarch.SceneDepthCopy;
+import com.github.dumann089.theatricalextralights.client.render.laser.LaserRaymarchRenderer;
+import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.fml.ModLoadingContext;
 import com.github.dumann089.theatricalextralights.client.entities.FireworkRocketRenderer;
 import com.github.dumann089.theatricalextralights.entities.ModEntities;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.client.event.RegisterShadersEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
@@ -29,6 +36,10 @@ import java.io.IOException;
  * "Attempted to load class ... for invalid dist DEDICATED_SERVER" y el mod
  * fallaría al construirse. Sólo se referencia desde
  * {@code TheatricalExtraLightsForge} dentro de una comprobación de dist.
+ *
+ * <p>C'est le seul point d'entree client Forge : pas de seconde classe annotee
+ * {@code @Mod.EventBusSubscriber}, sinon {@link TheatricalExtraLightsClient#init()} tourne deux
+ * fois (raccourcis, recepteurs reseau et DAC Ether Dream enregistres en double).
  */
 public final class TheatricalExtraLightsForgeClient {
 
@@ -36,10 +47,15 @@ public final class TheatricalExtraLightsForgeClient {
     }
 
     public static void register(IEventBus modEventBus) {
+        // Avant RegisterKeyMappingsEvent : Architectury met la touche en file pour l'evenement au
+        // lieu de l'enregistrer apres coup avec un avertissement.
+        ModKeybinds.register();
         modEventBus.addListener(TheatricalExtraLightsForgeClient::clientSetup);
 
-        // RegisterClientCommandsEvent est diffuse sur le bus Forge, pas sur le bus du mod.
-        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(SettingsCommandForge::register);
+        // RegisterClientCommandsEvent et RenderLevelStageEvent sont diffuses sur le bus Forge,
+        // pas sur le bus du mod.
+        MinecraftForge.EVENT_BUS.addListener(SettingsCommandForge::register);
+        MinecraftForge.EVENT_BUS.addListener(TheatricalExtraLightsForgeClient::onRenderLevelStage);
 
         // Registramos el evento para cargar nuestros Shaders de GPU
         modEventBus.addListener(TheatricalExtraLightsForgeClient::registerShaders);
@@ -74,6 +90,24 @@ public final class TheatricalExtraLightsForgeClient {
         );
     }
 
+    /**
+     * Copie la profondeur juste apres les block entities, avant le translucide et les particules,
+     * pour les moteurs raymarch (faisceaux et laser). Pendant de BEFORE_BLOCK_OUTLINE cote Fabric.
+     */
+    private static void onRenderLevelStage(final RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
+            return;
+        }
+        boolean raymarch = TheatricalExtraLightsConfig.isRaymarchEngine() && ModShaders.canUseRaymarch();
+        boolean laser = LaserRaymarchRenderer.isAvailable();
+        if (!raymarch && !laser) {
+            return;
+        }
+        // Geometrie opaque des block entities dans la profondeur, mais pas les quads de
+        // faisceau 2D : ils troueraient les volumes qui passent derriere.
+        SceneDepthCopy.flushOpaqueAndCapture(Minecraft.getInstance().renderBuffers().bufferSource());
+    }
+
     private static void registerShaders(final RegisterShadersEvent event) {
         try {
             // 1. Shader Original del Gobo Projector
@@ -104,6 +138,57 @@ public final class TheatricalExtraLightsForgeClient {
                             DefaultVertexFormat.POSITION_COLOR_TEX
                     ),
                     shader -> ModShaders.beamRaymarchShader = shader
+            );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            new ResourceLocation(
+                                    "theatricalextralights",
+                                    "laser_raymarch"
+                            ),
+                            DefaultVertexFormat.POSITION_COLOR_TEX
+                    ),
+                    shader -> ModShaders.laserRaymarchShader = shader
+            );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            new ResourceLocation(
+                                    "theatricalextralights",
+                                    "glow_disc"
+                            ),
+                            DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP
+                    ),
+                    shader -> ModShaders.glowDiscShader = shader
+            );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            new ResourceLocation("theatricalextralights", "flame_volume"),
+                            DefaultVertexFormat.POSITION_COLOR_TEX
+                    ),
+                    shader -> ModShaders.flameVolumeShader = shader
+            );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            new ResourceLocation("theatricalextralights", "flame_heat"),
+                            DefaultVertexFormat.POSITION_COLOR_TEX
+                    ),
+                    shader -> ModShaders.flameHeatShader = shader
+            );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            new ResourceLocation("theatricalextralights", "co2_plume"),
+                            DefaultVertexFormat.POSITION_COLOR_TEX
+                    ),
+                    shader -> ModShaders.co2PlumeShader = shader
             );
         } catch (IOException e) {
             throw new RuntimeException("Error cargando los shaders para Theatrical Extra Lights", e);

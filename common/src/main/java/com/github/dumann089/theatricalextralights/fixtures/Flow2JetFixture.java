@@ -27,8 +27,8 @@ public class Flow2JetFixture extends Fixture {
 
     /** Pivot rotation — machine entière (pas la buse seule). */
     private final float[] rotationPivot = new float[]{0.5F, 11f / 16f, 0.5F};
-    /** Sortie buse — bas de l'ouverture Blockbench (y=10.5). */
-    private final float[] beamStartPosition = new float[]{8.5f / 16f, 10.5f / 16f, 13f / 16f};
+    /** Sortie buse — centre de la bouche du cube buse Blockbench (7.5..9.5, 11..13, 12..14). */
+    private final float[] beamStartPosition = new float[]{8.5f / 16f, 13f / 16f, 13f / 16f};
 
     @Override
     public ResourceLocation getTiltModel() {

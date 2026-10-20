@@ -39,6 +39,10 @@ public class Items {
             "rgb_bar",
             () -> new BlockItem(Blocks.RGB_BAR.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
     );
+    public static final RegistrySupplier<Item> CHCB4 = ITEMS.register(
+            "chcb4",
+            () -> new BlockItem(Blocks.CHCB4.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
     public static final RegistrySupplier<Item> MINI_BAR = ITEMS.register(
             "mini_bar",
             () -> new BlockItem(Blocks.MINI_BAR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
@@ -50,6 +54,18 @@ public class Items {
     public static final RegistrySupplier<Item> MOVING_BAR = ITEMS.register(
             "moving_bar",
             () -> new BlockItem(Blocks.MOVING_BAR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
+    public static final RegistrySupplier<Item> DENSE_RGB_BAR = ITEMS.register(
+            "dense_rgb_bar",
+            () -> new BlockItem(Blocks.DENSE_RGB_BAR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
+    public static final RegistrySupplier<Item> DENSE_VERTICAL_BAR = ITEMS.register(
+            "dense_vertical_bar",
+            () -> new BlockItem(Blocks.DENSE_VERTICAL_BAR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
+    public static final RegistrySupplier<Item> DENSE_MOVING_BAR = ITEMS.register(
+            "dense_moving_bar",
+            () -> new BlockItem(Blocks.DENSE_MOVING_BAR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
     );
     public static final RegistrySupplier<Item> MOVING_MINI_BAR = ITEMS.register(
             "moving_mini_bar",
@@ -87,6 +103,10 @@ public class Items {
            "laser",
            () -> new BlockItem(Blocks.LASER_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
     );
+    public static final RegistrySupplier<Item> LASER_PROJECTOR = ITEMS.register(
+           "laser_projector",
+           () -> new BlockItem(Blocks.LASER_PROJECTOR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
     public static final RegistrySupplier<Item> BLINDER = ITEMS.register(
             "blinder",
             () -> new BlockItem(Blocks.BLINDER.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
@@ -102,6 +122,10 @@ public class Items {
     public static final RegistrySupplier<Item> BLINDER1X1 = ITEMS.register(
             "blinder1x1",
             () -> new BlockItem(Blocks.BLINDER1X1_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
+    public static final RegistrySupplier<Item> BLINDER1X2 = ITEMS.register(
+            "blinder1x2",
+            () -> new BlockItem(Blocks.BLINDER1X2_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
     );
     public static final RegistrySupplier<Item> BLINDER_WARM = ITEMS.register(
             "blinder_warm",

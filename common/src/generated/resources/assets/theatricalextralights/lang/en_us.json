@@ -21,11 +21,14 @@
   "block.theatricalextralights.par_led": "LED Par",
   "block.theatricalextralights.rgb_bar": "RGB Bar",
   "block.theatricalextralights.vertical_bar": "Vertical RGB Bar",
+  "block.theatricalextralights.dense_rgb_bar": "Dense RGB Bar",
+  "block.theatricalextralights.dense_vertical_bar": "Dense Vertical RGB Bar",
+  "block.theatricalextralights.dense_moving_bar": "Dense Moving RGB Bar",
   "block.theatricalextralights.blinder": "Blinder 4x2",
   "block.theatricalextralights.laser": "Laser",
   "block.theatricalextralights.truss_3lights": "Truss 3x3 Lights",
   "block.theatricalextralights.strobe": "Strobe",
-  "block.theatricalextralights.atomic_strobe": "Atomic Strobe (34 Channels)",
+  "block.theatricalextralights.atomic_strobe": "Atomic Strobe",
   "block.theatricalextralights.beam_7r": "Beam 7r (7Ch/10Ch)",
   "block.theatricalextralights.mac_vip": "Mac Vip (7Ch/10Ch)",
   "block.theatricalextralights.sharplus": "Sharplus (7Ch/10Ch)",
@@ -82,7 +85,6 @@
   "block.theatricalextralights.a2x2par64_warm": "2x2 Par64 Warm",
   "block.theatricalextralights.a2x2par64_white": "2x2 Par64 White",
   "block.theatricalextralights.dwt_panel": "Moving Panel Par64 (DWT)",
-
   "block.theatricalextralights.bigscroller": "Big Scroller",
   "block.theatricalextralights.horizontalscroller": "Horizontal Scroller",
   "block.theatricalextralights.verticalscroller": "Vertical Scroller",
@@ -196,6 +198,8 @@
   "block.theatricalextralights.laser_mirror": "Laser Mirror",
   "block.theatricalextralights.parscroller": "Par64 (Scroller)",
   "block.theatricalextralights.blinder2x2": "2x2 Blinder",
+  "block.theatricalextralights.blinder1x1": "Blinder 1x1",
+  "block.theatricalextralights.blinder1x2": "Blinder 1x2",
   "block.theatricalextralights.blinder2x2warm": "2x2 Blinder (Warm)",
   "block.theatricalextralights.source_four_warm": "Source Four (Warm)",
   "block.theatricalextralights.mini_bar": "Mini RGB Bar",
@@ -221,26 +225,6 @@
   "block.theatricalextralights.truss_joint": "Mini Truss Cross",
   "block.theatricalextralights.truss_corner": "Mini Truss Corner (L)",
   "block.theatricalextralights.truss_corner_t": "Mini Truss Corner (T)",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   "itemGroup.theatricalextralights": "Theatrical: Extra Lights",
   "itemGroup.theatricalextralights.pyro": "Theatrical: Pyro",
   "itemGroup.theatricalextralights.misc": "Theatrical: Misc",
@@ -415,9 +399,49 @@
   "tel.settings.spotmax": "Max spot radius",
   "tel.settings.beam.note": "Density, max alpha and slices only apply to the Slices engine.",
   "tel.settings.spot.note": "Spot sized on cone angle x lit distance.",
+  "tel.settings.tab.laser": "Laser",
+  "tel.settings.laser.realistic": "Realistic laser",
+  "tel.settings.laser.impacts": "Impacts",
+  "tel.settings.laser.flicker": "Scan head",
+  "tel.settings.laser.etherdream": "Ether Dream DAC",
+  "tel.settings.laser.haze": "Haze",
+  "tel.settings.barbeam": "Bar beam intensity",
+  "tel.settings.barbeamlength": "Bar beam length",
+  "tel.settings.laser.brightness": "Laser brightness",
+  "tel.settings.laser.radius": "Beam radius",
+  "tel.settings.laser.detail": "Laser detail (segments)",
+  "tel.settings.laser.note": "Without haze only the impacts stay visible, as in real life.",
+  "tel.settings.tab.flames": "Flames",
+  "tel.settings.flames.volumetric": "Volumetric flames (experimental)",
+  "tel.settings.flames.heat": "Heat distortion",
+  "tel.settings.flames.flicker": "Flickering light",
+  "tel.settings.flames.brightness": "Flame brightness",
+  "tel.settings.flames.heatstrength": "Distortion strength",
+  "tel.settings.flames.note": "Bloom works with or without Shimmer. Heat distortion applies to volumetric flames.",
+  "screen.pyro.flame_style": "Style: %s",
+  "screen.pyro.flame_style.jet": "Jet",
+  "screen.pyro.flame_style.burst": "Burst",
+  "tel.settings.flamebloom": "Flame bloom",
+  "tel.settings.flamebloomstrength": "Bloom",
   "tel.command.config.opened": "Extra Lights settings opened.",
-  "screen.theatricalextralights.mount.reset": "Reset",
-
   "category.theatricalextralights": "Theatrical Extra Lights",
-  "key.theatricalextralights.config": "Open Configuration Menu"
+  "key.theatricalextralights.config": "Open Configuration Menu",
+  "block.theatricalextralights.chcb4": "Color Block DB4 (12ch)",
+  "block.theatricalextralights.laser_projector": "Ether Dream Laser Projector",
+  "screen.laser_projector.title": "Laser Projector",
+  "screen.laser_projector.status": "State: %s",
+  "screen.laser_projector.link": "Link: %s",
+  "screen.laser_projector.buffer": "Buffer: %s / %s pts",
+  "screen.laser_projector.rate": "PPS: %s · points: %s",
+  "screen.laser_projector.scan": "Scan angle: %s°",
+  "screen.laser_projector.scale": "Scale: %s",
+  "screen.laser_projector.save": "Save",
+  "screen.laser_projector.listening": "listening (Ether Dream)",
+  "screen.laser_projector.offline": "offline",
+  "screen.laser_projector.state.offline": "Offline",
+  "screen.laser_projector.state.idle": "Idle",
+  "screen.laser_projector.state.prepared": "Prepared",
+  "screen.laser_projector.state.playing": "Playing",
+  "screen.laser_projector.state.estop": "E-Stop",
+  "tel.settings.co2reach": "CO2 jet reach"
 }

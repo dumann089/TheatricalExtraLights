@@ -27,7 +27,7 @@ GREEN = ch("Green", "0 to 255", "Green component of the additive colour mix.")
 BLUE = ch("Blue", "0 to 255",
           "Blue component of the additive colour mix. With red and green at 255 too the light is white; all three at 0 gives a dark fixture even with the dimmer up.")
 FOCUS = ch("Focus", "0 to 255",
-           "Beam sharpness. 0 is a hard-edged beam and a crisp projected image; 255 is soft. On fixtures without a separate zoom channel it also widens the cone slightly.")
+           "Beam divergence. 0 is a tight, collimated beam (about 1 mrad, a pinpoint impact even at 30 blocks); 255 opens it to a soft, wide beam with a blurred impact.")
 FOCUS_CONE = ch("Focus", "0 tight to 255 wide",
                 "Cone width of the beam. Low values give a tight pencil beam, high values a wide wash. It also drives the size of the light spot on the ground.")
 PAN = ch("Pan", "0 to 255 = −180° to 180°",
@@ -94,7 +94,7 @@ LASER_CH = [
     ch("Pan", "0 to 255 = −80° to 80°", "Horizontal aim of the projector, 128 straight ahead."),
     ch("Tilt", "0 to 255 = 45° to −45°", "Vertical aim, centred on 127. Higher values point down."),
     FOCUS,
-    ch("Persistence", "0 to 255", "Length of the trail left by moving beams on the client. 0 is a clean beam, higher values leave a longer afterglow like a slow camera shutter."),
+    ch("Persistence", "0 to 255", "Scan speed as the eye sees it. 0 shows the pattern as separate beams with a bright scan head running along them; 255 is a fast scan the eye fuses into a continuous sheet (cones, planes) with brighter corners where the scanner dwells."),
 ]
 
 FIRE = ch("Fire", "0 idle, rising edge = one shot, 2 to 255 = 1 to 10 shots/s",
@@ -128,7 +128,57 @@ P_10CH_EXT = P("10ch - Extended", [INTENSITY, RED, GREEN, BLUE, FOCUS_CONE, PAN,
 P_4CH = P("4-Channel Mode", [INTENSITY, RED, GREEN, BLUE])
 P_4CH_IRGB = P("4-Channel iRGB", [INTENSITY, RED, GREEN, BLUE])
 P_1CH = P("1-Channel Mode", [INTENSITY], "The colour is fixed by the block.")
+
+def _lamp_channels(rows, cols):
+    """One dimmer per lamp, front view: top row first, left to right."""
+    out = []
+    for r in range(rows):
+        for c in range(cols):
+            k = r * cols + c + 1
+            row = "top" if r == 0 else ("bottom" if r == rows - 1 else f"row {r + 1}")
+            side = "left" if c == 0 else "right"
+            out.append(ch(f"Lamp {k}", "0 off to 255 full",
+                          f"Dimmer of lamp {k} ({row}, {side} seen from the front). The fixture's room light follows the brightest lamp."))
+    return out
+
+
+P_WARM2X2_PIXEL = P("4-Channel Pixel Mode", _lamp_channels(2, 2),
+                    "One channel per lamp, seen from the front: top row first, left to right. The colour is fixed by the block.")
+P_WARM4X2_PIXEL = P("8-Channel Pixel Mode", _lamp_channels(4, 2),
+                    "One channel per lamp, seen from the front: top row first, left to right. The colour is fixed by the block.")
 P_1CH_JET = P("1-Channel Mode", [INTENSITY_JET], "Height, thickness and, where available, cone angle or spread are set in the fixture screen, not on DMX.")
+
+def _pixel_channels(count):
+    out = []
+    for n in range(1, count + 1):
+        out += [ch(f"Pixel {n} dimmer", "0 off to 255 full", f"Dimmer of pixel {n}. 0 turns the pixel off whatever its colour. There is no master dimmer in this mode; the dynamic light in the room follows the brightest pixel."),
+                ch(f"Pixel {n} red", "0 to 255", f"Red of pixel {n}."),
+                ch(f"Pixel {n} green", "0 to 255", f"Green of pixel {n}."),
+                ch(f"Pixel {n} blue", "0 to 255", f"Blue of pixel {n}.")]
+    return out
+
+
+def _pixel_note(count, order):
+    return (f"Pixels are numbered 1 to {count} {order}. Each pixel lights its cell and its LED dot; a single lit pixel throws one thin sheet of light into "
+            f"the haze, and neighbouring lit pixels of the same colour merge into one sheet that widens with them. There is no master dimmer: to fade the whole bar, "
+            f"select the fixture and use its dimmer. A ready-made [grandMA2 fixture file](/guide/grandma2) exists for this mode, "
+            f"with the pixels as sub-fixtures 1.1 to 1.{count}.")
+
+
+P_RGBBAR_PIXEL = P("36-Channel Pixel Mode (9x Dim/RGB)", _pixel_channels(9),
+                   _pixel_note(9, "from left to right, seen from the front of the bar"))
+P_VBAR_PIXEL = P("36-Channel Pixel Mode (9x Dim/RGB)", _pixel_channels(9),
+                 _pixel_note(9, "from the bottom to the top of the bar as it stands"))
+P_DRGBBAR_PIXEL = P("184-Channel Pixel Mode (46x Dim/RGB)", _pixel_channels(46),
+                    _pixel_note(46, "from left to right, seen from the front of the bar"))
+P_DVBAR_PIXEL = P("184-Channel Pixel Mode (46x Dim/RGB)", _pixel_channels(46),
+                  _pixel_note(46, "from the bottom to the top of the bar as it stands"))
+P_DMBAR_PIXEL = P("98-Channel Pixel Mode (Pan, Tilt + 24x Dim/RGB)", [PAN, TILT] + _pixel_channels(24),
+                  _pixel_note(24, "from left to right, seen from the front of the head")
+                  + " Pan and tilt sit on the main fixture, channels 1 and 2, with the same ranges as the 7-Channel Mode; there is no focus channel.")
+P_MBAR_PIXEL = P("34-Channel Pixel Mode (Pan, Tilt + 8x Dim/RGB)", [PAN, TILT] + _pixel_channels(8),
+                 _pixel_note(8, "from left to right, seen from the front of the head")
+                 + " Pan and tilt sit on the main fixture, channels 1 and 2, with the same ranges as the 7-Channel Mode; there is no focus channel.")
 
 COLOR_PRESETS = ["Red", "Green", "Blue", "Yellow", "Orange", "Purple", "Magenta", "Lightblue", "White"]
 P_PRESETS = [P(c, [ch("Intensity", "0 off to 255 full", f"Master dimmer of the fixed {c.lower()} colour.")]) for c in COLOR_PRESETS] + \
@@ -201,17 +251,31 @@ for id_, name, intro in [
     ("washlight", "Wash FX648", "LED wash moving head."),
     ("washled", "Wash Led", "Compact LED wash moving head."),
     ("miniwash", "Mini Wash", "Small LED wash moving head."),
-    ("moving_bar", "Moving Bar", "Tilting LED bar with a wash texture."),
 ]:
     FIXTURES.append(F(id_, name, "Moving heads & beams", intro, [P_7CH_ONLY], MH_NOTES))
+FIXTURES.append(F("moving_bar", "Moving Bar", "Moving heads & beams", "Tilting LED bar with eight pixels and a wash texture.",
+                  [P_7CH_ONLY, P_MBAR_PIXEL], MH_NOTES))
+FIXTURES.append(F("dense_moving_bar", "Dense Moving RGB Bar", "Moving heads & beams", "The Moving Bar with twenty-four pixels, one every sixteenth of a block, for fine chases and gradients.",
+                  [P_7CH_ONLY, P_DMBAR_PIXEL], MH_NOTES))
 
 _FAMILY = "Moving heads & beams"
+ATOMIC_TILT_CH = ch("Tilt", "0 to 255", "Tilt of the yoke over its full travel.")
+ATOMIC_BAR = [
+    ch("Intensity", "0 to 255", "Flash intensity."),
+    ch("Flash duration", "0 to 255", "Length of each flash, 12 ms at 0 to 650 ms at 255."),
+    ch("Flash rate", "0 to 255", "0 stops the strobe (as on the real unit); 1 to 255 runs 0.5 to 25 flashes a second."),
+    ch("Effects", "0 to 255", "0-9 plain strobe; 10-39 blinder, lamp on continuously; 40-69 ramp up; 70-99 ramp down; "
+                              "100-129 ramp up and down; 130-159 random; 160-189 lightning bursts; 190-219 spikes; "
+                              "220-255 sparkle (each bar segment flashes on its own in the pixel modes)."),
+]
+ATOMIC_NOTES = ["Every flash is timed from the game clock, so all clients see the same flashes. A flash shorter than a frame still shows for one frame.",
+                "The room light follows the flashes tick by tick."]
 FIXTURES.append(F("atomictilt", "Atomic Tilt", "A strobe head on a tilting yoke, no pan.", [
-    P("6-Channel RGB + Focus + Tilt", [INTENSITY, RED, GREEN, BLUE, FOCUS_CONE,
-                                       ch("Tilt", "0 to 255", "Tilt of the yoke over its full travel.")]),
-    P("7-Channel RGB + Focus + Strobe + Tilt", [INTENSITY, RED, GREEN, BLUE, FOCUS_CONE, STROBE,
-                                                ch("Tilt", "0 to 255", "Tilt of the yoke over its full travel.")]),
-]))
+    P("6-Channel RGB + Focus + Tilt", [INTENSITY, RED, GREEN, BLUE, FOCUS_CONE, ATOMIC_TILT_CH]),
+    P("7-Channel RGB + Focus + Strobe + Tilt", [INTENSITY, RED, GREEN, BLUE, FOCUS_CONE, STROBE, ATOMIC_TILT_CH]),
+    P("6-Channel Atomic + Focus + Tilt", ATOMIC_BAR + [FOCUS_CONE, ATOMIC_TILT_CH], "White head driven like a Martin Atomic: intensity, duration, rate, effects."),
+    P("9-Channel Atomic RGB + Focus + Tilt", ATOMIC_BAR + [RED, GREEN, BLUE, FOCUS_CONE, ATOMIC_TILT_CH], "The Atomic engine with a colour."),
+], ATOMIC_NOTES))
 MMB_BEAM = lambda n: [ch(f"Beam {n} intensity", "0 to 255", f"Dimmer of beam {n} (1 is at one end of the bar, 7 at the other)."),
                       ch(f"Beam {n} tilt", "0 to 255", f"Tilt of beam {n}."),
                       ch(f"Beam {n} red", "0 to 255", f"Red of beam {n}."),
@@ -272,12 +336,14 @@ for id_, name, intro in [("a1x1par64", "2x2 Par64 (Block/Color Preset)", "Block 
                          ("a6x3par64_vertical", "6x3 Par64 Vertical (Color Preset)", "Vertical array of eighteen PAR 64 cans.")]:
     FIXTURES.append(F(id_, name, "PARs & LED panels", intro + " Nine one-channel colour presets or a four-channel RGB mode.", P_PRESETS,
                       ["Pick the colour as a personality when the desk only has one dimmer channel to spare, or iRGB for free mixing."]))
-for id_, name, intro in [("par_led", "LED Par", "LED PAR with colour mixing."), ("led_panel_2", "LED Panel 2", "Flat LED panel."),
-                         ("big_panel", "Big Panel 3x3", "Nine-cell LED panel, driven as one."), ("big_panel2", "Big Panel 3x2", "Six-cell LED panel, driven as one."),
-                         ("rgb_bar", "RGB Bar", "Horizontal LED bar with a soft glow whose reach is `rgbBarBeamLength` in the config."),
-                         ("vertical_bar", "Vertical RGB Bar", "Vertical LED bar."), ("mini_bar", "Mini RGB Bar", "Short LED bar."),
-                         ("truss_3lights", "Truss 3x3 Lights", "Truss piece with nine built-in lights, driven as one.")]:
-    FIXTURES.append(F(id_, name, "PARs & LED panels", intro, [P_4CH]))
+for id_, name, intro, pers in [("par_led", "LED Par", "LED PAR with colour mixing.", [P_4CH]), ("led_panel_2", "LED Panel 2", "Flat LED panel, driven as one or as a 4x4 or 8x8 pixel grid.", [P_4CH, P("64-Channel Pixel Mode (4x4 Dim/RGB)", _pixel_channels(16), "Sixteen pixels, row by row from the top, left to right seen from the front."), P("256-Channel Pixel Mode (8x8 Dim/RGB)", _pixel_channels(64), "Sixty-four pixels, row by row from the top, left to right seen from the front.")]),
+                               ("big_panel", "Big Panel 3x3", "Nine-cell LED panel, driven as one.", [P_4CH]), ("big_panel2", "Big Panel 3x2", "Six-cell LED panel, driven as one.", [P_4CH]),
+                               ("rgb_bar", "RGB Bar", "Horizontal LED bar with nine pixels and a soft glow whose reach is `rgbBarBeamLength` in the config.", [P_4CH, P_RGBBAR_PIXEL]),
+                               ("vertical_bar", "Vertical RGB Bar", "Vertical LED bar with nine pixels.", [P_4CH, P_VBAR_PIXEL]), ("mini_bar", "Mini RGB Bar", "Short LED bar.", [P_4CH]),
+                               ("dense_rgb_bar", "Dense RGB Bar", "The RGB Bar with forty-six pixels, about one every sixteenth of a block, for fine chases, gradients and pixel-mapped effects. Adjacent dense bars fuse their haze sheets.", [P_4CH, P_DRGBBAR_PIXEL]),
+                               ("dense_vertical_bar", "Dense Vertical RGB Bar", "The Vertical RGB Bar with forty-six pixels, one every sixteenth of a block.", [P_4CH, P_DVBAR_PIXEL]),
+                               ("truss_3lights", "Truss 3x3 Lights", "Truss piece with nine built-in lights, driven as one.", [P_4CH])]:
+    FIXTURES.append(F(id_, name, "PARs & LED panels", intro, pers))
 FIXTURES.append(F("led_facade", "LED Facade", "A pixel-mapped LED wall. Paint the lit pixels in its screen, choose the resolution and smoothing, and drive every pixel from the desk.", [
     P("4-Channel Pixel (per lit pixel)", [ch("Pixel dimmer", "0 to 255", "Dimmer of this pixel."), ch("Pixel red", "0 to 255", "Red of this pixel."),
                                           ch("Pixel green", "0 to 255", "Green of this pixel."), ch("Pixel blue", "0 to 255", "Blue of this pixel.")],
@@ -293,8 +359,10 @@ FIXTURES += [
     F("blinder2x2", "2x2 Blinder", "Four-lamp blinder with colour mixing.", [P_4CH_IRGB]),
     F("blinder1x1", "Blinder 1x1", "Single-lamp blinder with colour mixing and a strobe channel.",
       [P("5-Channel iRGB + Strobe", [INTENSITY, RED, GREEN, BLUE, STROBE])]),
-    F("blinder_warm", "Blinder (warm)", "Eight-lamp blinder, fixed warm tungsten.", [P_1CH]),
-    F("blinder2x2warm", "2x2 Blinder (Warm)", "Four-lamp blinder, fixed warm tungsten.", [P_1CH]),
+    F("blinder1x2", "Blinder 1x2", "Two-lamp blinder, the 1x1 head doubled on one yoke, with colour mixing and a strobe channel.",
+      [P("5-Channel iRGB + Strobe", [INTENSITY, RED, GREEN, BLUE, STROBE])]),
+    F("blinder_warm", "Blinder (warm)", "Eight-lamp blinder, fixed warm tungsten.", [P_1CH, P_WARM4X2_PIXEL]),
+    F("blinder2x2warm", "2x2 Blinder (Warm)", "Four-lamp blinder, fixed warm tungsten.", [P_1CH, P_WARM2X2_PIXEL]),
     F("strobe", "Strobe", "Stage strobe with four ways to patch it.", [
         P("4-Channel Legacy", [INTENSITY, RED, GREEN, BLUE], "Always open; the desk makes the flashes with the dimmer."),
         P("5-Channel Focus", [INTENSITY, RED, GREEN, BLUE, ch("Focus", "1 to 255", "Size of the light spot on the ground: about 3 blocks at 1, about 20 blocks at 255.")]),
@@ -302,12 +370,38 @@ FIXTURES += [
         P("3-Channel Strobe RGB Only", [RED, GREEN, BLUE], "Intensity and focus are fixed and the shutter is always open: the fixture flashes continuously and you only choose the colour."),
     ], ["Flashes its face; it has no beam."]),
     F("white_strobe", "White Strobe (1 Channel)", "Simple white strobe.", [P_1CH]),
-    F("atomic_strobe", "Atomic Strobe (34 Channels)", "Large LED strobe with eight RGB zones and a nine-segment white bar, on a floor plate with a tilting yoke.", [
-        P("34-Channel Atomic", sum(([ch(f"Zone {z} red", "0 to 255", f"Red of RGB zone {z}."), ch(f"Zone {z} green", "0 to 255", f"Green of RGB zone {z}."),
-                                     ch(f"Zone {z} blue", "0 to 255", f"Blue of RGB zone {z}.")] for z in range(1, 9)), [])
+    F("atomic_strobe", "Atomic Strobe", "LED strobe in the Atomic style: a nine-segment white strobe bar between two plates of four RGB zones, on a U yoke with a floor plate.", [
+        P("34-Channel Pixel (Legacy)", sum(([ch(f"Zone {z} red", "0 to 255", f"Red of RGB zone {z}."), ch(f"Zone {z} green", "0 to 255", f"Green of RGB zone {z}."),
+                                             ch(f"Zone {z} blue", "0 to 255", f"Blue of RGB zone {z}.")] for z in range(1, 9)), [])
           + [ch(f"White bar segment {s}", "0 to 255", f"Level of white bar segment {s}.") for s in range(1, 10)]
           + [ch("Focus", "1 to 255", "Size of the light spot on the ground.")],
-          "The room light takes the brightest emitter as level and an intensity-weighted mix of every lit emitter as colour, with the white bar weighted heavier.")]),
+          "The original layout, everything lit continuously at its level. Kept first so fixtures placed before the modes existed keep working."),
+        P("1-Channel Strobe", [ch("Strobe", "0 to 255", "0 off; 1 to 254 flash rate, slow to fast, with a short flash; 255 lamp on continuously.")],
+          "White bar only."),
+        P("4-Channel Atomic", ATOMIC_BAR, "White bar only, driven like a Martin Atomic 3000."),
+        P("8-Channel Atomic + Aura", ATOMIC_BAR + [ch("Aura intensity", "0 to 255", "Level of the RGB plates, lit continuously as a backlight."),
+                                                    ch("Aura red", "0 to 255", "Red of the aura."), ch("Aura green", "0 to 255", "Green of the aura."),
+                                                    ch("Aura blue", "0 to 255", "Blue of the aura.")],
+          "The Atomic 3000 LED layout: the strobe bar plus the RGB plates as one coloured glow around it."),
+        P("10-Channel Compressed (Bar + Plate)", ATOMIC_BAR + [ch("Plate intensity", "0 to 255", "Level of the RGB plates."),
+                                                              ch("Plate flash duration", "0 to 255", "Flash length of the plates, 12 ms to 650 ms."),
+                                                              ch("Plate flash rate", "0 to 255", "0 leaves the plates on continuously; 1 to 255 strobes them at 0.5 to 25 Hz."),
+                                                              ch("Plate red", "0 to 255", "Red of all eight zones."), ch("Plate green", "0 to 255", "Green of all eight zones."),
+                                                              ch("Plate blue", "0 to 255", "Blue of all eight zones.")],
+          "All eight RGB zones act as one pixel with its own strobe, next to the bar."),
+        P("40-Channel Pixel (Bar + Plate)", ATOMIC_BAR + [ch(f"Bar segment {s}", "0 to 255", f"Level of white bar segment {s} under the bar's flashes.") for s in range(1, 10)]
+          + [ch("Plate intensity", "0 to 255", "Level of the RGB plates."), ch("Plate flash duration", "0 to 255", "Flash length of the plates."),
+             ch("Plate flash rate", "0 to 255", "0 continuous; 1 to 255 strobes the plates.")]
+          + sum(([ch(f"Zone {z} red", "0 to 255", f"Red of RGB zone {z}."), ch(f"Zone {z} green", "0 to 255", f"Green of RGB zone {z}."),
+                  ch(f"Zone {z} blue", "0 to 255", f"Blue of RGB zone {z}.")] for z in range(1, 9)), []),
+          "Every segment and every zone on its own channel; the sparkle effect flashes segments individually."),
+        P("400-Channel Pixel Map (Bar + 96 Pixels)", ATOMIC_BAR + [ch(f"Bar segment {s}", "0 to 255", f"Level of white bar segment {s} under the bar's flashes.") for s in range(1, 10)]
+          + [ch("Plate intensity", "0 to 255", "Level of the RGB plates."), ch("Plate flash duration", "0 to 255", "Flash length of the plates."),
+             ch("Plate flash rate", "0 to 255", "0 continuous; 1 to 255 strobes the plates.")]
+          + sum(([ch(f"Pixel {p} dim", "0 to 255", f"Dimmer of pixel {p}."), ch(f"Pixel {p} red", "0 to 255", f"Red of pixel {p}."),
+                  ch(f"Pixel {p} green", "0 to 255", f"Green of pixel {p}."), ch(f"Pixel {p} blue", "0 to 255", f"Blue of pixel {p}.")] for p in range(1, 97)), []),
+          "Each plate is a grid of 12 columns by 4 rows. Pixels 1 to 48 are the top plate, 49 to 96 the bottom plate, row by row from the top, left to right, four channels each. Fits one universe."),
+    ], ATOMIC_NOTES),
 ]
 
 # Laser
@@ -369,8 +463,8 @@ FIXTURES.append(F("pyro_fan", "Pyro Fan — 10 Comets", "Ten tubes firing gold c
       "Rate 0.5 to 6 shots per second, tubes scheduled round-robin, up to 10 launches per tick.")],
     ["Found in the Theatrical: Pyro tab."]))
 FIXTURES.append(F("flame_projector", "Flame Projector", "Vertical flame column.", [
-    P("2-Channel Flame Projector", [ch("Flame length", "0 off to 255 full", "Height of the flame and the trigger: 0 is off."),
-                                    ch("Head angle", "0 to 255", "Tilt of the flame head.")])], PYRO_NOTE))
+    P("2-Channel Flame Projector", [ch("Flame", "0 off to 255 full", "Trigger and brightness of the flame column: 0 is off."),
+                                    ch("Flame height", "0 to 255", "Height of the column, about 1 block at 0 to 6 blocks at 255.")])], PYRO_NOTE))
 FIXTURES.append(F("flame_thrower", "Flame Thrower", "Directed flame jet.", [
     P("2-Channel Flame Thrower", [ch("Flame", "0 off to 255 full", "Length of the jet and the trigger."), ch("Pan", "0 to 255", "Horizontal direction of the jet.")])], PYRO_NOTE))
 FIXTURES.append(F("gerb_gold", "Gold Gerb (Ground Fountain)", "Stage gerb, a gold spark fountain.", [

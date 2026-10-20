@@ -11,5 +11,6 @@ public enum TheatricalExtraLightsScreens {
     FOLLOWSPOT_CONSOLE,
     LED_FACADE,
     LASER,
-    PYRO;
+    PYRO,
+    LASER_PROJECTOR;
 }

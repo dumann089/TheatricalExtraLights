@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.client.gui;
 
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
+import com.github.dumann089.theatricalextralights.laser.dac.LaserDacRuntime;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
@@ -52,9 +53,11 @@ public class ExtraLightsSettingsScreen extends Screen {
     private static final int TAB_GENERAL = 0;
     private static final int TAB_BEAM = 1;
     private static final int TAB_SPOT = 2;
+    private static final int TAB_LASER = 3;
+    private static final int TAB_FLAMES = 4;
 
     private static final String[] TAB_KEYS = {
-            "tel.settings.tab.general", "tel.settings.tab.beam", "tel.settings.tab.spot"
+            "tel.settings.tab.general", "tel.settings.tab.beam", "tel.settings.tab.spot", "tel.settings.tab.laser", "tel.settings.tab.flames"
     };
 
     private static final String[] ENGINES = {"RAYMARCH", "LEGACY_SLICES"};
@@ -110,6 +113,8 @@ public class ExtraLightsSettingsScreen extends Screen {
         switch (tab) {
             case TAB_GENERAL -> buildGeneralTab(y, half);
             case TAB_SPOT -> buildSpotTab(y, half);
+            case TAB_LASER -> buildLaserTab(y, half);
+            case TAB_FLAMES -> buildFlamesTab(y, half);
             default -> buildBeamTab(y, half);
         }
 
@@ -167,6 +172,9 @@ public class ExtraLightsSettingsScreen extends Screen {
         addRenderableWidget(toggle(contentLeft, y, half, "tel.settings.beam2d",
                 TheatricalExtraLightsConfig::shouldRender2DBeam,
                 TheatricalExtraLightsConfig::setRender2DBeam));
+        addRenderableWidget(slider(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.barbeam",
+                0f, 4f, TheatricalExtraLightsConfig.getRgbBarBeamIntensity(), 1, "x",
+                TheatricalExtraLightsConfig::setRgbBarBeamIntensity));
         y += widgetHeight + rowGap;
 
         addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.brightness",
@@ -189,14 +197,20 @@ public class ExtraLightsSettingsScreen extends Screen {
                 TheatricalExtraLightsConfig::setMaxGoboDistance));
         y += widgetHeight + rowGap;
 
-        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.gobobrightness",
-                0f, 4f, TheatricalExtraLightsConfig.getGoboBrightness(), 2, " x",
-                TheatricalExtraLightsConfig::setGoboBrightness));
+        addRenderableWidget(toggle(contentLeft, y, half, "tel.settings.flamebloom",
+                TheatricalExtraLightsConfig::isFlameBloomEnabled,
+                TheatricalExtraLightsConfig::setFlameBloom));
+        addRenderableWidget(slider(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.flamebloomstrength",
+                0.1f, 3f, TheatricalExtraLightsConfig.getFlameBloomStrength(), 1, "",
+                TheatricalExtraLightsConfig::setFlameBloomStrength));
         y += widgetHeight + rowGap;
 
-        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.gobosurfacetint",
-                0f, 1f, TheatricalExtraLightsConfig.getGoboSurfaceTint(), 2, "",
-                TheatricalExtraLightsConfig::setGoboSurfaceTint));
+        addRenderableWidget(slider(contentLeft, y, half, "tel.settings.co2reach",
+                0.5f, 3f, TheatricalExtraLightsConfig.getCo2JetReach(), 1, "x",
+                TheatricalExtraLightsConfig::setCo2JetReach));
+        addRenderableWidget(slider(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.barbeamlength",
+                1f, 64f, TheatricalExtraLightsConfig.getRgbBarBeamLength(), 1, " m",
+                TheatricalExtraLightsConfig::setRgbBarBeamLength));
     }
 
     // Onglet Faisceau ------------------------------------------------------
@@ -251,6 +265,100 @@ public class ExtraLightsSettingsScreen extends Screen {
         addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.spotmax",
                 4f, 128f, TheatricalExtraLightsConfig.getSpotMaxRadius(), 0, " m",
                 TheatricalExtraLightsConfig::setSpotMaxRadius));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.gobobrightness",
+                0f, 4f, TheatricalExtraLightsConfig.getGoboBrightness(), 2, " x",
+                TheatricalExtraLightsConfig::setGoboBrightness));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.gobosurfacetint",
+                0f, 1f, TheatricalExtraLightsConfig.getGoboSurfaceTint(), 2, "",
+                TheatricalExtraLightsConfig::setGoboSurfaceTint));
+    }
+
+    // Onglet Laser ---------------------------------------------------------
+
+    private static final String[] FLAME_QUALITIES = {"LOW", "MEDIUM", "HIGH", "ULTRA"};
+
+    private void buildFlamesTab(int y, int half) {
+        addRenderableWidget(toggle(contentLeft, y, half, "tel.settings.flames.volumetric",
+                TheatricalExtraLightsConfig::isVolumetricFlamesEnabled,
+                TheatricalExtraLightsConfig::setVolumetricFlames));
+        addRenderableWidget(cycle(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.quality", FLAME_QUALITIES,
+                TheatricalExtraLightsConfig::getFlameQuality,
+                TheatricalExtraLightsConfig::setFlameQuality));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(toggle(contentLeft, y, half, "tel.settings.flames.heat",
+                TheatricalExtraLightsConfig::isFlameHeatDistortionEnabled,
+                TheatricalExtraLightsConfig::setFlameHeatDistortion));
+        addRenderableWidget(toggle(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.flames.flicker",
+                TheatricalExtraLightsConfig::isFlameLightFlickerEnabled,
+                TheatricalExtraLightsConfig::setFlameLightFlicker));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.flames.brightness",
+                0.2f, 3f, TheatricalExtraLightsConfig.getFlameBrightness(), 2, "",
+                TheatricalExtraLightsConfig::setFlameBrightness));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.flames.heatstrength",
+                0f, 3f, TheatricalExtraLightsConfig.getFlameHeatStrength(), 2, "",
+                TheatricalExtraLightsConfig::setFlameHeatStrength));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(toggle(contentLeft, y, half, "tel.settings.flamebloom",
+                TheatricalExtraLightsConfig::isFlameBloomEnabled,
+                TheatricalExtraLightsConfig::setFlameBloom));
+        addRenderableWidget(slider(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.flamebloomstrength",
+                0.1f, 3f, TheatricalExtraLightsConfig.getFlameBloomStrength(), 1, "",
+                TheatricalExtraLightsConfig::setFlameBloomStrength));
+    }
+
+    private void buildLaserTab(int y, int half) {
+        addRenderableWidget(toggle(contentLeft, y, half, "tel.settings.laser.realistic",
+                TheatricalExtraLightsConfig::isLaserRealistic,
+                TheatricalExtraLightsConfig::setLaserRealistic));
+        addRenderableWidget(toggle(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.laser.impacts",
+                TheatricalExtraLightsConfig::isLaserImpactsEnabled,
+                TheatricalExtraLightsConfig::setLaserImpacts));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(toggle(contentLeft, y, half, "tel.settings.laser.flicker",
+                TheatricalExtraLightsConfig::isLaserScanFlickerEnabled,
+                TheatricalExtraLightsConfig::setLaserScanFlicker));
+        addRenderableWidget(toggle(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.laser.etherdream",
+                TheatricalExtraLightsConfig::isEtherDreamEnabled,
+                enabled -> {
+                    TheatricalExtraLightsConfig.setEtherDreamEnabled(enabled);
+                    if (enabled) {
+                        LaserDacRuntime.start();
+                    } else {
+                        LaserDacRuntime.stop();
+                    }
+                }));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.laser.haze",
+                0f, 1f, TheatricalExtraLightsConfig.getLaserHaze(), 2, "",
+                TheatricalExtraLightsConfig::setLaserHaze));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.laser.brightness",
+                0.05f, 4f, TheatricalExtraLightsConfig.getLaserBrightness(), 2, "",
+                TheatricalExtraLightsConfig::setLaserBrightness));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.laser.radius",
+                0.2f, 6f, TheatricalExtraLightsConfig.getLaserBeamRadiusCm(), 1, " cm",
+                TheatricalExtraLightsConfig::setLaserBeamRadiusCm));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.laser.detail",
+                16f, (float) TheatricalExtraLightsConfig.MAX_LASER_SEGMENTS,
+                TheatricalExtraLightsConfig.getLaserDacMaxRays(), 0, "",
+                v -> TheatricalExtraLightsConfig.setLaserDacMaxRays(Math.round(v))));
     }
 
     // Widgets --------------------------------------------------------------
@@ -331,6 +439,12 @@ public class ExtraLightsSettingsScreen extends Screen {
                     contentLeft, noteY, COLOR_NOTE, false);
         } else if (tab == TAB_SPOT) {
             graphics.drawString(this.font, Component.translatable("tel.settings.spot.note"),
+                    contentLeft, noteY, COLOR_NOTE, false);
+        } else if (tab == TAB_LASER) {
+            graphics.drawString(this.font, Component.translatable("tel.settings.laser.note"),
+                    contentLeft, noteY, COLOR_NOTE, false);
+        } else if (tab == TAB_FLAMES) {
+            graphics.drawString(this.font, Component.translatable("tel.settings.flames.note"),
                     contentLeft, noteY, COLOR_NOTE, false);
         }
 

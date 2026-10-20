@@ -81,12 +81,38 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         INSTANCE.enqueue(data);
     }
 
-    private void enqueue(BeamRenderData data) {
-        if (!TheatricalExtraLightsConfig.isVolumetricBeamEnabled() || data.intensity() <= 0.0f) {
+    /**
+     * Faisceau dont la couleur varie le long de sa largeur : {@code colorRampTexture} est une
+     * texture GL d'une ligne, lue par le shader selon la position en U (nappes des barres LED).
+     */
+    public static void submit(BeamRenderData data, int colorRampTexture) {
+        submit(data, colorRampTexture, 0f);
+    }
+
+    /**
+     * @param maxLength longueur voulue du faisceau (reglage de l'appareil), 0 = jusqu'a l'obstacle.
+     *                  Plus courte que l'obstacle, le faisceau s'eteint en fondu a cette longueur au
+     *                  lieu de s'arreter net contre un bloc.
+     */
+    public static void submit(BeamRenderData data, int colorRampTexture, float maxLength) {
+        BeamSlot slot = INSTANCE.enqueue(data);
+        if (slot == null) {
             return;
         }
+        slot.colorRampTexture = colorRampTexture;
+        if (maxLength > 0f && data.scanLen() > maxLength) {
+            slot.scanLen = maxLength;
+            slot.hitBlock = false;
+            slot.fadeLength = Math.max(0.5f, maxLength * 0.45f);
+        }
+    }
+
+    private BeamSlot enqueue(BeamRenderData data) {
+        if (!TheatricalExtraLightsConfig.isVolumetricBeamEnabled() || data.intensity() <= 0.0f) {
+            return null;
+        }
         if (!ModShaders.canUseRaymarch()) {
-            return;
+            return null;
         }
 
         if (this.activeBeamCount == 0) {
@@ -96,14 +122,14 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
 
         int maxBeams = Math.min(MAX_BEAMS, Math.max(1, TheatricalExtraLightsConfig.getRaymarchMaxBeamsPerFrame()));
         if (this.activeBeamCount >= maxBeams) {
-            return;
+            return null;
         }
 
         float maxDist = TheatricalExtraLightsConfig.getVolumetricBeamDistance();
         boolean hitBlock = data.scanLen() < maxDist;
         float scanLen = hitBlock ? data.scanLen() + 2.5f : maxDist;
         if (scanLen <= 0.0f) {
-            return;
+            return null;
         }
 
         BeamSlot s = slots[this.activeBeamCount];
@@ -137,7 +163,10 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         s.localOriginX = (float) data.origin().x;
         s.localOriginY = (float) data.origin().y;
         s.localOriginZ = (float) data.origin().z;
+        s.colorRampTexture = 0;
+        s.fadeLength = -1f;
         this.activeBeamCount++;
+        return s;
     }
 
     @Override
@@ -147,7 +176,8 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 return;
             }
 
-            SceneDepthCopy.capture();
+            SceneDepthCopy.flushOpaqueAndCapture(bufferSource);
+            bufferSource.endBatch();
             if (!SceneDepthCopy.hasDepth() || ModShaders.beamRaymarchShader == null) {
                 drawStackedFallback(bufferSource, poseStack, camera);
                 return;
@@ -241,9 +271,10 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 shader.safeGetUniform("MaxAlpha").set(maxAlpha);
                 shader.safeGetUniform("Brightness").set(brightness);
                 shader.safeGetUniform("Anisotropy").set(anisotropy);
-                shader.safeGetUniform("FadeLength").set(s.hitBlock ? 0.0f : fadeLen);
+                shader.safeGetUniform("FadeLength").set(s.hitBlock ? 0.0f : (s.fadeLength >= 0f ? s.fadeLength : fadeLen));
                 shader.safeGetUniform("DustAmount").set(dust);
                 shader.safeGetUniform("GoboRotation").set(s.goboRotation);
+                shader.safeGetUniform("ColorRamp").set(s.colorRampTexture != 0 ? 1.0f : 0.0f);
                 shader.safeGetUniform("WheelTransition").set(s.wheelTransition);
                 FramingShutterRender.applyUniforms(shader, s.shutters);
                 applyAnimationUniforms(shader, s.animation);
@@ -256,7 +287,7 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 // Grade sem nenhum bloco solido e sem entidades: o shader leria zero em todas as
                 // amostras e devolveria 1.0 (sem sombra). ShadowEnabled=0 devolve o mesmo 1.0, mas
                 // sem as ate 32 leituras de textura por passo do raymarch.
-                if (shadows != null && !shadows.anySolid() && shadows.boxes().isEmpty()) {
+                if (shadows != null && !shadows.solidAny() && shadows.boxes().isEmpty()) {
                     shadows = null;
                 }
                 applyShadowUniforms(shader, shadows);
@@ -293,6 +324,11 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                     RenderSystem.setShaderTexture(4, OPEN_GOBO);
                     shader.setSampler("Sampler4", RenderSystem.getShaderTexture(4));
                 }
+
+                // Rampe de couleur des barres LED ; sinon la texture du gobo, pour un sampler valide.
+                int rampTex = s.colorRampTexture != 0 ? s.colorRampTexture : goboTex;
+                RenderSystem.setShaderTexture(5, rampTex);
+                shader.setSampler("Sampler5", rampTex);
 
                 shader.apply();
 
@@ -335,6 +371,9 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
             return;
         }
         shader.safeGetUniform("ShadowEnabled").set(1.0f);
+        shader.safeGetUniform("SolidAny").set(snap.solidAny() ? 1.0f : 0.0f);
+        shader.safeGetUniform("SolidMin").set((float) snap.solidMin().x, (float) snap.solidMin().y, (float) snap.solidMin().z);
+        shader.safeGetUniform("SolidMax").set((float) snap.solidMax().x, (float) snap.solidMax().y, (float) snap.solidMax().z);
         shader.safeGetUniform("VoxelOrigin").set((float) snap.gridOrigin().x, (float) snap.gridOrigin().y, (float) snap.gridOrigin().z);
         shader.safeGetUniform("VoxelCell").set(snap.cell());
         shader.safeGetUniform("VoxelSize").set((float) snap.size());
@@ -389,10 +428,15 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         double distToVolume = Math.max(0.0, radial - radius);
 
         int beamSteps = qualitySteps;
-        if (distToVolume < 2.0) {
-            beamSteps = Math.max(4, qualitySteps / 4);
-        } else if (distToVolume < 8.0) {
-            beamSteps = Math.max(4, (qualitySteps * 2) / 5);
+        // Une nappe de barre (rampe de couleur) n'est marchee que sur son epaisseur : la marche est
+        // courte quelle que soit la distance, et la reduction de proximite ne faisait que degrader
+        // la haze quand on s'approche.
+        if (s.colorRampTexture == 0) {
+            if (distToVolume < 2.0) {
+                beamSteps = Math.max(4, qualitySteps / 4);
+            } else if (distToVolume < 8.0) {
+                beamSteps = Math.max(4, (qualitySteps * 2) / 5);
+            }
         }
 
         double mx = s.originX + s.dirX * s.scanLen * 0.5 - camPos.x;
@@ -564,7 +608,84 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         vc.vertex((double) x, (double) y, (double) z).color(255, 255, 255, 255).uv(u, v).endVertex();
     }
 
+    /**
+     * Boite qui declenche le shader : orientee le long du faisceau quand ses axes forment un
+     * repere orthonorme, sinon la boite alignee sur le monde d'origine. Le shader ne retient que
+     * les echantillons a 0 <= z <= longueur et |u| <= r * WidthScale, |v| <= r * HeightScale
+     * avec r = max(BaseRadius, z * tan) : tout pixel qui contribue voit son rayon traverser
+     * cette boite, les autres etaient rejetes par le shader. Meme image, beaucoup moins de
+     * pixels traites pour un faisceau en diagonale.
+     */
     private static void drawConeProxy(BufferBuilder vc, Matrix4f mat, BeamSlot s, float endRadius) {
+        if (drawOrientedProxy(vc, mat, s)) {
+            return;
+        }
+        drawAlignedProxy(vc, mat, s, endRadius);
+    }
+
+    private static boolean drawOrientedProxy(BufferBuilder vc, Matrix4f mat, BeamSlot s) {
+        double dl = Math.sqrt(s.dirX * s.dirX + s.dirY * s.dirY + s.dirZ * s.dirZ);
+        double ul = Math.sqrt(s.uX * s.uX + s.uY * s.uY + s.uZ * s.uZ);
+        double vl = Math.sqrt(s.vX * s.vX + s.vY * s.vY + s.vZ * s.vZ);
+        if (dl < 1.0e-6 || ul < 1.0e-6 || vl < 1.0e-6) {
+            return false;
+        }
+        double dx = s.dirX / dl, dy = s.dirY / dl, dz = s.dirZ / dl;
+        double ux = s.uX / ul, uy = s.uY / ul, uz = s.uZ / ul;
+        double vx = s.vX / vl, vy = s.vY / vl, vz = s.vZ / vl;
+        // Hors repere orthonorme, la zone du shader n'est plus un pave : boite du monde.
+        if (Math.abs(dx * ux + dy * uy + dz * uz) > 1.0e-3
+                || Math.abs(dx * vx + dy * vy + dz * vz) > 1.0e-3
+                || Math.abs(ux * vx + uy * vy + uz * vz) > 1.0e-3) {
+            return false;
+        }
+        // Repere direct pour garder le sens des faces (elles sont dessinees de l'interieur).
+        double det = ux * (vy * dz - vz * dy) - uy * (vx * dz - vz * dx) + uz * (vx * dy - vy * dx);
+        if (det < 0.0) {
+            ux = -ux;
+            uy = -uy;
+            uz = -uz;
+        }
+        double r = Math.max(s.baseRadius, s.scanLen * Math.max(s.tanHalfAngle, 1.0e-5f));
+        double hu = r * Math.max(s.widthScale, 0.05f);
+        double hv = r * Math.max(s.heightScale, 0.05f);
+        double pad = 0.25 + 0.05 * Math.max(hu, hv);
+        hu += pad;
+        hv += pad;
+        double z0 = -pad;
+        double z1 = s.scanLen + pad;
+
+        float[][] c = new float[8][];
+        int i = 0;
+        for (int iz = 0; iz < 2; iz++) {
+            for (int iy = 0; iy < 2; iy++) {
+                for (int ix = 0; ix < 2; ix++) {
+                    double a = ix == 0 ? -hu : hu;
+                    double b = iy == 0 ? -hv : hv;
+                    double z = iz == 0 ? z0 : z1;
+                    c[i++] = new float[]{
+                            (float) (s.originX + ux * a + vx * b + dx * z),
+                            (float) (s.originY + uy * a + vy * b + dy * z),
+                            (float) (s.originZ + uz * a + vz * b + dz * z)};
+                }
+            }
+        }
+        // Memes six faces, meme sens que la boite alignee : x -> U, y -> V, z -> direction.
+        // Indice d'un coin : x + 2 y + 4 z (0 = min, 1 = max).
+        emitQuad(vc, mat, c[6], c[7], c[5], c[4]);
+        emitQuad(vc, mat, c[3], c[2], c[0], c[1]);
+        emitQuad(vc, mat, c[7], c[3], c[1], c[5]);
+        emitQuad(vc, mat, c[2], c[6], c[4], c[0]);
+        emitQuad(vc, mat, c[2], c[3], c[7], c[6]);
+        emitQuad(vc, mat, c[4], c[5], c[1], c[0]);
+        return true;
+    }
+
+    private static void emitQuad(BufferBuilder vc, Matrix4f mat, float[] p0, float[] p1, float[] p2, float[] p3) {
+        emitQuad(vc, mat, p0[0], p0[1], p0[2], p1[0], p1[1], p1[2], p2[0], p2[1], p2[2], p3[0], p3[1], p3[2]);
+    }
+
+    private static void drawAlignedProxy(BufferBuilder vc, Matrix4f mat, BeamSlot s, float endRadius) {
         float startR = Math.max(s.baseRadius, 0.05f) * Math.max(s.widthScale, s.heightScale);
         float pad = Math.max(startR, endRadius) * 1.15f + 0.25f;
 
@@ -621,7 +742,11 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         public ResourceLocation goboTexture;
         public ResourceLocation nextGoboTexture;
         public float goboRotation;
+        /** Texture GL d'une ligne lue le long de la largeur (barres LED), 0 = aucune. */
+        public int colorRampTexture;
         public float wheelTransition;
+        /** Fondu de fin propre au faisceau, -1 = reglage general. */
+        public float fadeLength = -1f;
         public FramingShutterState.Snapshot shutters;
         public BeamRenderData.Animation animation;
         public boolean hitBlock;

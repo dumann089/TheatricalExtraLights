@@ -11,17 +11,18 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.Collections;
 import java.util.List;
 
 public class LEDPanel2Fixture extends Fixture {
 
-    private static final List<DMXPersonality> PERSONALITIES = Collections.singletonList(
+    private static final List<DMXPersonality> PERSONALITIES = List.of(
             new DMXPersonality(4, "4-Channel Mode")
                     .addSlot(SharedSlots.INTENSITY)
                     .addSlot(SharedSlots.RED)
                     .addSlot(SharedSlots.GREEN)
-                    .addSlot(SharedSlots.BLUE)
+                    .addSlot(SharedSlots.BLUE),
+            PixelBarPersonalities.addPixels(new DMXPersonality(64, "64-Channel Pixel Mode (4x4 Dim/RGB)"), 16),
+            PixelBarPersonalities.addPixels(new DMXPersonality(256, "256-Channel Pixel Mode (8x8 Dim/RGB)"), 64)
     );
 
     private static final ResourceLocation TILT_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/ledpanel/led_panel_body");

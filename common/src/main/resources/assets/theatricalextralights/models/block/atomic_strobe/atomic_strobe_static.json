@@ -1,6 +1,11 @@
 {
-	"credit": "Theatrical Extra Lights",
-	"textures": {
-		"particle": "theatricalextralights:block/atomic_strobe/atomic_face_base"
-	}
+  "credit": "Theatrical Extra Lights, tools/models/gen_atomic_strobe.py",
+  "texture_size": [
+    16,
+    16
+  ],
+  "textures": {
+    "particle": "theatricalextralights:block/atomic_strobe/atomic_face_base"
+  },
+  "elements": []
 }
