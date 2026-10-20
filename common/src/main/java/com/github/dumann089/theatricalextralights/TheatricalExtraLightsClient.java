@@ -160,7 +160,8 @@ public class TheatricalExtraLightsClient {
 
 
         BlockEntityRendererRegistry.register(BlockEntities.CONFETTI_CANNON.get(), ConfettiCannonRenderer::new);
-        BlockEntityRendererRegistry.register(BlockEntities.FLAME_PROJECTOR.get(), ctx -> new StaticFixtureRenderer<>(ctx));
+        BlockEntityRendererRegistry.register(BlockEntities.FLAME_PROJECTOR.get(),
+                com.github.dumann089.theatricalextralights.client.blockentities.FlameProjectorRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.FLAME_THROWER.get(), FlameThrowerRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.FLOW2JET.get(), Flow2JetRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.GERB_GOLD.get(), ctx -> new StaticFixtureRenderer<>(ctx));

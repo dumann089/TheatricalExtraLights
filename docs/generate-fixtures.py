@@ -449,8 +449,8 @@ FIXTURES.append(F("pyro_fan", "Pyro Fan — 10 Comets", "Ten tubes firing gold c
       "Rate 0.5 to 6 shots per second, tubes scheduled round-robin, up to 10 launches per tick.")],
     ["Found in the Theatrical: Pyro tab."]))
 FIXTURES.append(F("flame_projector", "Flame Projector", "Vertical flame column.", [
-    P("2-Channel Flame Projector", [ch("Flame length", "0 off to 255 full", "Height of the flame and the trigger: 0 is off."),
-                                    ch("Head angle", "0 to 255", "Tilt of the flame head.")])], PYRO_NOTE))
+    P("2-Channel Flame Projector", [ch("Flame", "0 off to 255 full", "Trigger and brightness of the flame column: 0 is off."),
+                                    ch("Flame height", "0 to 255", "Height of the column, about 1 block at 0 to 6 blocks at 255.")])], PYRO_NOTE))
 FIXTURES.append(F("flame_thrower", "Flame Thrower", "Directed flame jet.", [
     P("2-Channel Flame Thrower", [ch("Flame", "0 off to 255 full", "Length of the jet and the trigger."), ch("Pan", "0 to 255", "Horizontal direction of the jet.")])], PYRO_NOTE))
 FIXTURES.append(F("gerb_gold", "Gold Gerb (Ground Fountain)", "Stage gerb, a gold spark fountain.", [

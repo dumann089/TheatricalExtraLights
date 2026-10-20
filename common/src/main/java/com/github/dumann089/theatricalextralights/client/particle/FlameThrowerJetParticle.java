@@ -39,7 +39,10 @@ public class FlameThrowerJetParticle extends TextureSheetParticle {
         this.sprites = sprites;
 
         Vec3 axis = normalizeDirection(dirX, dirY, dirZ);
-        float speed = 0.62f + random.nextFloat() * 0.45f;
+        // La longueur du vecteur direction regle la portee du jet (1 = lance-flammes plein).
+        double magnitude = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+        float reach = magnitude > 1.0e-4 ? (float) Math.max(0.2, Math.min(2.0, magnitude)) : 1f;
+        float speed = (0.62f + random.nextFloat() * 0.45f) * reach;
         Vec3 lateral = randomDiskOffset(axis, random, CONE_SPREAD * (0.65f + random.nextFloat() * 0.55f));
 
         xd = axis.x * speed + lateral.x;

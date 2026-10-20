@@ -357,7 +357,17 @@
   "tel.settings.laser.radius": "Strahlradius",
   "tel.settings.laser.detail": "Laser-Detail (Segmente)",
   "tel.settings.laser.note": "Ohne Dunst bleiben nur die Auftreffpunkte sichtbar, wie in echt.",
+  "tel.settings.tab.flames": "Flammen",
+  "tel.settings.flames.volumetric": "Volumenflammen (experimentell)",
+  "tel.settings.flames.heat": "Hitzeflimmern",
+  "tel.settings.flames.flicker": "Flackerndes Licht",
+  "tel.settings.flames.brightness": "Flammenhelligkeit",
+  "tel.settings.flames.heatstrength": "Flimmerstärke",
+  "tel.settings.flames.note": "Bloom mit oder ohne Shimmer. Hitzeflimmern nur bei Volumenflammen.",
+  "screen.pyro.flame_style": "Stil: %s",
+  "screen.pyro.flame_style.jet": "Jet",
+  "screen.pyro.flame_style.burst": "Burst",
   "tel.settings.flamebloom": "Flammen-Bloom",
-  "tel.settings.co2reach": "Reichweite CO₂-Jet",
-  "tel.settings.flamebloomstrength": "Bloom"
+  "tel.settings.flamebloomstrength": "Bloom",
+  "tel.settings.co2reach": "Reichweite CO₂-Jet"
 }

@@ -80,6 +80,19 @@ public class TheatricalExtraLightsConfig {
     /** Bloom des flammes (post-process sans shaderpack). */
     private Boolean flameBloom = true;
     private Float flameBloomStrength = 1.0f;
+    /**
+     * Flammes en volume (shader, experimental) au lieu des particules. Nouvelle cle, coupee par
+     * defaut : l'ancienne {@code realisticFlames} etait a true dans les configs existantes.
+     */
+    private Boolean volumetricFlames = false;
+    /** LOW, MEDIUM, HIGH, ULTRA : pas de marche et octaves de turbulence. */
+    private String flameQuality = "HIGH";
+    private Float flameBrightness = 1.0f;
+    /** Distorsion de chaleur : copie de l'image par image quand une flamme est visible. */
+    private Boolean flameHeatDistortion = true;
+    private Float flameHeatStrength = 1.0f;
+    /** Lumiere dynamique qui vacille avec la flamme (reconstruit les chunks autour, a 6 Hz). */
+    private Boolean flameLightFlicker = true;
     private Integer fireworkSmokeBudgetPerTick = 24;
     private Integer fireworkSmokeSpawnInterval = 3;
 
@@ -374,6 +387,48 @@ public class TheatricalExtraLightsConfig {
     public static double getFireworkRenderDistance() { return INSTANCE.fireworkRenderDistance != null ? INSTANCE.fireworkRenderDistance : 2048.0; }
     public static boolean useFireworkDynamicRenderDistance() { return INSTANCE.fireworkDynamicRenderDistance == null || INSTANCE.fireworkDynamicRenderDistance; }
     public static boolean isFireworkDynamicLightEnabled() { return INSTANCE.fireworkDynamicLightEnabled == null || INSTANCE.fireworkDynamicLightEnabled; }
+    public static boolean isVolumetricFlamesEnabled() { return INSTANCE.volumetricFlames != null && INSTANCE.volumetricFlames; }
+    public static void setVolumetricFlames(boolean value) { INSTANCE.volumetricFlames = value; save(); }
+    public static String getFlameQuality() { return INSTANCE.flameQuality != null ? INSTANCE.flameQuality : "HIGH"; }
+    public static void setFlameQuality(String value) {
+        String q = value == null ? "HIGH" : value.trim().toUpperCase();
+        INSTANCE.flameQuality = switch (q) {
+            case "LOW", "MEDIUM", "ULTRA" -> q;
+            default -> "HIGH";
+        };
+        save();
+    }
+    public static int getFlameSteps() {
+        return switch (getFlameQuality().trim().toUpperCase()) {
+            case "LOW" -> 12;
+            case "MEDIUM" -> 18;
+            case "ULTRA" -> 40;
+            default -> 26;
+        };
+    }
+    public static int getFlameNoiseOctaves() {
+        return switch (getFlameQuality().trim().toUpperCase()) {
+            case "LOW" -> 2;
+            case "MEDIUM" -> 3;
+            case "ULTRA" -> 5;
+            default -> 4;
+        };
+    }
+    public static float getFlameBrightness() {
+        float v = INSTANCE.flameBrightness != null ? INSTANCE.flameBrightness : 1.0f;
+        return Math.max(0.2f, Math.min(3.0f, v));
+    }
+    public static void setFlameBrightness(float value) { INSTANCE.flameBrightness = Math.max(0.2f, Math.min(3.0f, value)); save(); }
+    public static boolean isFlameHeatDistortionEnabled() { return INSTANCE.flameHeatDistortion == null || INSTANCE.flameHeatDistortion; }
+    public static void setFlameHeatDistortion(boolean value) { INSTANCE.flameHeatDistortion = value; save(); }
+    public static float getFlameHeatStrength() {
+        float v = INSTANCE.flameHeatStrength != null ? INSTANCE.flameHeatStrength : 1.0f;
+        return Math.max(0.0f, Math.min(3.0f, v));
+    }
+    public static void setFlameHeatStrength(float value) { INSTANCE.flameHeatStrength = Math.max(0.0f, Math.min(3.0f, value)); save(); }
+    public static boolean isFlameLightFlickerEnabled() { return INSTANCE.flameLightFlicker == null || INSTANCE.flameLightFlicker; }
+    public static void setFlameLightFlicker(boolean value) { INSTANCE.flameLightFlicker = value; save(); }
+
     public static boolean isFlameBloomEnabled() { return INSTANCE.flameBloom == null || INSTANCE.flameBloom; }
     public static void setFlameBloom(boolean value) { INSTANCE.flameBloom = value; save(); }
     public static float getFlameBloomStrength() {

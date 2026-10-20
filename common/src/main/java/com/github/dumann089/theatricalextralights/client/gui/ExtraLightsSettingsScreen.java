@@ -54,9 +54,10 @@ public class ExtraLightsSettingsScreen extends Screen {
     private static final int TAB_BEAM = 1;
     private static final int TAB_SPOT = 2;
     private static final int TAB_LASER = 3;
+    private static final int TAB_FLAMES = 4;
 
     private static final String[] TAB_KEYS = {
-            "tel.settings.tab.general", "tel.settings.tab.beam", "tel.settings.tab.spot", "tel.settings.tab.laser"
+            "tel.settings.tab.general", "tel.settings.tab.beam", "tel.settings.tab.spot", "tel.settings.tab.laser", "tel.settings.tab.flames"
     };
 
     private static final String[] ENGINES = {"RAYMARCH", "LEGACY_SLICES"};
@@ -113,6 +114,7 @@ public class ExtraLightsSettingsScreen extends Screen {
             case TAB_GENERAL -> buildGeneralTab(y, half);
             case TAB_SPOT -> buildSpotTab(y, half);
             case TAB_LASER -> buildLaserTab(y, half);
+            case TAB_FLAMES -> buildFlamesTab(y, half);
             default -> buildBeamTab(y, half);
         }
 
@@ -264,6 +266,43 @@ public class ExtraLightsSettingsScreen extends Screen {
 
     // Onglet Laser ---------------------------------------------------------
 
+    private static final String[] FLAME_QUALITIES = {"LOW", "MEDIUM", "HIGH", "ULTRA"};
+
+    private void buildFlamesTab(int y, int half) {
+        addRenderableWidget(toggle(contentLeft, y, half, "tel.settings.flames.volumetric",
+                TheatricalExtraLightsConfig::isVolumetricFlamesEnabled,
+                TheatricalExtraLightsConfig::setVolumetricFlames));
+        addRenderableWidget(cycle(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.quality", FLAME_QUALITIES,
+                TheatricalExtraLightsConfig::getFlameQuality,
+                TheatricalExtraLightsConfig::setFlameQuality));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(toggle(contentLeft, y, half, "tel.settings.flames.heat",
+                TheatricalExtraLightsConfig::isFlameHeatDistortionEnabled,
+                TheatricalExtraLightsConfig::setFlameHeatDistortion));
+        addRenderableWidget(toggle(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.flames.flicker",
+                TheatricalExtraLightsConfig::isFlameLightFlickerEnabled,
+                TheatricalExtraLightsConfig::setFlameLightFlicker));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.flames.brightness",
+                0.2f, 3f, TheatricalExtraLightsConfig.getFlameBrightness(), 2, "",
+                TheatricalExtraLightsConfig::setFlameBrightness));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.flames.heatstrength",
+                0f, 3f, TheatricalExtraLightsConfig.getFlameHeatStrength(), 2, "",
+                TheatricalExtraLightsConfig::setFlameHeatStrength));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(toggle(contentLeft, y, half, "tel.settings.flamebloom",
+                TheatricalExtraLightsConfig::isFlameBloomEnabled,
+                TheatricalExtraLightsConfig::setFlameBloom));
+        addRenderableWidget(slider(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.flamebloomstrength",
+                0.1f, 3f, TheatricalExtraLightsConfig.getFlameBloomStrength(), 1, "",
+                TheatricalExtraLightsConfig::setFlameBloomStrength));
+    }
+
     private void buildLaserTab(int y, int half) {
         addRenderableWidget(toggle(contentLeft, y, half, "tel.settings.laser.realistic",
                 TheatricalExtraLightsConfig::isLaserRealistic,
@@ -390,6 +429,9 @@ public class ExtraLightsSettingsScreen extends Screen {
                     contentLeft, noteY, COLOR_NOTE, false);
         } else if (tab == TAB_LASER) {
             graphics.drawString(this.font, Component.translatable("tel.settings.laser.note"),
+                    contentLeft, noteY, COLOR_NOTE, false);
+        } else if (tab == TAB_FLAMES) {
+            graphics.drawString(this.font, Component.translatable("tel.settings.flames.note"),
                     contentLeft, noteY, COLOR_NOTE, false);
         }
 
