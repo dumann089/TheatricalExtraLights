@@ -20,6 +20,7 @@ public class ModShaders {
     public static ShaderInstance volumetricBeamShader;
     public static ShaderInstance beamRaymarchShader;
     public static ShaderInstance laserRaymarchShader;
+    public static ShaderInstance glowDiscShader;
     public static ShaderInstance flameVolumeShader;
     public static ShaderInstance flameHeatShader;
     public static ShaderInstance co2PlumeShader;
@@ -141,9 +142,17 @@ public class ModShaders {
     }
 
     /** Le laser realiste partage les prerequis du raymarch : shader charge, pas d'Iris. */
+    /**
+     * Disques de lueur en un quad ({@code glow_disc}) : hors shaderpack seulement, Iris remplace
+     * les shaders core et le chemin maille d'origine reste celui qu'il sait dessiner.
+     */
     /** Flammes en volume : shader charge et pas de shaderpack (Iris remplace les shaders core). */
     public static boolean canUseFlames() {
         return flameVolumeShader != null && !isIrisShaderpackActive();
+    }
+
+    public static boolean canUseGlowDisc() {
+        return glowDiscShader != null && !isIrisShaderpackActive();
     }
 
     public static boolean canUseLaserRaymarch() {

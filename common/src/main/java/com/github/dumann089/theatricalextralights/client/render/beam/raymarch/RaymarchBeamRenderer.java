@@ -288,7 +288,7 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 // Grade sem nenhum bloco solido e sem entidades: o shader leria zero em todas as
                 // amostras e devolveria 1.0 (sem sombra). ShadowEnabled=0 devolve o mesmo 1.0, mas
                 // sem as ate 32 leituras de textura por passo do raymarch.
-                if (shadows != null && !shadows.anySolid() && shadows.boxes().isEmpty()) {
+                if (shadows != null && !shadows.solidAny() && shadows.boxes().isEmpty()) {
                     shadows = null;
                 }
                 applyShadowUniforms(shader, shadows);
@@ -372,6 +372,9 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
             return;
         }
         shader.safeGetUniform("ShadowEnabled").set(1.0f);
+        shader.safeGetUniform("SolidAny").set(snap.solidAny() ? 1.0f : 0.0f);
+        shader.safeGetUniform("SolidMin").set((float) snap.solidMin().x, (float) snap.solidMin().y, (float) snap.solidMin().z);
+        shader.safeGetUniform("SolidMax").set((float) snap.solidMax().x, (float) snap.solidMax().y, (float) snap.solidMax().z);
         shader.safeGetUniform("VoxelOrigin").set((float) snap.gridOrigin().x, (float) snap.gridOrigin().y, (float) snap.gridOrigin().z);
         shader.safeGetUniform("VoxelCell").set(snap.cell());
         shader.safeGetUniform("VoxelSize").set((float) snap.size());
@@ -606,7 +609,84 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         vc.vertex((double) x, (double) y, (double) z).color(255, 255, 255, 255).uv(u, v).endVertex();
     }
 
+    /**
+     * Boite qui declenche le shader : orientee le long du faisceau quand ses axes forment un
+     * repere orthonorme, sinon la boite alignee sur le monde d'origine. Le shader ne retient que
+     * les echantillons a 0 <= z <= longueur et |u| <= r * WidthScale, |v| <= r * HeightScale
+     * avec r = max(BaseRadius, z * tan) : tout pixel qui contribue voit son rayon traverser
+     * cette boite, les autres etaient rejetes par le shader. Meme image, beaucoup moins de
+     * pixels traites pour un faisceau en diagonale.
+     */
     private static void drawConeProxy(BufferBuilder vc, Matrix4f mat, BeamSlot s, float endRadius) {
+        if (drawOrientedProxy(vc, mat, s)) {
+            return;
+        }
+        drawAlignedProxy(vc, mat, s, endRadius);
+    }
+
+    private static boolean drawOrientedProxy(BufferBuilder vc, Matrix4f mat, BeamSlot s) {
+        double dl = Math.sqrt(s.dirX * s.dirX + s.dirY * s.dirY + s.dirZ * s.dirZ);
+        double ul = Math.sqrt(s.uX * s.uX + s.uY * s.uY + s.uZ * s.uZ);
+        double vl = Math.sqrt(s.vX * s.vX + s.vY * s.vY + s.vZ * s.vZ);
+        if (dl < 1.0e-6 || ul < 1.0e-6 || vl < 1.0e-6) {
+            return false;
+        }
+        double dx = s.dirX / dl, dy = s.dirY / dl, dz = s.dirZ / dl;
+        double ux = s.uX / ul, uy = s.uY / ul, uz = s.uZ / ul;
+        double vx = s.vX / vl, vy = s.vY / vl, vz = s.vZ / vl;
+        // Hors repere orthonorme, la zone du shader n'est plus un pave : boite du monde.
+        if (Math.abs(dx * ux + dy * uy + dz * uz) > 1.0e-3
+                || Math.abs(dx * vx + dy * vy + dz * vz) > 1.0e-3
+                || Math.abs(ux * vx + uy * vy + uz * vz) > 1.0e-3) {
+            return false;
+        }
+        // Repere direct pour garder le sens des faces (elles sont dessinees de l'interieur).
+        double det = ux * (vy * dz - vz * dy) - uy * (vx * dz - vz * dx) + uz * (vx * dy - vy * dx);
+        if (det < 0.0) {
+            ux = -ux;
+            uy = -uy;
+            uz = -uz;
+        }
+        double r = Math.max(s.baseRadius, s.scanLen * Math.max(s.tanHalfAngle, 1.0e-5f));
+        double hu = r * Math.max(s.widthScale, 0.05f);
+        double hv = r * Math.max(s.heightScale, 0.05f);
+        double pad = 0.25 + 0.05 * Math.max(hu, hv);
+        hu += pad;
+        hv += pad;
+        double z0 = -pad;
+        double z1 = s.scanLen + pad;
+
+        float[][] c = new float[8][];
+        int i = 0;
+        for (int iz = 0; iz < 2; iz++) {
+            for (int iy = 0; iy < 2; iy++) {
+                for (int ix = 0; ix < 2; ix++) {
+                    double a = ix == 0 ? -hu : hu;
+                    double b = iy == 0 ? -hv : hv;
+                    double z = iz == 0 ? z0 : z1;
+                    c[i++] = new float[]{
+                            (float) (s.originX + ux * a + vx * b + dx * z),
+                            (float) (s.originY + uy * a + vy * b + dy * z),
+                            (float) (s.originZ + uz * a + vz * b + dz * z)};
+                }
+            }
+        }
+        // Memes six faces, meme sens que la boite alignee : x -> U, y -> V, z -> direction.
+        // Indice d'un coin : x + 2 y + 4 z (0 = min, 1 = max).
+        emitQuad(vc, mat, c[6], c[7], c[5], c[4]);
+        emitQuad(vc, mat, c[3], c[2], c[0], c[1]);
+        emitQuad(vc, mat, c[7], c[3], c[1], c[5]);
+        emitQuad(vc, mat, c[2], c[6], c[4], c[0]);
+        emitQuad(vc, mat, c[2], c[3], c[7], c[6]);
+        emitQuad(vc, mat, c[4], c[5], c[1], c[0]);
+        return true;
+    }
+
+    private static void emitQuad(BufferBuilder vc, Matrix4f mat, float[] p0, float[] p1, float[] p2, float[] p3) {
+        emitQuad(vc, mat, p0[0], p0[1], p0[2], p1[0], p1[1], p1[2], p2[0], p2[1], p2[2], p3[0], p3[1], p3[2]);
+    }
+
+    private static void drawAlignedProxy(BufferBuilder vc, Matrix4f mat, BeamSlot s, float endRadius) {
         float startR = Math.max(s.baseRadius, 0.05f) * Math.max(s.widthScale, s.heightScale);
         float pad = Math.max(startR, endRadius) * 1.15f + 0.25f;
 

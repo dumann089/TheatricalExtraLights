@@ -69,6 +69,10 @@ uniform vec3 VoxelOrigin;   // coin min de la grille, monde
 uniform float VoxelCell;    // taille d'une cellule, blocs
 uniform float VoxelSize;    // cellules par axe
 uniform float OccCount;
+// Boite des cellules solides de la grille (monde), voir beam_raymarch.fsh.
+uniform float SolidAny;
+uniform vec3 SolidMin;
+uniform vec3 SolidMax;
 uniform vec3 OccMin0;
 uniform vec3 OccMax0;
 uniform vec3 OccMin1;
@@ -131,17 +135,30 @@ float shadowFactor(vec3 wp, vec3 lightW, float startOffset) {
     if (OccCount > 5.5 && segmentHitsBox(wp, lightW, OccMin5, OccMax5)) return 0.0;
     if (OccCount > 6.5 && segmentHitsBox(wp, lightW, OccMin6, OccMax6)) return 0.0;
     if (OccCount > 7.5 && segmentHitsBox(wp, lightW, OccMin7, OccMax7)) return 0.0;
+    if (SolidAny < 0.5) return 1.0;
     vec3 dirL = toL / len;
     float start = min(startOffset, len * 0.5);
     float span = len - start - VoxelCell * 0.75;   // on s'arrete avant la cellule de la source
     if (span <= 0.0) return 1.0;
     int steps = int(clamp(ceil(span / (VoxelCell * 0.9)), 2.0, 32.0));
     float ds = span / float(steps);
-    vec3 p = wp + dirL * (start + ds * 0.5);
+
+    // Seulement la portion du trajet qui traverse la boite des cellules solides.
+    vec3 dd = vec3(
+        abs(dirL.x) < 1.0e-6 ? 1.0e-6 : dirL.x,
+        abs(dirL.y) < 1.0e-6 ? 1.0e-6 : dirL.y,
+        abs(dirL.z) < 1.0e-6 ? 1.0e-6 : dirL.z);
+    vec3 b0 = (SolidMin - 0.01 - wp) / dd;
+    vec3 b1 = (SolidMax + 0.01 - wp) / dd;
+    float sIn = max(max(min(b0.x, b1.x), min(b0.y, b1.y)), min(b0.z, b1.z));
+    float sOut = min(min(max(b0.x, b1.x), max(b0.y, b1.y)), max(b0.z, b1.z));
+    if (sOut < sIn) return 1.0;
+    int i0 = max(0, int(floor((sIn - start) / ds - 0.5)));
+    int i1 = min(steps - 1, int(ceil((sOut - start) / ds - 0.5)));
     for (int i = 0; i < 32; i++) {
-        if (i >= steps) break;
+        if (i + i0 > i1) break;
+        vec3 p = wp + dirL * (start + ds * (float(i + i0) + 0.5));
         if (voxelSolid(p) > 0.5) return 0.0;
-        p += dirL * ds;
     }
     return 1.0;
 }
