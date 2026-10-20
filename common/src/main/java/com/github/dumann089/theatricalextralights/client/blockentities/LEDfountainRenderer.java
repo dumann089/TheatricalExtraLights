@@ -192,8 +192,8 @@ public class LEDfountainRenderer extends ExtraLightsFixtureRenderer<LEDFountainB
                     zoomNorm,
                     (float) blockEntity.getDistance(),
                     tanHalfAngle,
-                    blockEntity.getColour(),
-                    blockEntity.getIntensity() / 255.0f,
+                    blockEntity.getDisplayColour(partialTicks),
+                    blockEntity.getDisplayIntensity(partialTicks) / 255.0f,
                     goboTex,
                     goboTex,
                     (float) blockEntity.getGoboRotation(),
@@ -218,8 +218,8 @@ public class LEDfountainRenderer extends ExtraLightsFixtureRenderer<LEDFountainB
 
                 preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
 
-                float intensity = blockEntity.getPrevIntensity() + ((blockEntity.getIntensity()) - blockEntity.getPrevIntensity()) * partialTicks;
-                int color = blockEntity.getColour();
+                float intensity = blockEntity.getDisplayIntensity(partialTicks);
+                int color = blockEntity.getDisplayColour(partialTicks);
                 float alpha = (intensity / 255f) * beamOpacity.floatValue();
 
                 VertexConsumer builder = multiBufferSource.getBuffer(Beam2DRenderTypes.getBeam());
