@@ -50,10 +50,22 @@ uniform float AnimEnabled;
 uniform float AnimAngle;   // orientation, radians
 uniform float AnimOffset;  // defilement, en tuiles
 
+// Invariants du pixel, calcules une fois dans main() plutot qu'a chaque echantillon de la
+// marche : axes normalises, cos/sin des rotations du gobo, de la roue d'animation et du
+// module de couteaux. Memes operations, memes valeurs, seulement hors de la boucle.
+vec3 gAxisU;
+vec3 gAxisV;
+float gGoboCa;
+float gGoboSa;
+float gAnimCa;
+float gAnimSa;
+float gFrameCr;
+float gFrameSr;
+
 float animationMask(float u, float v, float radius) {
     if (AnimEnabled < 0.5) return 1.0;
-    float ca = cos(AnimAngle);
-    float sa = sin(AnimAngle);
+    float ca = gAnimCa;
+    float sa = gAnimSa;
     vec2 p = vec2(u, v) / max(radius, 0.0001);
     vec2 r = vec2(p.x * ca - p.y * sa, p.x * sa + p.y * ca);
     vec2 uv = fract(vec2(r.x * 0.5 + AnimOffset, r.y * 0.5));
@@ -74,6 +86,12 @@ uniform vec3 VoxelOrigin;   // coin min de la grille, monde
 uniform float VoxelCell;    // taille d'une cellule, blocs
 uniform float VoxelSize;    // cellules par axe
 uniform float OccCount;
+// Boite englobante des cellules solides de la grille (monde). Hors de cette boite aucune
+// cellule n'est solide : la marche d'ombre n'echantillonne que le trajet qui la traverse.
+// SolidAny = 0 : grille vide, aucune lecture de texture.
+uniform float SolidAny;
+uniform vec3 SolidMin;
+uniform vec3 SolidMax;
 uniform vec3 OccMin0;
 uniform vec3 OccMax0;
 uniform vec3 OccMin1;
@@ -129,6 +147,7 @@ float shadowFactor(vec3 wp, vec3 lightW, float startOffset) {
     if (OccCount > 5.5 && segmentHitsBox(wp, lightW, OccMin5, OccMax5)) return 0.0;
     if (OccCount > 6.5 && segmentHitsBox(wp, lightW, OccMin6, OccMax6)) return 0.0;
     if (OccCount > 7.5 && segmentHitsBox(wp, lightW, OccMin7, OccMax7)) return 0.0;
+    if (SolidAny < 0.5) return 1.0;
     vec3 dirL = toL / len;
     float start = min(startOffset, len * 0.5);
     float span = len - start - VoxelCell * 0.75;   // on s'arrete avant la cellule de la source
@@ -136,11 +155,24 @@ float shadowFactor(vec3 wp, vec3 lightW, float startOffset) {
     float shadowCap = StepCount <= 8 ? 12.0 : 32.0;
     int steps = int(clamp(ceil(span / (VoxelCell * 0.9)), 2.0, shadowCap));
     float ds = span / float(steps);
-    vec3 p = wp + dirL * (start + ds * 0.5);
+
+    // Portion du trajet dans la boite des cellules solides (elargie d'un peu, jamais retrecie) :
+    // un echantillon hors de la boite lirait forcement 0. Memes positions d'echantillons.
+    vec3 dd = vec3(
+        abs(dirL.x) < 1.0e-6 ? 1.0e-6 : dirL.x,
+        abs(dirL.y) < 1.0e-6 ? 1.0e-6 : dirL.y,
+        abs(dirL.z) < 1.0e-6 ? 1.0e-6 : dirL.z);
+    vec3 b0 = (SolidMin - 0.01 - wp) / dd;
+    vec3 b1 = (SolidMax + 0.01 - wp) / dd;
+    float sIn = max(max(min(b0.x, b1.x), min(b0.y, b1.y)), min(b0.z, b1.z));
+    float sOut = min(min(max(b0.x, b1.x), max(b0.y, b1.y)), max(b0.z, b1.z));
+    if (sOut < sIn) return 1.0;
+    int i0 = max(0, int(floor((sIn - start) / ds - 0.5)));
+    int i1 = min(steps - 1, int(ceil((sOut - start) / ds - 0.5)));
     for (int i = 0; i < 32; i++) {
-        if (i >= steps) break;
+        if (i + i0 > i1) break;
+        vec3 p = wp + dirL * (start + ds * (float(i + i0) + 0.5));
         if (voxelSolid(p) > 0.5) return 0.0;
-        p += dirL * ds;
     }
     return 1.0;
 }
@@ -210,7 +242,7 @@ float henyeyGreenstein(float cosTheta, float g) {
         1.0 + g2 - 2.0 * g * cosTheta
     );
 
-    return (1.0 - g2) / (4.0 * PI * pow(denom, 1.5));
+    return (1.0 - g2) / (4.0 * PI * (denom * sqrt(denom)));
 }
 
 vec3 reconstructViewPos(vec2 uv, float depth) {
@@ -232,8 +264,8 @@ bool intersectBounds(
     out float tExit
 ) {
     vec3 axis = normalize(BeamDir);
-    vec3 uA = normalize(AxisU);
-    vec3 vA = normalize(AxisV);
+    vec3 uA = gAxisU;
+    vec3 vA = gAxisV;
 
     float k = max(TanHalfAngle, 1.0e-4) * 1.15;
     float wS = max(WidthScale, 0.05);
@@ -411,8 +443,8 @@ float shutterMask(float u, float v, float radius, float soft) {
         return 1.0;
     }
     vec2 p = vec2(u, v) / max(radius, 1.0e-4);
-    float cr = cos(-FrameRotation);
-    float sr = sin(-FrameRotation);
+    float cr = gFrameCr;
+    float sr = gFrameSr;
     vec2 q = vec2(p.x * cr - p.y * sr, p.x * sr + p.y * cr);
 
     float m = 1.0;
@@ -426,16 +458,15 @@ float shutterMask(float u, float v, float radius, float soft) {
 // Tu sistema de proyección de Gobo.
 // El resto del shader permanece igual al del repositorio.
 float sampleGobo(vec3 worldOffset, float zDist) {
-    vec3 uAxis = normalize(AxisU);
-    vec3 vAxis = normalize(AxisV);
+    vec3 uAxis = gAxisU;
+    vec3 vAxis = gAxisV;
 
     float z = max(zDist, 0.001);
     float u = dot(worldOffset, uAxis);
     float v = dot(worldOffset, vAxis);
 
-    float angle = radians(GoboRotation);
-    float ca = cos(angle);
-    float sa = sin(angle);
+    float ca = gGoboCa;
+    float sa = gGoboSa;
 
     float projectionRadius = max(
         z * max(TanHalfAngle, 0.0001),
@@ -473,6 +504,16 @@ float sampleGobo(vec3 worldOffset, float zDist) {
 }
 
 void main() {
+    gAxisU = normalize(AxisU);
+    gAxisV = normalize(AxisV);
+    float goboAngle = radians(GoboRotation);
+    gGoboCa = cos(goboAngle);
+    gGoboSa = sin(goboAngle);
+    gAnimCa = cos(AnimAngle);
+    gAnimSa = sin(AnimAngle);
+    gFrameCr = cos(-FrameRotation);
+    gFrameSr = sin(-FrameRotation);
+
     vec2 screenUV = gl_FragCoord.xy / ScreenSize;
 
     float sceneDepthSample = texture(Sampler1, screenUV).r;
@@ -529,8 +570,8 @@ void main() {
     float t = tEnter + dt * ign(gl_FragCoord.xy);
 
     vec3 axis = normalize(BeamDir);
-    vec3 uAxis = normalize(AxisU);
-    vec3 vAxis = normalize(AxisV);
+    vec3 uAxis = gAxisU;
+    vec3 vAxis = gAxisV;
 
     float g = clamp(
         Anisotropy,

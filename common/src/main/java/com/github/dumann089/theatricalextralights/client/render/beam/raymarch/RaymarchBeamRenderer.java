@@ -249,6 +249,12 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                             new Vec3(s.originX, s.originY, s.originZ), new Vec3(s.dirX, s.dirY, s.dirZ),
                             s.scanLen, endRadius);
                 }
+                // Grade sem nenhum bloco solido e sem entidades: o shader leria zero em todas as
+                // amostras e devolveria 1.0 (sem sombra). ShadowEnabled=0 devolve o mesmo 1.0, mas
+                // sem as ate 32 leituras de textura por passo do raymarch.
+                if (shadows != null && !shadows.solidAny() && shadows.boxes().isEmpty()) {
+                    shadows = null;
+                }
                 applyShadowUniforms(shader, shadows);
                 shader.safeGetUniform("Time").set(time);
                 shader.safeGetUniform("Ambient").set(daylight);
@@ -326,6 +332,9 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
             return;
         }
         shader.safeGetUniform("ShadowEnabled").set(1.0f);
+        shader.safeGetUniform("SolidAny").set(snap.solidAny() ? 1.0f : 0.0f);
+        shader.safeGetUniform("SolidMin").set((float) snap.solidMin().x, (float) snap.solidMin().y, (float) snap.solidMin().z);
+        shader.safeGetUniform("SolidMax").set((float) snap.solidMax().x, (float) snap.solidMax().y, (float) snap.solidMax().z);
         shader.safeGetUniform("VoxelOrigin").set((float) snap.gridOrigin().x, (float) snap.gridOrigin().y, (float) snap.gridOrigin().z);
         shader.safeGetUniform("VoxelCell").set(snap.cell());
         shader.safeGetUniform("VoxelSize").set((float) snap.size());
@@ -424,7 +433,219 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         }
     }
 
+    /**
+     * Calcula, em espaco de view, um tronco convexo de {@link #HULL_N} lados que contem toda a
+     * regiao onde o shader pode produzir cor: zDist em [0, scanLen] e raio ate
+     * max(baseRadius, z * tan) * escala (elipse U/V). Rasterizar so este volume, em vez da caixa
+     * alinhada aos eixos do mundo, poupa o fragment shader de rodar em milhoes de pixels que ele
+     * descartaria. O shader nao muda, entao os pixels cobertos saem identicos.
+     *
+     * @return false se a base U/V/dir nao for ortonormal (usa-se entao a caixa antiga)
+     */
+    private boolean computeHull(BeamSlot s, Matrix4f viewMat) {
+        float dl = (float) Math.sqrt(s.dirX * s.dirX + s.dirY * s.dirY + s.dirZ * s.dirZ);
+        float ul = (float) Math.sqrt(s.uX * s.uX + s.uY * s.uY + s.uZ * s.uZ);
+        float vl = (float) Math.sqrt(s.vX * s.vX + s.vY * s.vY + s.vZ * s.vZ);
+        if (dl < 1.0e-4f || ul < 1.0e-4f || vl < 1.0e-4f) {
+            return false;
+        }
+        float dx = s.dirX / dl, dy = s.dirY / dl, dz = s.dirZ / dl;
+        float ux = s.uX / ul, uy = s.uY / ul, uz = s.uZ / ul;
+        float vx = s.vX / vl, vy = s.vY / vl, vz = s.vZ / vl;
+        if (Math.abs(ux * dx + uy * dy + uz * dz) > 0.02f
+                || Math.abs(vx * dx + vy * dy + vz * dz) > 0.02f
+                || Math.abs(ux * vx + uy * vy + uz * vz) > 0.02f) {
+            return false;
+        }
+
+        float k = Math.max(s.tanHalfAngle, 1.0e-5f);
+        float r0 = Math.max(s.baseRadius, 0.0f);
+        float wS = Math.max(s.widthScale, 0.05f);
+        float hS = Math.max(s.heightScale, 0.05f);
+        float pad = 0.1f;
+
+        for (int ring = 0; ring < 2; ring++) {
+            float z = ring == 0 ? -pad : s.scanLen + pad;
+            // Reta r0 + k*z deslocada por pad: majora max(baseRadius, z*k) em toda a faixa.
+            float r = Math.max(r0 + k * z, 0.0f) + pad;
+            float cx = s.originX + dx * z;
+            float cy = s.originY + dy * z;
+            float cz = s.originZ + dz * z;
+            for (int i = 0; i < HULL_N; i++) {
+                float a = r * wS * HULL_CIRC * HULL_COS[i];
+                float b = r * hS * HULL_CIRC * HULL_SIN[i];
+                tmpVec.set(cx + ux * a + vx * b, cy + uy * a + vy * b, cz + uz * a + vz * b, 1.0f);
+                viewMat.transform(tmpVec);
+                int o = (ring * HULL_N + i) * 3;
+                hullView[o] = tmpVec.x;
+                hullView[o + 1] = tmpVec.y;
+                hullView[o + 2] = tmpVec.z;
+            }
+        }
+        return true;
+    }
+
+    /** true se todos os vertices do tronco estao do lado de fora de um mesmo plano do frustum. */
+    private boolean hullOutsideFrustum() {
+        int allOut = 0x3F;
+        for (int i = 0; i < 2 * HULL_N; i++) {
+            tmpVec.set(hullView[i * 3], hullView[i * 3 + 1], hullView[i * 3 + 2], 1.0f);
+            projMat.transform(tmpVec);
+            float w = tmpVec.w;
+            int bits = 0;
+            if (tmpVec.x < -w) bits |= 1;
+            if (tmpVec.x > w) bits |= 2;
+            if (tmpVec.y < -w) bits |= 4;
+            if (tmpVec.y > w) bits |= 8;
+            if (tmpVec.z < -w) bits |= 16;
+            if (tmpVec.z > w) bits |= 32;
+            allOut &= bits;
+            if (allOut == 0) {
+                return false;
+            }
+        }
+        return allOut != 0;
+    }
+
+    /**
+     * Emite o tronco com as faces voltadas para dentro (so as faces de tras sao rasterizadas,
+     * como na caixa antiga), de modo que cada pixel dentro da silhueta recebe um unico fragmento,
+     * inclusive com a camera dentro do volume.
+     */
+    private void emitHull(BufferBuilder vc) {
+        float[] h = hullView;
+        float gx = 0, gy = 0, gz = 0;
+        int total = 2 * HULL_N;
+        for (int i = 0; i < total; i++) {
+            gx += h[i * 3];
+            gy += h[i * 3 + 1];
+            gz += h[i * 3 + 2];
+        }
+        gx /= total;
+        gy /= total;
+        gz /= total;
+
+        // Laterais.
+        for (int i = 0; i < HULL_N; i++) {
+            int j = (i + 1) % HULL_N;
+            emitFaceInward(vc, gx, gy, gz, i, j, HULL_N + j, HULL_N + i);
+        }
+        // Tampas (leque de quads: v0, v(2m-1), v(2m), v(2m+1)).
+        for (int m = 1; m + 2 < HULL_N + 1; m += 2) {
+            emitFaceInward(vc, gx, gy, gz, 0, m, m + 1, m + 2);
+            emitFaceInward(vc, gx, gy, gz, HULL_N, HULL_N + m, HULL_N + m + 1, HULL_N + m + 2);
+        }
+    }
+
+    private void emitFaceInward(BufferBuilder vc, float gx, float gy, float gz, int a, int b, int c, int d) {
+        float[] h = hullView;
+        float ax = h[a * 3], ay = h[a * 3 + 1], az = h[a * 3 + 2];
+        float bx = h[b * 3], by = h[b * 3 + 1], bz = h[b * 3 + 2];
+        float cx = h[c * 3], cy = h[c * 3 + 1], cz = h[c * 3 + 2];
+        float dx = h[d * 3], dy = h[d * 3 + 1], dz = h[d * 3 + 2];
+        float nx = (by - ay) * (cz - az) - (bz - az) * (cy - ay);
+        float ny = (bz - az) * (cx - ax) - (bx - ax) * (cz - az);
+        float nz = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+        float fx = (ax + bx + cx + dx) * 0.25f;
+        float fy = (ay + by + cy + dy) * 0.25f;
+        float fz = (az + bz + cz + dz) * 0.25f;
+        // Normal (regra da mao direita) apontando para o centro = face voltada para dentro.
+        boolean inward = nx * (gx - fx) + ny * (gy - fy) + nz * (gz - fz) > 0.0f;
+        if (inward) {
+            hullVertex(vc, ax, ay, az, 0f, 0f);
+            hullVertex(vc, bx, by, bz, 1f, 0f);
+            hullVertex(vc, cx, cy, cz, 1f, 1f);
+            hullVertex(vc, dx, dy, dz, 0f, 1f);
+        } else {
+            hullVertex(vc, dx, dy, dz, 0f, 0f);
+            hullVertex(vc, cx, cy, cz, 1f, 0f);
+            hullVertex(vc, bx, by, bz, 1f, 1f);
+            hullVertex(vc, ax, ay, az, 0f, 1f);
+        }
+    }
+
+    private static void hullVertex(BufferBuilder vc, float x, float y, float z, float u, float v) {
+        vc.vertex((double) x, (double) y, (double) z).color(255, 255, 255, 255).uv(u, v).endVertex();
+    }
+
+    /**
+     * Boite qui declenche le shader : orientee le long du faisceau quand ses axes forment un
+     * repere orthonorme, sinon la boite alignee sur le monde d'origine. Le shader ne retient que
+     * les echantillons a 0 <= z <= longueur et |u| <= r * WidthScale, |v| <= r * HeightScale
+     * avec r = max(BaseRadius, z * tan) : tout pixel qui contribue voit son rayon traverser
+     * cette boite, les autres etaient rejetes par le shader. Meme image, beaucoup moins de
+     * pixels traites pour un faisceau en diagonale.
+     */
     private static void drawConeProxy(BufferBuilder vc, Matrix4f mat, BeamSlot s, float endRadius) {
+        if (drawOrientedProxy(vc, mat, s)) {
+            return;
+        }
+        drawAlignedProxy(vc, mat, s, endRadius);
+    }
+
+    private static boolean drawOrientedProxy(BufferBuilder vc, Matrix4f mat, BeamSlot s) {
+        double dl = Math.sqrt(s.dirX * s.dirX + s.dirY * s.dirY + s.dirZ * s.dirZ);
+        double ul = Math.sqrt(s.uX * s.uX + s.uY * s.uY + s.uZ * s.uZ);
+        double vl = Math.sqrt(s.vX * s.vX + s.vY * s.vY + s.vZ * s.vZ);
+        if (dl < 1.0e-6 || ul < 1.0e-6 || vl < 1.0e-6) {
+            return false;
+        }
+        double dx = s.dirX / dl, dy = s.dirY / dl, dz = s.dirZ / dl;
+        double ux = s.uX / ul, uy = s.uY / ul, uz = s.uZ / ul;
+        double vx = s.vX / vl, vy = s.vY / vl, vz = s.vZ / vl;
+        // Hors repere orthonorme, la zone du shader n'est plus un pave : boite du monde.
+        if (Math.abs(dx * ux + dy * uy + dz * uz) > 1.0e-3
+                || Math.abs(dx * vx + dy * vy + dz * vz) > 1.0e-3
+                || Math.abs(ux * vx + uy * vy + uz * vz) > 1.0e-3) {
+            return false;
+        }
+        // Repere direct pour garder le sens des faces (elles sont dessinees de l'interieur).
+        double det = ux * (vy * dz - vz * dy) - uy * (vx * dz - vz * dx) + uz * (vx * dy - vy * dx);
+        if (det < 0.0) {
+            ux = -ux;
+            uy = -uy;
+            uz = -uz;
+        }
+        double r = Math.max(s.baseRadius, s.scanLen * Math.max(s.tanHalfAngle, 1.0e-5f));
+        double hu = r * Math.max(s.widthScale, 0.05f);
+        double hv = r * Math.max(s.heightScale, 0.05f);
+        double pad = 0.25 + 0.05 * Math.max(hu, hv);
+        hu += pad;
+        hv += pad;
+        double z0 = -pad;
+        double z1 = s.scanLen + pad;
+
+        float[][] c = new float[8][];
+        int i = 0;
+        for (int iz = 0; iz < 2; iz++) {
+            for (int iy = 0; iy < 2; iy++) {
+                for (int ix = 0; ix < 2; ix++) {
+                    double a = ix == 0 ? -hu : hu;
+                    double b = iy == 0 ? -hv : hv;
+                    double z = iz == 0 ? z0 : z1;
+                    c[i++] = new float[]{
+                            (float) (s.originX + ux * a + vx * b + dx * z),
+                            (float) (s.originY + uy * a + vy * b + dy * z),
+                            (float) (s.originZ + uz * a + vz * b + dz * z)};
+                }
+            }
+        }
+        // Memes six faces, meme sens que la boite alignee : x -> U, y -> V, z -> direction.
+        // Indice d'un coin : x + 2 y + 4 z (0 = min, 1 = max).
+        emitQuad(vc, mat, c[6], c[7], c[5], c[4]);
+        emitQuad(vc, mat, c[3], c[2], c[0], c[1]);
+        emitQuad(vc, mat, c[7], c[3], c[1], c[5]);
+        emitQuad(vc, mat, c[2], c[6], c[4], c[0]);
+        emitQuad(vc, mat, c[2], c[3], c[7], c[6]);
+        emitQuad(vc, mat, c[4], c[5], c[1], c[0]);
+        return true;
+    }
+
+    private static void emitQuad(BufferBuilder vc, Matrix4f mat, float[] p0, float[] p1, float[] p2, float[] p3) {
+        emitQuad(vc, mat, p0[0], p0[1], p0[2], p1[0], p1[1], p1[2], p2[0], p2[1], p2[2], p3[0], p3[1], p3[2]);
+    }
+
+    private static void drawAlignedProxy(BufferBuilder vc, Matrix4f mat, BeamSlot s, float endRadius) {
         float startR = Math.max(s.baseRadius, 0.05f) * Math.max(s.widthScale, s.heightScale);
         float pad = Math.max(startR, endRadius) * 1.15f + 0.25f;
 

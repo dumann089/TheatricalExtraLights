@@ -57,6 +57,30 @@ public final class ExtraLightsRenderTypes {
     );
 
     /**
+     * Meme etat que {@link #GLOW}, dessine par le shader {@code glow_disc} : un disque de lueur
+     * tient en un quad au lieu de ses anneaux x segments, et les quads pleins passent par le
+     * meme shader (UV0.x = 8) pour ne pas alterner deux types de rendu dans le meme lot.
+     * Sommets : {@link com.github.dumann089.theatricalextralights.client.StrobeVisualEffects}.
+     */
+    public static final RenderType GLOW_DISC = RenderType.create(
+            "extralights_glow_disc",
+            DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP,
+            VertexFormat.Mode.QUADS,
+            1024,
+            false,
+            false,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(() -> ModShaders.glowDiscShader))
+                    .setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
+                    .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                    .setOutputState(RenderStateShard.TRANSLUCENT_TARGET)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .createCompositeState(false)
+    );
+
+    /**
      * Face LED allumee (pixels, segments) : opaque et pleine luminosite, elle recouvre la texture
      * de l'appareil au lieu de s'y ajouter, et ecrit la profondeur comme une surface.
      */

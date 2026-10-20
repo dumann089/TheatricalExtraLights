@@ -84,6 +84,34 @@ public final class StrobeVisualEffects {
     private StrobeVisualEffects() {
     }
 
+    /** UV0.x des quads pleins dans {@link ExtraLightsRenderTypes#GLOW_DISC}. */
+    private static final float PLAIN_QUAD_U = 8.0f;
+    /** Force codee sur 16 bits, 0..4, pour que l'arrondi par anneau du shader tombe juste. */
+    private static final float STRENGTH_SCALE = 16383.0f;
+
+    /**
+     * Tampon des lueurs additives : {@link ExtraLightsRenderTypes#GLOW_DISC} (un quad par disque)
+     * quand son shader est charge et qu'aucun shaderpack n'est actif, sinon {@link ExtraLightsRenderTypes#GLOW}.
+     * Les sommets s'ecrivent ensuite avec {@link #glowVertex}, qui suit le meme choix.
+     */
+    public static VertexConsumer glowBuffer(MultiBufferSource bufferSource) {
+        return bufferSource.getBuffer(glowDisc() ? ExtraLightsRenderTypes.GLOW_DISC : ExtraLightsRenderTypes.GLOW);
+    }
+
+    private static boolean glowDisc() {
+        return ModShaders.canUseGlowDisc();
+    }
+
+    /** Sommet plein couleur du tampon {@link #glowBuffer}, quel que soit le type de rendu choisi. */
+    public static void glowVertex(VertexConsumer vc, Matrix4f m, float x, float y, float z,
+                                  int r, int g, int b, int a) {
+        VertexConsumer v = vc.vertex(m, x, y, z).color(r, g, b, a);
+        if (glowDisc()) {
+            v.uv(PLAIN_QUAD_U, 0f).uv2(0, 0);
+        }
+        v.endVertex();
+    }
+
     /** Pose deja placee au centre de la face ({@link Face#apply}). */
     public static void renderFace(
             MultiBufferSource.BufferSource bufferSource,
@@ -114,7 +142,7 @@ public final class StrobeVisualEffects {
         if (level <= 0f) {
             return;
         }
-        VertexConsumer glow = bufferSource.getBuffer(ExtraLightsRenderTypes.GLOW);
+        VertexConsumer glow = glowBuffer(bufferSource);
         Matrix4f m = poseStack.last().pose();
         float w = face.halfW();
         float h = face.halfH();
@@ -150,10 +178,10 @@ public final class StrobeVisualEffects {
     private static void quad(VertexConsumer vc, Matrix4f m,
                              float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3,
                              float z, int[] c0, int a0, int[] c1, int a1) {
-        vc.vertex(m, x0, y0, z).color(c0[0], c0[1], c0[2], a0).endVertex();
-        vc.vertex(m, x1, y1, z).color(c0[0], c0[1], c0[2], a0).endVertex();
-        vc.vertex(m, x2, y2, z).color(c1[0], c1[1], c1[2], a1).endVertex();
-        vc.vertex(m, x3, y3, z).color(c1[0], c1[1], c1[2], a1).endVertex();
+        glowVertex(vc, m, x0, y0, z, c0[0], c0[1], c0[2], a0);
+        glowVertex(vc, m, x1, y1, z, c0[0], c0[1], c0[2], a0);
+        glowVertex(vc, m, x2, y2, z, c1[0], c1[1], c1[2], a1);
+        glowVertex(vc, m, x3, y3, z, c1[0], c1[1], c1[2], a1);
     }
 
     /** Trapeze : arete interieure (x0,y0)-(x1,y1) en {@code cIn}, arete exterieure (x2,y2)-(x3,y3) en {@code cOut}. */
@@ -189,7 +217,7 @@ public final class StrobeVisualEffects {
         Vector3f right = new Vector3f(camera.getLeftVector());
         Vector3f up = new Vector3f(camera.getUpVector());
         Matrix4f view = viewPose.last().pose();
-        VertexConsumer vc = bufferSource.getBuffer(ExtraLightsRenderTypes.GLOW);
+        VertexConsumer vc = glowBuffer(bufferSource);
         int[] core = hazeTint(color, 0.75f);
         int tint = packed(hazeTint(color, 0.35f));
 
@@ -249,7 +277,7 @@ public final class StrobeVisualEffects {
         if (strength <= 0f) {
             return;
         }
-        VertexConsumer vc = bufferSource.getBuffer(ExtraLightsRenderTypes.GLOW);
+        VertexConsumer vc = glowBuffer(bufferSource);
         Vector3f right = new Vector3f(camera.getLeftVector());
         Vector3f up = new Vector3f(camera.getUpVector());
         softDisc(vc, viewPose.last().pose(), centre, right, up, radius, whiten(color, 0.35f), color, strength,
@@ -275,6 +303,20 @@ public final class StrobeVisualEffects {
         int rr = (ring >> 16) & 0xFF;
         int rg = (ring >> 8) & 0xFF;
         int rb = ring & 0xFF;
+        if (glowDisc()) {
+            // Un quad : le shader glow_disc retrouve l'anneau et le triangle de chaque pixel et
+            // refait l'interpolation et l'arrondi du maillage ci-dessous (ecart <= 1/255).
+            int s16 = Math.max(0, Math.min(65535, Math.round(strength * STRENGTH_SCALE)));
+            int packX = (core[0] & 0xFF) | ((core[1] & 0xFF) << 8);
+            int packY = (core[2] & 0xFF) | ((s16 & 0xFF) << 8);
+            int sHi = (s16 >> 8) & 0xFF;
+            float off = rings == DISC_RINGS ? 0f : 4f;
+            discVertex(vc, view, centre, right, up, -radius, radius, -1f + off, 1f, rr, rg, rb, sHi, packX, packY);
+            discVertex(vc, view, centre, right, up, -radius, -radius, -1f + off, -1f, rr, rg, rb, sHi, packX, packY);
+            discVertex(vc, view, centre, right, up, radius, -radius, 1f + off, -1f, rr, rg, rb, sHi, packX, packY);
+            discVertex(vc, view, centre, right, up, radius, radius, 1f + off, 1f, rr, rg, rb, sHi, packX, packY);
+            return;
+        }
         for (int k = 0; k < rings; k++) {
             float t0 = (float) k / rings;
             float t1 = (float) (k + 1) / rings;
@@ -295,6 +337,15 @@ public final class StrobeVisualEffects {
                 haloVertex(vc, view, centre, right, up, c1 * r0, s1 * r0, cr, cg, cb, a0k);
             }
         }
+    }
+
+    private static void discVertex(VertexConsumer vc, Matrix4f view, Vector3f centre, Vector3f right, Vector3f up,
+                                   float du, float dv, float u, float v, int r, int g, int b, int a,
+                                   int packX, int packY) {
+        float x = centre.x + right.x * du + up.x * dv;
+        float y = centre.y + right.y * du + up.y * dv;
+        float z = centre.z + right.z * du + up.z * dv;
+        vc.vertex(view, x, y, z).color(r, g, b, a).uv(u, v).uv2(packX, packY).endVertex();
     }
 
     private static void haloVertex(VertexConsumer vc, Matrix4f view, Vector3f centre, Vector3f right, Vector3f up,

@@ -237,7 +237,7 @@ public abstract class PixelBarRenderer<T extends PixelBarBlockEntity> extends Ex
                     addVertex(builder, m, normal, r, g, b, cellA, cx + hx, cy - hy, 0f);
                     addVertex(builder, m, normal, r, g, b, cellA, cx - hx, cy - hy, 0f);
                 }
-                VertexConsumer dots = bufferSource.getBuffer(ExtraLightsRenderTypes.GLOW);
+                VertexConsumer dots = StrobeVisualEffects.glowBuffer(bufferSource);
                 float d = s.dotHalf();
                 for (int i = 0; i < count; i++) {
                     int colour = blockEntity.getPixelColour(i);
@@ -248,19 +248,19 @@ public abstract class PixelBarRenderer<T extends PixelBarBlockEntity> extends Ex
                     float cx = s.x(s.along(i), 0f);
                     float cy = s.y(s.along(i), 0f);
                     int dotA = (int) (alpha * blockEntity.getPixelDimmer(i));
-                    dots.vertex(m, cx - d, cy + d, -0.002f).color(r, g, b, dotA).endVertex();
-                    dots.vertex(m, cx + d, cy + d, -0.002f).color(r, g, b, dotA).endVertex();
-                    dots.vertex(m, cx + d, cy - d, -0.002f).color(r, g, b, dotA).endVertex();
-                    dots.vertex(m, cx - d, cy - d, -0.002f).color(r, g, b, dotA).endVertex();
+                    StrobeVisualEffects.glowVertex(dots, m, cx - d, cy + d, -0.002f, r, g, b, dotA);
+                    StrobeVisualEffects.glowVertex(dots, m, cx + d, cy + d, -0.002f, r, g, b, dotA);
+                    StrobeVisualEffects.glowVertex(dots, m, cx + d, cy - d, -0.002f, r, g, b, dotA);
+                    StrobeVisualEffects.glowVertex(dots, m, cx - d, cy - d, -0.002f, r, g, b, dotA);
                     // Coeur surexpose, additif par-dessus le point.
                     int cr = r + (int) ((255 - r) * DOT_CORE_WHITEN);
                     int cg = g + (int) ((255 - g) * DOT_CORE_WHITEN);
                     int cb = b + (int) ((255 - b) * DOT_CORE_WHITEN);
                     float c = d * DOT_CORE_SCALE;
-                    dots.vertex(m, cx - c, cy + c, -0.003f).color(cr, cg, cb, dotA).endVertex();
-                    dots.vertex(m, cx + c, cy + c, -0.003f).color(cr, cg, cb, dotA).endVertex();
-                    dots.vertex(m, cx + c, cy - c, -0.003f).color(cr, cg, cb, dotA).endVertex();
-                    dots.vertex(m, cx - c, cy - c, -0.003f).color(cr, cg, cb, dotA).endVertex();
+                    StrobeVisualEffects.glowVertex(dots, m, cx - c, cy + c, -0.003f, cr, cg, cb, dotA);
+                    StrobeVisualEffects.glowVertex(dots, m, cx + c, cy + c, -0.003f, cr, cg, cb, dotA);
+                    StrobeVisualEffects.glowVertex(dots, m, cx + c, cy - c, -0.003f, cr, cg, cb, dotA);
+                    StrobeVisualEffects.glowVertex(dots, m, cx - c, cy - c, -0.003f, cr, cg, cb, dotA);
                 }
                 poseStack.popPose();
 
