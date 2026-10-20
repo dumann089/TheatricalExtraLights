@@ -128,6 +128,24 @@ P_10CH_EXT = P("10ch - Extended", [INTENSITY, RED, GREEN, BLUE, FOCUS_CONE, PAN,
 P_4CH = P("4-Channel Mode", [INTENSITY, RED, GREEN, BLUE])
 P_4CH_IRGB = P("4-Channel iRGB", [INTENSITY, RED, GREEN, BLUE])
 P_1CH = P("1-Channel Mode", [INTENSITY], "The colour is fixed by the block.")
+
+def _lamp_channels(rows, cols):
+    """One dimmer per lamp, front view: top row first, left to right."""
+    out = []
+    for r in range(rows):
+        for c in range(cols):
+            k = r * cols + c + 1
+            row = "top" if r == 0 else ("bottom" if r == rows - 1 else f"row {r + 1}")
+            side = "left" if c == 0 else "right"
+            out.append(ch(f"Lamp {k}", "0 off to 255 full",
+                          f"Dimmer of lamp {k} ({row}, {side} seen from the front). The fixture's room light follows the brightest lamp."))
+    return out
+
+
+P_WARM2X2_PIXEL = P("4-Channel Pixel Mode", _lamp_channels(2, 2),
+                    "One channel per lamp, seen from the front: top row first, left to right. The colour is fixed by the block.")
+P_WARM4X2_PIXEL = P("8-Channel Pixel Mode", _lamp_channels(4, 2),
+                    "One channel per lamp, seen from the front: top row first, left to right. The colour is fixed by the block.")
 P_1CH_JET = P("1-Channel Mode", [INTENSITY_JET], "Height, thickness and, where available, cone angle or spread are set in the fixture screen, not on DMX.")
 
 def _pixel_channels(count):
@@ -341,8 +359,10 @@ FIXTURES += [
     F("blinder2x2", "2x2 Blinder", "Four-lamp blinder with colour mixing.", [P_4CH_IRGB]),
     F("blinder1x1", "Blinder 1x1", "Single-lamp blinder with colour mixing and a strobe channel.",
       [P("5-Channel iRGB + Strobe", [INTENSITY, RED, GREEN, BLUE, STROBE])]),
-    F("blinder_warm", "Blinder (warm)", "Eight-lamp blinder, fixed warm tungsten.", [P_1CH]),
-    F("blinder2x2warm", "2x2 Blinder (Warm)", "Four-lamp blinder, fixed warm tungsten.", [P_1CH]),
+    F("blinder1x2", "Blinder 1x2", "Two-lamp blinder, the 1x1 head doubled on one yoke, with colour mixing and a strobe channel.",
+      [P("5-Channel iRGB + Strobe", [INTENSITY, RED, GREEN, BLUE, STROBE])]),
+    F("blinder_warm", "Blinder (warm)", "Eight-lamp blinder, fixed warm tungsten.", [P_1CH, P_WARM4X2_PIXEL]),
+    F("blinder2x2warm", "2x2 Blinder (Warm)", "Four-lamp blinder, fixed warm tungsten.", [P_1CH, P_WARM2X2_PIXEL]),
     F("strobe", "Strobe", "Stage strobe with four ways to patch it.", [
         P("4-Channel Legacy", [INTENSITY, RED, GREEN, BLUE], "Always open; the desk makes the flashes with the dimmer."),
         P("5-Channel Focus", [INTENSITY, RED, GREEN, BLUE, ch("Focus", "1 to 255", "Size of the light spot on the ground: about 3 blocks at 1, about 20 blocks at 255.")]),

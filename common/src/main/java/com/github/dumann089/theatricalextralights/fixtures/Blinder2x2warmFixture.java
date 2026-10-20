@@ -15,8 +15,14 @@ import java.util.List;
 
 public class Blinder2x2warmFixture extends Fixture {
 
-    private static final List<DMXPersonality> PERSONALITIES = Collections.singletonList(
+    private static final List<DMXPersonality> PERSONALITIES = List.of(
             new DMXPersonality(1, "1-Channel Mode")
+                    .addSlot(SharedSlots.INTENSITY),
+            // Un canal par lampe, vu de face : rangee du haut puis du bas, de gauche a droite.
+            new DMXPersonality(4, "4-Channel Pixel Mode")
+                    .addSlot(SharedSlots.INTENSITY)
+                    .addSlot(SharedSlots.INTENSITY)
+                    .addSlot(SharedSlots.INTENSITY)
                     .addSlot(SharedSlots.INTENSITY)
     );
 

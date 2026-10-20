@@ -17,10 +17,20 @@ import java.util.List;
 
 public class BlinderwarmFixture extends Fixture {
 
-    private static final List<DMXPersonality> PERSONALITIES = Collections.singletonList(
-        new DMXPersonality(1, "1-Channel Mode")
-                .addSlot(SharedSlots.INTENSITY)
-);
+    private static final List<DMXPersonality> PERSONALITIES = List.of(
+            new DMXPersonality(1, "1-Channel Mode")
+                    .addSlot(SharedSlots.INTENSITY),
+            // Un canal par lampe, vu de face : rangee par rangee depuis le haut, de gauche a droite.
+            new DMXPersonality(8, "8-Channel Pixel Mode")
+                    .addSlot(SharedSlots.INTENSITY)
+                    .addSlot(SharedSlots.INTENSITY)
+                    .addSlot(SharedSlots.INTENSITY)
+                    .addSlot(SharedSlots.INTENSITY)
+                    .addSlot(SharedSlots.INTENSITY)
+                    .addSlot(SharedSlots.INTENSITY)
+                    .addSlot(SharedSlots.INTENSITY)
+                    .addSlot(SharedSlots.INTENSITY)
+    );
     
     private static final ResourceLocation TILT_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/4x2_blinder/4x2_blinder_tilt");
     private static final ResourceLocation PAN_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/4x2_blinder/4x2_blinder_pan");
