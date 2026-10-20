@@ -5,9 +5,11 @@ import com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLight
 import com.github.dumann089.theatricalextralights.blockentities.FollowspotConsoleBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.blockentities.LaserBlockEntity;
+import com.github.dumann089.theatricalextralights.blockentities.LaserProjectorBlockEntity;
 import com.github.dumann089.theatricalextralights.client.gui.PyroConfigScreen;
 import com.github.dumann089.theatricalextralights.blockentities.LedFacadeBlockEntity;
 import com.github.dumann089.theatricalextralights.client.gui.ExtraLightsConfigScreen;
+import com.github.dumann089.theatricalextralights.client.gui.LaserProjectorScreen;
 import com.github.dumann089.theatricalextralights.client.gui.FixtureMountScreen;
 import com.github.dumann089.theatricalextralights.client.gui.FollowspotConsoleScreen;
 import com.github.dumann089.theatricalextralights.client.gui.LaserConfigScreen;
@@ -58,6 +60,13 @@ public class ExtraLightsClientScreens {
                 }
                 return;
             }
+
+            case LASER_PROJECTOR -> {
+                if (blockEntity instanceof LaserProjectorBlockEntity projector) {
+                    mc.setScreen(new LaserProjectorScreen(projector, pos));
+                }
+                return;
+            }
         }
 
         if (!(blockEntity instanceof BaseDMXConsumerLightBlockEntity lightBE)) {
@@ -103,7 +112,7 @@ public class ExtraLightsClientScreens {
                     ? new PyroConfigScreen(lightBE, safety, pos)
                     : new ExtraLightsConfigScreen(lightBE, pos, lightBE.getTranslationKey(), false);
 
-            case MOUNT_WRENCH, FOLLOWSPOT_CONSOLE, LED_FACADE -> null;
+            case MOUNT_WRENCH, FOLLOWSPOT_CONSOLE, LED_FACADE, LASER_PROJECTOR -> null;
         };
 
         if (screen != null) {

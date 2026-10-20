@@ -72,6 +72,24 @@ public enum LaserPattern {
     }
 
     /**
+     * True when every trace of this pattern loops back on itself (rings, polygons). Open
+     * traces (lines, waves, spirals) end with a dwelling beam instead.
+     */
+    public boolean strokesClosed() {
+        switch (this) {
+            case CIRCLE:
+            case SQUARE:
+            case STAR:
+            case TRIANGLE:
+            case TUNNEL:
+            case DOUBLE_CIRCLE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * @param sizeRaw DMX 0-255 for the Size channel
      * @param amplitudeRaw DMX 0-255 for the Amplitude channel
      * @param speedRaw DMX 0-255 for the Speed channel
@@ -250,7 +268,7 @@ public enum LaserPattern {
                 float yaw = (float) (Math.cos(ang) * ringRadius);
                 float pitch = (float) (Math.sin(ang) * ringRadius);
                 int color = triGradient(idx / (float) total, c1, c2, c3);
-                out.add(new LaserBeam(yaw, pitch, length, color));
+                out.add(new LaserBeam(yaw, pitch, length, color, r));
                 idx++;
             }
         }
@@ -310,7 +328,7 @@ public enum LaserPattern {
                 float yr = yaw * cosR - pitch * sinR;
                 float pr = yaw * sinR + pitch * cosR;
                 int color = triGradient(idx / (float) total, c1, c2, c3);
-                out.add(new LaserBeam(yr, pr, 32f, color));
+                out.add(new LaserBeam(yr, pr, 32f, color, idx / perBranch));
                 idx++;
             }
         }
@@ -386,7 +404,7 @@ public enum LaserPattern {
                 float yr = yaw * cosR - pitch * sinR;
                 float pr = yaw * sinR + pitch * cosR;
                 int color = triGradient(idx / (float) total, c1, c2, c3);
-                out.add(new LaserBeam(yr, pr, 32f, color));
+                out.add(new LaserBeam(yr, pr, 32f, color, l));
                 idx++;
             }
         }
@@ -407,7 +425,7 @@ public enum LaserPattern {
             float yaw = (float) (Math.cos(ang) * outer);
             float pitch = (float) (Math.sin(ang) * outer);
             int color = triGradient(idx / (float) total, c1, c2, c3);
-            out.add(new LaserBeam(yaw, pitch, 32f, color));
+            out.add(new LaserBeam(yaw, pitch, 32f, color, 0));
             idx++;
         }
         for (int i = 0; i < countInner; i++) {
@@ -415,7 +433,7 @@ public enum LaserPattern {
             float yaw = (float) (Math.cos(ang) * inner);
             float pitch = (float) (Math.sin(ang) * inner);
             int color = triGradient(idx / (float) total, c1, c2, c3);
-            out.add(new LaserBeam(yaw, pitch, 32f, color));
+            out.add(new LaserBeam(yaw, pitch, 32f, color, 1));
             idx++;
         }
         return out;
@@ -437,7 +455,7 @@ public enum LaserPattern {
             float yaw = (float) (Math.cos(ang) * r);
             float pitch = (float) (Math.sin(ang) * r);
             int color = triGradient(rng.nextFloat(), c1, c2, c3);
-            out.add(new LaserBeam(yaw, pitch, 32f, color));
+            out.add(new LaserBeam(yaw, pitch, 32f, color, i));
         }
         return out;
     }
@@ -458,7 +476,7 @@ public enum LaserPattern {
             float yaw = (float) (Math.cos(ang) * r);
             float pitch = (float) (Math.sin(ang) * r);
             int color = triGradient(i / (float) count, c1, c2, c3);
-            out.add(new LaserBeam(yaw, pitch, 48f, color));
+            out.add(new LaserBeam(yaw, pitch, 48f, color, i));
         }
         return out;
     }

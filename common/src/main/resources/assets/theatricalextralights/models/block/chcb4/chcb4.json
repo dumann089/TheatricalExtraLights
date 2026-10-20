@@ -1,0 +1,21 @@
+{
+  "credit": "Made with Blockbench",
+  "textures": {
+    "0": "theatricalextralights:block/chcb4/chcb4",
+    "particle": "theatricalextralights:block/chcb4/chcb4"
+  },
+  "elements": [
+    {
+      "from": [2, 0, 6],
+      "to": [14, 3, 10],
+      "faces": {
+        "north": {"uv": [0.5, 4.9888, 5.6563, 6.3437], "texture": "#0"},
+        "east": {"uv": [5.9338, 0.2488, 7.1914, 1.7185], "texture": "#0"},
+        "south": {"uv": [0.5, 0.2233, 5.5351, 1.4952], "texture": "#0"},
+        "west": {"uv": [5.9135, 3.3939, 7.2476, 4.8062], "texture": "#0"},
+        "up": {"uv": [0.449, 1.8816, 5.6563, 3.1455], "texture": "#0"},
+        "down": {"uv": [0.4681, 6.5829, 5.567, 7.8022], "texture": "#0"}
+      }
+    }
+  ]
+}

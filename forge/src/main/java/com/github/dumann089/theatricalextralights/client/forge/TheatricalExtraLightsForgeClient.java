@@ -105,6 +105,18 @@ public final class TheatricalExtraLightsForgeClient {
                     ),
                     shader -> ModShaders.beamRaymarchShader = shader
             );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            new ResourceLocation(
+                                    "theatricalextralights",
+                                    "laser_raymarch"
+                            ),
+                            DefaultVertexFormat.POSITION_COLOR_TEX
+                    ),
+                    shader -> ModShaders.laserRaymarchShader = shader
+            );
         } catch (IOException e) {
             throw new RuntimeException("Error cargando los shaders para Theatrical Extra Lights", e);
         }

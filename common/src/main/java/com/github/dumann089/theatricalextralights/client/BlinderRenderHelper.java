@@ -39,7 +39,7 @@ public final class BlinderRenderHelper {
         int b = color & 0xFF;
         int a = (int) intensity;
 
-        VertexConsumer beamConsumer = bufferSource.getBuffer(TheatricalRenderTypes.BEAM);
+        VertexConsumer beamConsumer = bufferSource.getBuffer(ExtraLightsRenderTypes.BEAM);
         poseStack.pushPose();
         poseStack.translate(face.x(), face.y(), face.z());
         Matrix4f matrix = poseStack.last().pose();

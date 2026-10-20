@@ -82,7 +82,6 @@
   "block.theatricalextralights.a2x2par64_warm": "2x2 Par64 Warm",
   "block.theatricalextralights.a2x2par64_white": "2x2 Par64 White",
   "block.theatricalextralights.dwt_panel": "Moving Panel Par64 (DWT)",
-
   "block.theatricalextralights.bigscroller": "Big Scroller",
   "block.theatricalextralights.horizontalscroller": "Horizontal Scroller",
   "block.theatricalextralights.verticalscroller": "Vertical Scroller",
@@ -220,26 +219,6 @@
   "block.theatricalextralights.truss_joint": "Mini Truss Cross",
   "block.theatricalextralights.truss_corner": "Mini Truss Corner (L)",
   "block.theatricalextralights.truss_corner_t": "Mini Truss Corner (T)",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   "itemGroup.theatricalextralights": "Theatrical: Extra Lights",
   "itemGroup.theatricalextralights.pyro": "Theatrical: Pyro",
   "itemGroup.theatricalextralights.misc": "Theatrical: Misc",
@@ -414,9 +393,34 @@
   "tel.settings.spotmax": "Max spot radius",
   "tel.settings.beam.note": "Density, max alpha and slices only apply to the Slices engine.",
   "tel.settings.spot.note": "Spot sized on cone angle x lit distance.",
+  "tel.settings.tab.laser": "Laser",
+  "tel.settings.laser.realistic": "Realistic laser",
+  "tel.settings.laser.impacts": "Impacts",
+  "tel.settings.laser.flicker": "Scan head",
+  "tel.settings.laser.etherdream": "Ether Dream DAC",
+  "tel.settings.laser.haze": "Haze",
+  "tel.settings.laser.brightness": "Laser brightness",
+  "tel.settings.laser.radius": "Beam radius",
+  "tel.settings.laser.detail": "Laser detail (segments)",
+  "tel.settings.laser.note": "Without haze only the impacts stay visible, as in real life.",
   "tel.command.config.opened": "Extra Lights settings opened.",
-  "screen.theatricalextralights.mount.reset": "Reset",
-
   "category.theatricalextralights": "Theatrical Extra Lights",
-  "key.theatricalextralights.config": "Open Configuration Menu"
+  "key.theatricalextralights.config": "Open Configuration Menu",
+  "block.theatricalextralights.chcb4": "Color Block DB4 (12ch)",
+  "block.theatricalextralights.laser_projector": "Ether Dream Laser Projector",
+  "screen.laser_projector.title": "Laser Projector",
+  "screen.laser_projector.status": "State: %s",
+  "screen.laser_projector.link": "Link: %s",
+  "screen.laser_projector.buffer": "Buffer: %s / %s pts",
+  "screen.laser_projector.rate": "PPS: %s · points: %s",
+  "screen.laser_projector.scan": "Scan angle: %s°",
+  "screen.laser_projector.scale": "Scale: %s",
+  "screen.laser_projector.save": "Save",
+  "screen.laser_projector.listening": "listening (Ether Dream)",
+  "screen.laser_projector.offline": "offline",
+  "screen.laser_projector.state.offline": "Offline",
+  "screen.laser_projector.state.idle": "Idle",
+  "screen.laser_projector.state.prepared": "Prepared",
+  "screen.laser_projector.state.playing": "Playing",
+  "screen.laser_projector.state.estop": "E-Stop"
 }

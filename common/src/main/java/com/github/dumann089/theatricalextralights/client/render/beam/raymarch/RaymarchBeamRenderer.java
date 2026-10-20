@@ -147,7 +147,8 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 return;
             }
 
-            SceneDepthCopy.capture();
+            SceneDepthCopy.flushOpaqueAndCapture(bufferSource);
+            bufferSource.endBatch();
             if (!SceneDepthCopy.hasDepth() || ModShaders.beamRaymarchShader == null) {
                 drawStackedFallback(bufferSource, poseStack, camera);
                 return;

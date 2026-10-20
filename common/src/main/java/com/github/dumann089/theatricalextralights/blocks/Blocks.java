@@ -25,9 +25,11 @@ public class Blocks {
     public static final RegistrySupplier<Block> PAR_LED = BLOCKS.register("par_led", ParLedBlock::new);
     public static final RegistrySupplier<Block> LED_FOUNTAIN = BLOCKS.register("led_fountain", LEDfountainBlock::new);
     public static final RegistrySupplier<Block> RGB_BAR = BLOCKS.register("rgb_bar", RGBbarBlock::new);
+    public static final RegistrySupplier<Block> CHCB4 = BLOCKS.register("chcb4", Chcb4Block::new);
     public static final RegistrySupplier<Block> BIG_PANEL = BLOCKS.register("big_panel", BigPanelBlock::new);
     public static final RegistrySupplier<Block> BIG_PANEL2 = BLOCKS.register("big_panel2", BigPanel2Block::new);
     public static final RegistrySupplier<Block> LASER_BLOCK = BLOCKS.register("laser", LaserBlock::new);
+    public static final RegistrySupplier<Block> LASER_PROJECTOR_BLOCK = BLOCKS.register("laser_projector", LaserProjectorBlock::new);
     public static final RegistrySupplier<Block> BLINDER = BLOCKS.register("blinder", BlinderBlock::new);
     public static final RegistrySupplier<Block> STROBE = BLOCKS.register("strobe", StrobeBlock::new);
     public static final RegistrySupplier<Block> ATOMIC_STROBE = BLOCKS.register("atomic_strobe", AtomicStrobeBlock::new);

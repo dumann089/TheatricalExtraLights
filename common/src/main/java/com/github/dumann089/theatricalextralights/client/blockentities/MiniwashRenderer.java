@@ -8,7 +8,7 @@ import com.mojang.math.Axis;
 import dev.imabad.theatrical.TheatricalExpectPlatform;
 import dev.imabad.theatrical.blocks.HangableBlock;
 import dev.imabad.theatrical.client.LazyRenderers;
-import dev.imabad.theatrical.client.TheatricalRenderTypes;
+import com.github.dumann089.theatricalextralights.client.ExtraLightsRenderTypes;
 import com.github.dumann089.theatricalextralights.client.blockentities.ExtraLightsRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -121,7 +121,7 @@ public class MiniwashRenderer extends ExtraLightsRenderer<MiniwashBlockEntity> {
                     Vec3 offset = Vec3.atLowerCornerOf(blockEntity.getBlockPos()).subtract(camera.getPosition());
                     poseStack.translate(offset.x, offset.y, offset.z);
                     preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
-                    VertexConsumer beamConsumer = multiBufferSource.getBuffer(TheatricalRenderTypes.BEAM);
+                    VertexConsumer beamConsumer = multiBufferSource.getBuffer(ExtraLightsRenderTypes.BEAM);
 //            poseStack.translate(blockEntity.getFixture().getBeamStartPosition()[0], blockEntity.getFixture().getBeamStartPosition()[1], blockEntity.getFixture().getBeamStartPosition()[2]);
                     float intensity = blockEntity.getDisplayIntensity(partialTicks);
                     int color = blockEntity.getDisplayColour(partialTicks);

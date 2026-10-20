@@ -27,8 +27,14 @@ public class Fixtures {
     public static final RegistrySupplier<Fixture> LASER =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "laser"), LaserFixture::new);
 
+    public static final RegistrySupplier<Fixture> LASER_PROJECTOR =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "laser_projector"), LaserProjectorFixture::new);
+
     public static final RegistrySupplier<Fixture> RGB_BAR =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "rgb_bar"), RGBbarFixture::new);
+
+    public static final RegistrySupplier<Fixture> CHCB4 =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "chcb4"), Chcb4Fixture::new);
       
     public static final RegistrySupplier<Fixture> VERTICAL_BAR =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "vertical_bar"), VerticalbarFixture::new);

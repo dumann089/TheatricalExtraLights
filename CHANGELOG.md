@@ -2,6 +2,11 @@
 
 ## 1.4.12 (mc 1.20.1)
 
+### Ether Dream laser projector
+- New **Ether Dream Laser Projector** block driven by a virtual Ether Dream DAC instead of DMX. The client advertises itself on UDP 7654 and accepts one control connection on TCP 7765, so MadMapper, LaserOS, CloudLase or any Ether Dream capable software on the LAN can draw ILDA frames into the world. Scan angle, projection scale and DAC binding are set in the projector screen.
+- Config `etherDreamEnabled` (default on) plus bind address, ports, buffer size, max point rate and `laserDac*` rendering options.
+- New **Color Block DB4 (12ch)** fixture.
+
 ### Gobo moving heads
 - Profile personality is now **29ch - Profile 16bit**: two new channels after the prism rotation for an **animation wheel** (11: out / flames / water / clouds / breakup, 12: indexed orientation or continuous scroll in both directions). The effect texture scrolls in front of the gate and modulates both the volumetric beam and the projected gobo. Channels 13-29 shift by two (frost, zoom, focus, pan/tilt 16 bit, speed, framing shutters).
 
