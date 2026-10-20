@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MA xmlns:xml="http://www.w3.org/XML/1998/namespace" major_vers="3" minor_vers="2" stream_vers="2">
+  <Info datetime="2026-9-27T12:00:00" showfile="ma fixture builder"/>
+  <FixtureType index="0" name="THEATRICAL ATOMIC STROBE" mode="1CH">
+    <InfoItems>
+      <Info>Theatrical Extra Lights Atomic Strobe, 1-channel personality: strobe only, 0 off, 1-254 rate 0.5 to 25 Hz, 255 on. Requires mod personality "1-Channel Strobe".</Info>
+    </InfoItems>
+    <short_name>TEL-Atom1</short_name>
+    <manufacturer>Nailec</manufacturer>
+    <short_manufacturer>Nailec</short_manufacturer>
+    <Modules index="0">
+      <Module index="0" name="MAIN" class="LED" beamtype="Wash" beam_angle="60" beam_intensity="10000">
+        <Body>
+          <Size x="0.45" y="0.25" z="0.25"/>
+        </Body>
+        <ChannelType index="0" attribute="SHUTTER" feature="SHUTTER" preset="BEAM" coarse="1" default="0" highlight_value="100">
+          <ChannelFunction index="0" name="Off" from="0" to="0.391" min_dmx_24="0" max_dmx_24="65535" physfrom="0" physto="0" subattribute="SHUTTER" subattribute_user_name="Shutter" attribute="SHUTTER" attribute_user_name="Shutter" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="closed" from_dmx="0" to_dmx="0"/>
+          </ChannelFunction>
+          <ChannelFunction index="1" name="Strobe" from="0.391" to="99.609" min_dmx_24="65536" max_dmx_24="16711679" physfrom="0.5" physto="25" subattribute="STROBE" subattribute_user_name="Rate" attribute="SHUTTER" attribute_user_name="Shutter" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="0.5 Hz" from_dmx="1" to_dmx="1"/>
+            <ChannelSet index="1" name="25 Hz" from_dmx="254" to_dmx="254"/>
+          </ChannelFunction>
+          <ChannelFunction index="2" name="On" from="99.609" to="100" min_dmx_24="16711680" max_dmx_24="16777215" physfrom="1" physto="1" subattribute="SHUTTER" subattribute_user_name="Shutter" attribute="SHUTTER" attribute_user_name="Shutter" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="open" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+      </Module>
+    </Modules>
+    <Instances index="1">
+      <Instance index="0" patch="1" module_index="0" name="Main"/>
+    </Instances>
+    <Wheels index="2"/>
+    <VirtualFunctionBlocks index="3"/>
+    <FixtureMacroCollect index="5"/>
+  </FixtureType>
+</MA>

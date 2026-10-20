@@ -20,6 +20,6 @@ One page per fixture, each channel explained. 19 fixtures.
 | [Wash Led](/fixtures/washled) | 7-Channel Mode (7) |
 | [Mini Wash](/fixtures/miniwash) | 7-Channel Mode (7) |
 | [Moving Bar](/fixtures/moving_bar) | 7-Channel Mode (7) |
-| [Atomic Tilt](/fixtures/atomictilt) | 6-Channel RGB + Focus + Tilt (6), 7-Channel RGB + Focus + Strobe + Tilt (7) |
+| [Atomic Tilt](/fixtures/atomictilt) | 6-Channel RGB + Focus + Tilt (6), 7-Channel RGB + Focus + Strobe + Tilt (7), 6-Channel Atomic + Focus + Tilt (6), 9-Channel Atomic RGB + Focus + Tilt (9) |
 | [Moving Mini Bar](/fixtures/moving_mini_bar) | 5ch - Unite Beam (5), 35ch - Alone Beam (35) |
 | [Moving Panel Par64 (DWT)](/fixtures/dwt_panel) | 6-Channel Mode (6) |

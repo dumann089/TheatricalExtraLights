@@ -32,8 +32,6 @@ import net.minecraft.core.BlockPos;
 
 import net.minecraft.core.Direction;
 
-import net.minecraft.util.Mth;
-
 import net.minecraft.world.level.block.state.BlockState;
 
 import net.minecraft.world.phys.Vec3;
@@ -270,57 +268,16 @@ public class StrobeRenderer extends ExtraLightsFixtureRenderer<StrobeBlockEntity
 
         }
 
-
-
         LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
 
             @Override
 
             public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
 
-                float intensity = StrobeRenderHelper.renderedIntensity(blockEntity, partialTick);
-
-                if (intensity <= 0f) {
-
-                    return;
-
-                }
-
-
-
-                float focusInterpolated = blockEntity.getPrevFocus()
-
-                        + (blockEntity.getFocus() - blockEntity.getPrevFocus()) * partialTick;
-
-                float focusNorm = (Math.max(1f, focusInterpolated) - 1f) / 254f;
-
-                float visualScale = Mth.lerp(focusNorm, 0.30f, 1.0f);
-
-
-
-                int color = blockEntity.getDisplayColour(partialTick);
-
-                int r = (color >> 16) & 0xFF;
-
-                int g = (color >> 8) & 0xFF;
-
-                int b = color & 0xFF;
-
-                int a = (int) ((intensity / 255f) * visualScale * 255f);
-
-                poseStack.pushPose();
-
-                Vec3 blockOffset = Vec3.atLowerCornerOf(blockEntity.getBlockPos()).subtract(camera.getPosition());
-
-                poseStack.translate(blockOffset.x, blockOffset.y, blockOffset.z);
-
-                preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
-
-
-
-                StrobeVisualEffects.renderFace(bufferSource, poseStack, r, g, b, a);
-
-                poseStack.popPose();
+                float level = StrobeRenderHelper.renderedIntensity(blockEntity, partialTick) / 255f;
+                renderStrobeFlash(bufferSource, poseStack, camera, blockEntity,
+                        pose -> preparePoseStack(blockEntity, pose, facing, partialTick, isFlipped, blockstate, isHanging),
+                        StrobeVisualEffects.Face.STROBE, blockEntity.getDisplayColour(partialTick), level, true);
 
             }
 

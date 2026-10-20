@@ -34,6 +34,49 @@ public final class ExtraLightsRenderTypes {
                     .createCompositeState(false)
     );
 
+    /**
+     * Halo additif des sources (strobes) : s'ajoute a la scene au lieu de la recouvrir, sans
+     * ecrire la profondeur ni cacher les faces arriere pour qu'un billboard reste visible.
+     */
+    public static final RenderType GLOW = RenderType.create(
+            "extralights_glow",
+            DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS,
+            1024,
+            false,
+            false,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
+                    .setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
+                    .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                    .setOutputState(RenderStateShard.TRANSLUCENT_TARGET)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .createCompositeState(false)
+    );
+
+    /**
+     * Face LED allumee (pixels, segments) : opaque et pleine luminosite, elle recouvre la texture
+     * de l'appareil au lieu de s'y ajouter, et ecrit la profondeur comme une surface.
+     */
+    public static final RenderType LED_FACE = RenderType.create(
+            "extralights_led_face",
+            DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS,
+            4096,
+            false,
+            false,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
+                    .setTransparencyState(RenderStateShard.NO_TRANSPARENCY)
+                    .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                    .setWriteMaskState(RenderStateShard.COLOR_DEPTH_WRITE)
+                    .createCompositeState(false)
+    );
+
     private ExtraLightsRenderTypes() {
     }
 }

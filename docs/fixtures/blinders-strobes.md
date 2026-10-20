@@ -11,4 +11,4 @@ One page per fixture, each channel explained. 8 fixtures.
 | [2x2 Blinder (Warm)](/fixtures/blinder2x2warm) | 1-Channel Mode (1) |
 | [Strobe](/fixtures/strobe) | 4-Channel Legacy (4), 5-Channel Focus (5), 6-Channel Focus + Strobe (6), 3-Channel Strobe RGB Only (3) |
 | [White Strobe (1 Channel)](/fixtures/white_strobe) | 1-Channel Mode (1) |
-| [Atomic Strobe (34 Channels)](/fixtures/atomic_strobe) | 34-Channel Atomic (34) |
+| [Atomic Strobe](/fixtures/atomic_strobe) | 7 modes |

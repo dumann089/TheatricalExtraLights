@@ -6,6 +6,7 @@ import com.github.dumann089.theatricalextralights.blockentities.StrobeBlockEntit
 import com.github.dumann089.theatricalextralights.blockentities.WhiteStrobeBlockEntity;
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
 import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
+import com.github.dumann089.theatricalextralights.client.StrobeVisualEffects;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -34,8 +35,10 @@ import org.joml.Matrix4f;
 
 import java.util.Optional;
 
-public class WhiteStrobeRenderer extends ExtraLightsRenderer<WhiteStrobeBlockEntity> {
+public class WhiteStrobeRenderer extends ExtraLightsFixtureRenderer<WhiteStrobeBlockEntity> {
     private BakedModel cachedPanModel, cachedTiltModel, cachedStaticModel;
+    /** Le canal unique sert de vitesse de strobe et remplit aussi R=G=B : le tube, lui, reste blanc. */
+    private static final int WHITE = 0xFFFFFF;
     public WhiteStrobeRenderer(BlockEntityRendererProvider.Context context) {super(context);}
 
         @Override
@@ -132,52 +135,23 @@ public class WhiteStrobeRenderer extends ExtraLightsRenderer<WhiteStrobeBlockEnt
             int packedLight,
             int packedOverlay
     ) {
-        if (blockEntity.getDisplayIntensity(partialTicks) > 0) {
-            LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
-
-                @Override
-                public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
-                    poseStack.pushPose();
-                    Vec3 offset = Vec3.atLowerCornerOf(blockEntity.getBlockPos())
-                            .subtract(camera.getPosition());
-                    poseStack.translate(offset.x, offset.y, offset.z);
-                    preparePoseStack(
-                            blockEntity,
-                            poseStack,
-                            facing,
-                            partialTick,
-                            isFlipped,
-                            blockstate,
-                            isHanging
-                    );
-                    VertexConsumer beamConsumer =
-                            multiBufferSource.getBuffer(ExtraLightsRenderTypes.BEAM);
-
-                    float intensity = StrobeRenderHelper.renderedIntensity(blockEntity, partialTicks);
-
-                    int color = blockEntity.getDisplayColour(partialTicks);
-                    int r = (color >> 16) & 0xFF;
-                    int g = (color >> 8) & 0xFF;
-                    int b = color & 0xFF;
-                    int a = (int) ((intensity / 255f) * 255f);
-                    poseStack.pushPose();
-                    poseStack.translate(0.5, 0.65f, 0.37f);
-                    Matrix4f m = poseStack.last().pose();
-                    Matrix3f normal = poseStack.last().normal();
-                    addVertex(beamConsumer, m, normal, r, g, b, a, -0.4375f, 0.21875f , 0f);
-                    addVertex(beamConsumer, m, normal, r, g, b, a,  0.4375f, 0.21875f, 0f);
-                    addVertex(beamConsumer, m, normal, r, g, b, a, 0.4375f, -0.21875f,0f);
-                    addVertex(beamConsumer, m, normal, r, g, b, a,-0.4375f, -0.21875f, 0f);
-                    poseStack.popPose();
-
-                    poseStack.popPose();
-                }
-                @Override
-                public Vec3 getPos(float partialTick) {
-                    return blockEntity.getBlockPos().getCenter();
-                }
-            });
+        if (!StrobeRenderHelper.isVisuallyLit(blockEntity)) {
+            return;
         }
+        LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
+            @Override
+            public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
+                float level = StrobeRenderHelper.renderedIntensity(blockEntity, partialTick) / 255f;
+                renderStrobeFlash(bufferSource, poseStack, camera, blockEntity,
+                        pose -> preparePoseStack(blockEntity, pose, facing, partialTick, isFlipped, blockstate, isHanging),
+                        StrobeVisualEffects.Face.STROBE, WHITE, level, true);
+            }
+
+            @Override
+            public Vec3 getPos(float partialTick) {
+                return blockEntity.getBlockPos().getCenter();
+            }
+        });
     }
 
         @Override

@@ -4,6 +4,8 @@ import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasPe
 import com.github.dumann089.theatricalextralights.blocks.AtomictiltBlock;
 import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
+import com.github.dumann089.theatricalextralights.util.AtomicStrobeEngine;
+import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 import com.github.dumann089.theatricalextralights.util.DmxFrameAtomictiltSync;
 import com.github.dumann089.theatricalextralights.util.DmxShutterStrobeHelper;
 import com.github.dumann089.theatricalextralights.util.DmxStrobeFixture;
@@ -14,22 +16,31 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Tete strobe sur lyre a tilt. Deux modes historiques (RGB + focus [+ strobe shutter] + tilt) et
+ * deux modes Atomic ou l'intensite instantanee vient de {@link AtomicStrobeEngine} : intensite,
+ * duree de flash, cadence, effets [+ RGB], focus, tilt.
+ */
 public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
         implements HasPersonality, DmxStrobeFixture, DmxFrameAtomictiltSync {
     private static final int RGB_FOCUS_TILT_MODE = 0;
     private static final int RGB_FOCUS_STROBE_TILT_MODE = 1;
+    private static final int ATOMIC_TILT_MODE = 2;
+    private static final int ATOMIC_RGB_TILT_MODE = 3;
 
     private int activePersonalityIndex = RGB_FOCUS_TILT_MODE;
     private int strobe = 255;
     private int prevStrobe = 255;
+    /** Canaux du moteur Atomic (modes 2 et 3). */
+    private int flashDuration;
+    private int flashRate;
+    private int flashEffect;
     /** Valeur DMX brute du canal tilt (0–255) — sync extended + NBT. */
     private int rawTiltDmx;
     private int prevRawTiltDmx;
@@ -87,6 +98,10 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
         return activePersonalityIndex == RGB_FOCUS_STROBE_TILT_MODE;
     }
 
+    private boolean usesAtomicEngine() {
+        return activePersonalityIndex == ATOMIC_TILT_MODE || activePersonalityIndex == ATOMIC_RGB_TILT_MODE;
+    }
+
     @Override
     public boolean usesStrobeExtras() {
         return usesStrobeChannel();
@@ -94,6 +109,12 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
 
     private long getGameTimeForStrobe() {
         return level != null ? level.getGameTime() : 0L;
+    }
+
+    private float atomicLevel(float partialTick, double window, double offsetSeconds) {
+        double seconds = (getGameTimeForStrobe() + partialTick) / 20.0 + offsetSeconds;
+        return AtomicStrobeEngine.levelOverWindow(intensity, flashDuration, flashRate, flashEffect,
+                seconds, window, getBlockPos().asLong(), 0, 1);
     }
 
     @Override
@@ -113,6 +134,9 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
 
     @Override
     public float getRenderedIntensity(float partialTick) {
+        if (usesAtomicEngine()) {
+            return atomicLevel(partialTick, AtomicStrobeEngine.FRAME_SECONDS, 0.0) * 255f;
+        }
         if (usesStrobeChannel()) {
             return DmxStrobeFixture.super.getRenderedIntensity(partialTick);
         }
@@ -120,7 +144,19 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
     }
 
     @Override
+    public boolean shouldForceStrobeRepaint() {
+        if (usesAtomicEngine()) {
+            return AtomicStrobeEngine.canLight(intensity, flashRate, flashEffect)
+                    && AtomicStrobeEngine.effectOf(flashEffect) != AtomicStrobeEngine.EFFECT_BLINDER;
+        }
+        return DmxStrobeFixture.super.shouldForceStrobeRepaint();
+    }
+
+    @Override
     public float getIntensity() {
+        if (usesAtomicEngine()) {
+            return atomicLevel(0f, AtomicStrobeEngine.TICK_SECONDS, 0.0) * 255f;
+        }
         if (usesStrobeChannel()) {
             return DmxShutterStrobeHelper.computeEffectiveIntensity(intensity, strobe, getGameTimeForStrobe());
         }
@@ -129,6 +165,9 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
 
     @Override
     public int getPrevIntensity() {
+        if (usesAtomicEngine()) {
+            return (int) (atomicLevel(0f, AtomicStrobeEngine.TICK_SECONDS, -AtomicStrobeEngine.TICK_SECONDS) * 255f);
+        }
         if (usesStrobeChannel()) {
             return (int) DmxShutterStrobeHelper.computeEffectiveIntensity(
                     prevIntensity,
@@ -229,26 +268,50 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
     public void consume(byte[] dmxValues) {
         int channelCount = getPersonalityChannelCount();
         int start = this.getChannelStart() > 0 ? this.getChannelStart() - 1 : 0;
-        byte[] ourValues = Arrays.copyOfRange(dmxValues, start, start + channelCount);
-        if (ourValues.length < channelCount) {
+        byte[] v = Arrays.copyOfRange(dmxValues, start, start + channelCount);
+        if (v.length < channelCount) {
             return;
         }
         boolean prevAdvanced = beginDmxUpdate();
         int _pi = intensity, _pr = red, _pg = green, _pb = blue, _pf = focus, _pp = pan, _pt = tilt, _ps = strobe;
+        int _pd = flashDuration, _prt = flashRate, _pe = flashEffect;
         int _rawTilt = rawTiltDmx;
 
-        intensity = convertByteToInt(ourValues[0]);
-        red = convertByteToInt(ourValues[1]);
-        green = convertByteToInt(ourValues[2]);
-        blue = convertByteToInt(ourValues[3]);
-        focus = convertByteToInt(ourValues[4]);
-
         int newRawTilt;
-        if (usesStrobeChannel()) {
-            strobe = convertByteToInt(ourValues[5]);
-            newRawTilt = convertByteToInt(ourValues[6]);
-        } else {
-            newRawTilt = convertByteToInt(ourValues[5]);
+        switch (activePersonalityIndex) {
+            case ATOMIC_TILT_MODE -> {
+                intensity = convertByteToInt(v[0]);
+                flashDuration = convertByteToInt(v[1]);
+                flashRate = convertByteToInt(v[2]);
+                flashEffect = convertByteToInt(v[3]);
+                red = green = blue = 255;
+                focus = convertByteToInt(v[4]);
+                newRawTilt = convertByteToInt(v[5]);
+            }
+            case ATOMIC_RGB_TILT_MODE -> {
+                intensity = convertByteToInt(v[0]);
+                flashDuration = convertByteToInt(v[1]);
+                flashRate = convertByteToInt(v[2]);
+                flashEffect = convertByteToInt(v[3]);
+                red = convertByteToInt(v[4]);
+                green = convertByteToInt(v[5]);
+                blue = convertByteToInt(v[6]);
+                focus = convertByteToInt(v[7]);
+                newRawTilt = convertByteToInt(v[8]);
+            }
+            default -> {
+                intensity = convertByteToInt(v[0]);
+                red = convertByteToInt(v[1]);
+                green = convertByteToInt(v[2]);
+                blue = convertByteToInt(v[3]);
+                focus = convertByteToInt(v[4]);
+                if (usesStrobeChannel()) {
+                    strobe = convertByteToInt(v[5]);
+                    newRawTilt = convertByteToInt(v[6]);
+                } else {
+                    newRawTilt = convertByteToInt(v[5]);
+                }
+            }
         }
 
         prevRawTiltDmx = rawTiltDmx;
@@ -256,7 +319,8 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
         tilt = mapTiltDmx(rawTiltDmx);
 
         boolean changed = intensity != _pi || red != _pr || green != _pg || blue != _pb
-                || focus != _pf || pan != _pp || tilt != _pt || strobe != _ps || rawTiltDmx != _rawTilt;
+                || focus != _pf || pan != _pp || tilt != _pt || strobe != _ps || rawTiltDmx != _rawTilt
+                || flashDuration != _pd || flashRate != _prt || flashEffect != _pe;
         finishDmxUpdate(changed, prevAdvanced);
     }
 
@@ -267,10 +331,9 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
     @Override
     public void lightTick() {
         super.lightTick();
-        if (level != null && level.isClientSide && usesStrobeChannel()) {
+        if (level != null && level.isClientSide && (usesStrobeChannel() || usesAtomicEngine())) {
             prevStrobe = strobe;
             if (shouldForceStrobeRepaint()) {
-                BlockEntitySync.sendData(this);
                 StrobeRenderHelper.markSectionDirty(getBlockPos());
             }
         }
@@ -287,6 +350,9 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
             strobe = tag.getInt("strobe");
             prevStrobe = strobe;
         }
+        flashDuration = tag.getInt("flashDuration");
+        flashRate = tag.getInt("flashRate");
+        flashEffect = tag.getInt("flashEffect");
         if (tag.contains("rawTiltDmx")) {
             rawTiltDmx = tag.getInt("rawTiltDmx");
             prevRawTiltDmx = tag.contains("prevRawTiltDmx") ? tag.getInt("prevRawTiltDmx") : rawTiltDmx;
@@ -299,11 +365,20 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
         }
     }
 
+    private void writeExtra(CompoundTag tag) {
+        tag.putInt("activePersonality", activePersonalityIndex);
+        tag.putInt("strobe", strobe);
+        tag.putInt("flashDuration", flashDuration);
+        tag.putInt("flashRate", flashRate);
+        tag.putInt("flashEffect", flashEffect);
+        tag.putInt("rawTiltDmx", rawTiltDmx);
+        tag.putInt("prevRawTiltDmx", prevRawTiltDmx);
+    }
+
     @Override
     public void write(CompoundTag tag) {
         super.write(tag);
-        tag.putInt("rawTiltDmx", rawTiltDmx);
-        tag.putInt("prevRawTiltDmx", prevRawTiltDmx);
+        writeExtra(tag);
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, AtomictiltBlockEntity be) {
@@ -343,19 +418,13 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
     @Override
     public void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putInt("activePersonality", activePersonalityIndex);
-        tag.putInt("strobe", strobe);
-        tag.putInt("rawTiltDmx", rawTiltDmx);
-        tag.putInt("prevRawTiltDmx", prevRawTiltDmx);
+        writeExtra(tag);
     }
 
     @Override
     public CompoundTag getUpdateTag() {
         CompoundTag tag = super.getUpdateTag();
-        tag.putInt("activePersonality", activePersonalityIndex);
-        tag.putInt("strobe", strobe);
-        tag.putInt("rawTiltDmx", rawTiltDmx);
-        tag.putInt("prevRawTiltDmx", prevRawTiltDmx);
+        writeExtra(tag);
         return tag;
     }
 
