@@ -42,7 +42,7 @@
   "screen.laser_projector.state.estop": "E-Stop",
   "block.theatricalextralights.truss_3lights": "Traverse 3×3 Lichter",
   "block.theatricalextralights.strobe": "Stroboskop",
-  "block.theatricalextralights.atomic_strobe": "Atomic Stroboskop (34 Kanäle)",
+  "block.theatricalextralights.atomic_strobe": "Atomic Stroboskop",
   "block.theatricalextralights.beam_7r": "Beam 7R (7Ch/10Ch)",
   "block.theatricalextralights.mac_vip": "Mac VIP (7Ch/10Ch)",
   "block.theatricalextralights.sharplus": "Sharpy+ (7Ch/10Ch)",

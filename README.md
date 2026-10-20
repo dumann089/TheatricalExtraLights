@@ -60,7 +60,7 @@ Hundreds of placeable fixtures across creative tabs **Theatrical: Extra Lights**
 - **Moving heads** — Moving 500, Beam 7R, Mac VIP, Sharpy+, Robit Spot, Verve Spot, VL2/VL6, scans, gobo variants…
 - **Wash & spot** — Source Four, followspot, searchlight, wash LED, mini wash, VL 6000
 - **PAR & panels** — LED Par, Par 1000, x8 Par64, 2×2 / 2×8 / 6×3 Par64 arrays, big panels, shaped LED panels
-- **Blinders & strobes** — 4×2 blinder, atomic strobe (34ch), atomic tilt, white strobe
+- **Blinders & strobes** — 4×2 blinder, atomic strobe (1 to 400ch, Atomic-style duration/rate/effects, pixel bar, RGB plate and a 96-pixel map), atomic tilt (RGB or Atomic modes), white strobe
 - **Effects** — laser, laser mirror, LED fountain, RGB / vertical bars, scrollers, invisible light
 - **Water jets** — jets, cones, bloom, fog, organ pipes, moving fan, and more
 - **Pyro** — 50+ firework launchers, Pyro Fan, RGB launcher, confetti, gerbs, flame projector, **flame thrower**, daytime powder *(see [Pyro](#pyro-theatrical-pyro-tab) below)*
@@ -71,7 +71,7 @@ All DMX fixtures work with Theatrical’s **Configuration Card**, **Art-Net netw
 
 ### Improved patching & configuration *(recent)*
 
-- **Configuration card** — automatically jumps to the **next universe at address 1** when a fixture no longer fits in the remaining 512 channels (e.g. Universe 1 @ 500 + 34ch Atomic → Universe 2 @ 1)
+- **Configuration card** — automatically jumps to the **next universe at address 1** when a fixture no longer fits in the remaining 512 channels (e.g. Universe 1 @ 500 + 40ch Atomic → Universe 2 @ 1)
 - **Clear chat feedback** — fixture name, network, channel range, wrap notice, and next card address
 - **Fixture config screen** — clean UI with labels above fields, Save / Cancel, live **DMX footprint** preview, and personality-aware channel count
 - **Keyboard shortcuts** — Enter to save, Escape to cancel

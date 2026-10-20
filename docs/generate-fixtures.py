@@ -206,12 +206,23 @@ for id_, name, intro in [
     FIXTURES.append(F(id_, name, "Moving heads & beams", intro, [P_7CH_ONLY], MH_NOTES))
 
 _FAMILY = "Moving heads & beams"
+ATOMIC_TILT_CH = ch("Tilt", "0 to 255", "Tilt of the yoke over its full travel.")
+ATOMIC_BAR = [
+    ch("Intensity", "0 to 255", "Flash intensity."),
+    ch("Flash duration", "0 to 255", "Length of each flash, 12 ms at 0 to 650 ms at 255."),
+    ch("Flash rate", "0 to 255", "0 stops the strobe (as on the real unit); 1 to 255 runs 0.5 to 25 flashes a second."),
+    ch("Effects", "0 to 255", "0-9 plain strobe; 10-39 blinder, lamp on continuously; 40-69 ramp up; 70-99 ramp down; "
+                              "100-129 ramp up and down; 130-159 random; 160-189 lightning bursts; 190-219 spikes; "
+                              "220-255 sparkle (each bar segment flashes on its own in the pixel modes)."),
+]
+ATOMIC_NOTES = ["Every flash is timed from the game clock, so all clients see the same flashes. A flash shorter than a frame still shows for one frame.",
+                "The room light follows the flashes tick by tick."]
 FIXTURES.append(F("atomictilt", "Atomic Tilt", "A strobe head on a tilting yoke, no pan.", [
-    P("6-Channel RGB + Focus + Tilt", [INTENSITY, RED, GREEN, BLUE, FOCUS_CONE,
-                                       ch("Tilt", "0 to 255", "Tilt of the yoke over its full travel.")]),
-    P("7-Channel RGB + Focus + Strobe + Tilt", [INTENSITY, RED, GREEN, BLUE, FOCUS_CONE, STROBE,
-                                                ch("Tilt", "0 to 255", "Tilt of the yoke over its full travel.")]),
-]))
+    P("6-Channel RGB + Focus + Tilt", [INTENSITY, RED, GREEN, BLUE, FOCUS_CONE, ATOMIC_TILT_CH]),
+    P("7-Channel RGB + Focus + Strobe + Tilt", [INTENSITY, RED, GREEN, BLUE, FOCUS_CONE, STROBE, ATOMIC_TILT_CH]),
+    P("6-Channel Atomic + Focus + Tilt", ATOMIC_BAR + [FOCUS_CONE, ATOMIC_TILT_CH], "White head driven like a Martin Atomic: intensity, duration, rate, effects."),
+    P("9-Channel Atomic RGB + Focus + Tilt", ATOMIC_BAR + [RED, GREEN, BLUE, FOCUS_CONE, ATOMIC_TILT_CH], "The Atomic engine with a colour."),
+], ATOMIC_NOTES))
 MMB_BEAM = lambda n: [ch(f"Beam {n} intensity", "0 to 255", f"Dimmer of beam {n} (1 is at one end of the bar, 7 at the other)."),
                       ch(f"Beam {n} tilt", "0 to 255", f"Tilt of beam {n}."),
                       ch(f"Beam {n} red", "0 to 255", f"Red of beam {n}."),
@@ -302,12 +313,38 @@ FIXTURES += [
         P("3-Channel Strobe RGB Only", [RED, GREEN, BLUE], "Intensity and focus are fixed and the shutter is always open: the fixture flashes continuously and you only choose the colour."),
     ], ["Flashes its face; it has no beam."]),
     F("white_strobe", "White Strobe (1 Channel)", "Simple white strobe.", [P_1CH]),
-    F("atomic_strobe", "Atomic Strobe (34 Channels)", "Large LED strobe with eight RGB zones and a nine-segment white bar, on a floor plate with a tilting yoke.", [
-        P("34-Channel Atomic", sum(([ch(f"Zone {z} red", "0 to 255", f"Red of RGB zone {z}."), ch(f"Zone {z} green", "0 to 255", f"Green of RGB zone {z}."),
-                                     ch(f"Zone {z} blue", "0 to 255", f"Blue of RGB zone {z}.")] for z in range(1, 9)), [])
+    F("atomic_strobe", "Atomic Strobe", "LED strobe in the Atomic style: a nine-segment white strobe bar between two plates of four RGB zones, on a U yoke with a floor plate.", [
+        P("34-Channel Pixel (Legacy)", sum(([ch(f"Zone {z} red", "0 to 255", f"Red of RGB zone {z}."), ch(f"Zone {z} green", "0 to 255", f"Green of RGB zone {z}."),
+                                             ch(f"Zone {z} blue", "0 to 255", f"Blue of RGB zone {z}.")] for z in range(1, 9)), [])
           + [ch(f"White bar segment {s}", "0 to 255", f"Level of white bar segment {s}.") for s in range(1, 10)]
           + [ch("Focus", "1 to 255", "Size of the light spot on the ground.")],
-          "The room light takes the brightest emitter as level and an intensity-weighted mix of every lit emitter as colour, with the white bar weighted heavier.")]),
+          "The original layout, everything lit continuously at its level. Kept first so fixtures placed before the modes existed keep working."),
+        P("1-Channel Strobe", [ch("Strobe", "0 to 255", "0 off; 1 to 254 flash rate, slow to fast, with a short flash; 255 lamp on continuously.")],
+          "White bar only."),
+        P("4-Channel Atomic", ATOMIC_BAR, "White bar only, driven like a Martin Atomic 3000."),
+        P("8-Channel Atomic + Aura", ATOMIC_BAR + [ch("Aura intensity", "0 to 255", "Level of the RGB plates, lit continuously as a backlight."),
+                                                    ch("Aura red", "0 to 255", "Red of the aura."), ch("Aura green", "0 to 255", "Green of the aura."),
+                                                    ch("Aura blue", "0 to 255", "Blue of the aura.")],
+          "The Atomic 3000 LED layout: the strobe bar plus the RGB plates as one coloured glow around it."),
+        P("10-Channel Compressed (Bar + Plate)", ATOMIC_BAR + [ch("Plate intensity", "0 to 255", "Level of the RGB plates."),
+                                                              ch("Plate flash duration", "0 to 255", "Flash length of the plates, 12 ms to 650 ms."),
+                                                              ch("Plate flash rate", "0 to 255", "0 leaves the plates on continuously; 1 to 255 strobes them at 0.5 to 25 Hz."),
+                                                              ch("Plate red", "0 to 255", "Red of all eight zones."), ch("Plate green", "0 to 255", "Green of all eight zones."),
+                                                              ch("Plate blue", "0 to 255", "Blue of all eight zones.")],
+          "All eight RGB zones act as one pixel with its own strobe, next to the bar."),
+        P("40-Channel Pixel (Bar + Plate)", ATOMIC_BAR + [ch(f"Bar segment {s}", "0 to 255", f"Level of white bar segment {s} under the bar's flashes.") for s in range(1, 10)]
+          + [ch("Plate intensity", "0 to 255", "Level of the RGB plates."), ch("Plate flash duration", "0 to 255", "Flash length of the plates."),
+             ch("Plate flash rate", "0 to 255", "0 continuous; 1 to 255 strobes the plates.")]
+          + sum(([ch(f"Zone {z} red", "0 to 255", f"Red of RGB zone {z}."), ch(f"Zone {z} green", "0 to 255", f"Green of RGB zone {z}."),
+                  ch(f"Zone {z} blue", "0 to 255", f"Blue of RGB zone {z}.")] for z in range(1, 9)), []),
+          "Every segment and every zone on its own channel; the sparkle effect flashes segments individually."),
+        P("400-Channel Pixel Map (Bar + 96 Pixels)", ATOMIC_BAR + [ch(f"Bar segment {s}", "0 to 255", f"Level of white bar segment {s} under the bar's flashes.") for s in range(1, 10)]
+          + [ch("Plate intensity", "0 to 255", "Level of the RGB plates."), ch("Plate flash duration", "0 to 255", "Flash length of the plates."),
+             ch("Plate flash rate", "0 to 255", "0 continuous; 1 to 255 strobes the plates.")]
+          + sum(([ch(f"Pixel {p} dim", "0 to 255", f"Dimmer of pixel {p}."), ch(f"Pixel {p} red", "0 to 255", f"Red of pixel {p}."),
+                  ch(f"Pixel {p} green", "0 to 255", f"Green of pixel {p}."), ch(f"Pixel {p} blue", "0 to 255", f"Blue of pixel {p}.")] for p in range(1, 97)), []),
+          "Each plate is a grid of 12 columns by 4 rows. Pixels 1 to 48 are the top plate, 49 to 96 the bottom plate, row by row from the top, left to right, four channels each. Fits one universe."),
+    ], ATOMIC_NOTES),
 ]
 
 # Laser

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MA xmlns:xml="http://www.w3.org/XML/1998/namespace" major_vers="3" minor_vers="2" stream_vers="2">
+  <Info datetime="2026-9-27T12:00:00" showfile="ma fixture builder"/>
+  <FixtureType index="0" name="THEATRICAL ATOMIC STROBE" mode="400CH PixelMap">
+    <InfoItems>
+      <Info>Theatrical Extra Lights Atomic Strobe, 400-channel pixel map personality: Dim, Flash Duration, Flash Rate, Effects on the main fixture, Segment sub-fixtures 1.1 to 1.9 (Dim each, left to right), Plate 1.10 (Dim, Duration, Rate; rate 0 = continuous) and Pixel sub-fixtures 1.11 to 1.106 (Dim, Red, Green, Blue each): pixels 1-48 on the top plate, 49-96 on the bottom plate, each plate 12 columns x 4 rows, row by row from the top, left to right. Effects: 0-9 strobe, 10-39 blinder, 40-69 ramp up, 70-99 ramp down, 100-129 ramp up/down, 130-159 random, 160-189 lightning, 190-219 spikes, 220-255 sparkle. Rate 0 stops the strobe. Requires mod personality "400-Channel Pixel Map (Bar + 96 Pixels)".</Info>
+    </InfoItems>
+    <short_name>TEL-Atom400</short_name>
+    <manufacturer>Nailec</manufacturer>
+    <short_manufacturer>Nailec</short_manufacturer>
+    <Modules index="0">
+      <Module index="0" name="MAIN" class="LED" beamtype="Wash" beam_angle="60" beam_intensity="10000">
+        <Body>
+          <Size x="0.45" y="0.25" z="0.25"/>
+        </Body>
+        <ChannelType index="0" attribute="DIM" feature="DIMMER" preset="DIMMER" coarse="1" default="0" highlight_value="100" react_to_master="1">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="DIM" subattribute_user_name="Dim" attribute="DIM" attribute_user_name="Dim" feature="DIMMER" feature_user_name="Dimmer" preset="DIMMER" preset_user_name="Dimmer">
+            <ChannelSet index="0" name="closed" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="open" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="1" attribute="STROBEDURATION" feature="SHUTTER" preset="BEAM" coarse="2" default="40" highlight_value="15">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0.012" physto="0.65" subattribute="STROBEDURATION" subattribute_user_name="Duration" attribute="STROBEDURATION" attribute_user_name="Duration" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="12 ms" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="100 ms" from_dmx="100" to_dmx="100"/>
+            <ChannelSet index="2" name="650 ms" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="2" attribute="SHUTTER" feature="SHUTTER" preset="BEAM" coarse="3" default="0" highlight_value="60">
+          <ChannelFunction index="0" name="Off" from="0" to="0.391" min_dmx_24="0" max_dmx_24="65535" physfrom="0" physto="0" subattribute="SHUTTER" subattribute_user_name="Shutter" attribute="SHUTTER" attribute_user_name="Shutter" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+          </ChannelFunction>
+          <ChannelFunction index="1" name="Strobe" from="0.391" to="100" min_dmx_24="65536" max_dmx_24="16777215" physfrom="0.5" physto="25" subattribute="STROBE" subattribute_user_name="Rate" attribute="SHUTTER" attribute_user_name="Shutter" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="0.5 Hz" from_dmx="1" to_dmx="1"/>
+            <ChannelSet index="1" name="5 Hz" from_dmx="110" to_dmx="110"/>
+            <ChannelSet index="2" name="12 Hz" from_dmx="180" to_dmx="180"/>
+            <ChannelSet index="3" name="25 Hz" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="3" attribute="STROBEMODE" feature="SHUTTER" preset="BEAM" coarse="4" default="0" highlight_value="0" snap="true">
+          <ChannelFunction index="0" name="Strobe" from="0" to="3.906" min_dmx_24="0" max_dmx_24="655359" physfrom="0" physto="0" subattribute="STROBEMODE" subattribute_user_name="Strobe" attribute="STROBEMODE" attribute_user_name="Effects" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="Strobe" from_dmx="0" to_dmx="9"/>
+          </ChannelFunction>
+          <ChannelFunction index="1" name="Blinder" from="3.906" to="15.625" min_dmx_24="655360" max_dmx_24="2621439" physfrom="0" physto="0" subattribute="STROBEMODE" subattribute_user_name="Blinder" attribute="STROBEMODE" attribute_user_name="Effects" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="Blinder" from_dmx="10" to_dmx="39"/>
+          </ChannelFunction>
+          <ChannelFunction index="2" name="Ramp Up" from="15.625" to="27.344" min_dmx_24="2621440" max_dmx_24="4587519" physfrom="0" physto="0" subattribute="STROBEMODEPULSEOPEN" subattribute_user_name="Ramp Up" attribute="STROBEMODE" attribute_user_name="Effects" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="Ramp Up" from_dmx="40" to_dmx="69"/>
+          </ChannelFunction>
+          <ChannelFunction index="3" name="Ramp Down" from="27.344" to="39.062" min_dmx_24="4587520" max_dmx_24="6553599" physfrom="0" physto="0" subattribute="STROBEMODEPULSECLOSE" subattribute_user_name="Ramp Down" attribute="STROBEMODE" attribute_user_name="Effects" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="Ramp Down" from_dmx="70" to_dmx="99"/>
+          </ChannelFunction>
+          <ChannelFunction index="4" name="Ramp Up/Down" from="39.062" to="50.781" min_dmx_24="6553600" max_dmx_24="8519679" physfrom="0" physto="0" subattribute="STROBEMODEPULSE" subattribute_user_name="Ramp Up/Down" attribute="STROBEMODE" attribute_user_name="Effects" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="Ramp Up/Down" from_dmx="100" to_dmx="129"/>
+          </ChannelFunction>
+          <ChannelFunction index="5" name="Random" from="50.781" to="62.5" min_dmx_24="8519680" max_dmx_24="10485759" physfrom="0" physto="0" subattribute="STROBEMODERANDOM" subattribute_user_name="Random" attribute="STROBEMODE" attribute_user_name="Effects" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="Random" from_dmx="130" to_dmx="159"/>
+          </ChannelFunction>
+          <ChannelFunction index="6" name="Lightning" from="62.5" to="74.219" min_dmx_24="10485760" max_dmx_24="12451839" physfrom="0" physto="0" subattribute="STROBEMODELIGHTNING" subattribute_user_name="Lightning" attribute="STROBEMODE" attribute_user_name="Effects" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="Lightning" from_dmx="160" to_dmx="189"/>
+          </ChannelFunction>
+          <ChannelFunction index="7" name="Spikes" from="74.219" to="85.938" min_dmx_24="12451840" max_dmx_24="14417919" physfrom="0" physto="0" subattribute="STROBEMODERANDOM" subattribute_user_name="Spikes" attribute="STROBEMODE" attribute_user_name="Effects" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="Spikes" from_dmx="190" to_dmx="219"/>
+          </ChannelFunction>
+          <ChannelFunction index="8" name="Sparkle" from="85.938" to="100" min_dmx_24="14417920" max_dmx_24="16777215" physfrom="0" physto="0" subattribute="STROBEMODERANDOM" subattribute_user_name="Sparkle" attribute="STROBEMODE" attribute_user_name="Effects" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="Sparkle" from_dmx="220" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+      </Module>
+      <Module index="1" name="SEGMENT" class="LED" beamtype="Wash" beam_angle="60" beam_intensity="10000">
+        <Body>
+          <Size x="0.044" y="0.03" z="0.25"/>
+        </Body>
+        <ChannelType index="0" attribute="DIM" feature="DIMMER" preset="DIMMER" coarse="1" default="0" highlight_value="100" react_to_master="1">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="DIM" subattribute_user_name="Dim" attribute="DIM" attribute_user_name="Dim" feature="DIMMER" feature_user_name="Dimmer" preset="DIMMER" preset_user_name="Dimmer">
+            <ChannelSet index="0" name="closed" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="open" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+      </Module>
+      <Module index="2" name="PLATE" class="LED" beamtype="Wash" beam_angle="120" beam_intensity="10000">
+        <Body>
+          <Size x="0.4" y="0.09" z="0.25"/>
+        </Body>
+        <ChannelType index="0" attribute="DIM" feature="DIMMER" preset="DIMMER" coarse="1" default="0" highlight_value="100" react_to_master="1">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="DIM" subattribute_user_name="Dim" attribute="DIM" attribute_user_name="Dim" feature="DIMMER" feature_user_name="Dimmer" preset="DIMMER" preset_user_name="Dimmer">
+            <ChannelSet index="0" name="closed" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="open" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="1" attribute="STROBEDURATION" feature="SHUTTER" preset="BEAM" coarse="2" default="40" highlight_value="15">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0.012" physto="0.65" subattribute="STROBEDURATION" subattribute_user_name="Duration" attribute="STROBEDURATION" attribute_user_name="Duration" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="12 ms" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="100 ms" from_dmx="100" to_dmx="100"/>
+            <ChannelSet index="2" name="650 ms" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="2" attribute="SHUTTER" feature="SHUTTER" preset="BEAM" coarse="3" default="0" highlight_value="60">
+          <ChannelFunction index="0" name="Open" from="0" to="0.391" min_dmx_24="0" max_dmx_24="65535" physfrom="1" physto="1" subattribute="SHUTTER" subattribute_user_name="Shutter" attribute="SHUTTER" attribute_user_name="Shutter" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="open" from_dmx="0" to_dmx="0"/>
+          </ChannelFunction>
+          <ChannelFunction index="1" name="Strobe" from="0.391" to="100" min_dmx_24="65536" max_dmx_24="16777215" physfrom="0.5" physto="25" subattribute="STROBE" subattribute_user_name="Rate" attribute="SHUTTER" attribute_user_name="Shutter" feature="SHUTTER" feature_user_name="Shutter" preset="BEAM" preset_user_name="Beam">
+            <ChannelSet index="0" name="0.5 Hz" from_dmx="1" to_dmx="1"/>
+            <ChannelSet index="1" name="5 Hz" from_dmx="110" to_dmx="110"/>
+            <ChannelSet index="2" name="12 Hz" from_dmx="180" to_dmx="180"/>
+            <ChannelSet index="3" name="25 Hz" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+      </Module>
+      <Module index="3" name="PIXEL" class="LED" beamtype="Wash" beam_angle="120" beam_intensity="10000">
+        <Body>
+          <Size x="0.033" y="0.022" z="0.25"/>
+        </Body>
+        <ChannelType index="0" attribute="DIM" feature="DIMMER" preset="DIMMER" coarse="1" default="0" highlight_value="100" react_to_master="1">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="DIM" subattribute_user_name="Dim" attribute="DIM" attribute_user_name="Dim" feature="DIMMER" feature_user_name="Dimmer" preset="DIMMER" preset_user_name="Dimmer">
+            <ChannelSet index="0" name="closed" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="open" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="1" attribute="COLORRGB1" feature="COLORRGB" preset="COLOR" coarse="2" default="255" highlight_value="100" color="ff0000">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB1" subattribute_user_name="Red" attribute="COLORRGB1" attribute_user_name="Red" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="2" attribute="COLORRGB2" feature="COLORRGB" preset="COLOR" coarse="3" default="255" highlight_value="100" color="00ff00">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB2" subattribute_user_name="Green" attribute="COLORRGB2" attribute_user_name="Green" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="3" attribute="COLORRGB3" feature="COLORRGB" preset="COLOR" coarse="4" default="255" highlight_value="100" color="0000ff">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB3" subattribute_user_name="Blue" attribute="COLORRGB3" attribute_user_name="Blue" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+      </Module>
+    </Modules>
+    <Instances index="1">
+      <Instance index="0" patch="1" module_index="0" name="Main"/>
+      <Instance index="1" patch="5" module_index="1" name="Segment 1"/>
+      <Instance index="2" patch="6" module_index="1" name="Segment 2"/>
+      <Instance index="3" patch="7" module_index="1" name="Segment 3"/>
+      <Instance index="4" patch="8" module_index="1" name="Segment 4"/>
+      <Instance index="5" patch="9" module_index="1" name="Segment 5"/>
+      <Instance index="6" patch="10" module_index="1" name="Segment 6"/>
+      <Instance index="7" patch="11" module_index="1" name="Segment 7"/>
+      <Instance index="8" patch="12" module_index="1" name="Segment 8"/>
+      <Instance index="9" patch="13" module_index="1" name="Segment 9"/>
+      <Instance index="10" patch="14" module_index="2" name="Plate"/>
+      <Instance index="11" patch="17" module_index="3" name="Px T1-1"/>
+      <Instance index="12" patch="21" module_index="3" name="Px T1-2"/>
+      <Instance index="13" patch="25" module_index="3" name="Px T1-3"/>
+      <Instance index="14" patch="29" module_index="3" name="Px T1-4"/>
+      <Instance index="15" patch="33" module_index="3" name="Px T1-5"/>
+      <Instance index="16" patch="37" module_index="3" name="Px T1-6"/>
+      <Instance index="17" patch="41" module_index="3" name="Px T1-7"/>
+      <Instance index="18" patch="45" module_index="3" name="Px T1-8"/>
+      <Instance index="19" patch="49" module_index="3" name="Px T1-9"/>
+      <Instance index="20" patch="53" module_index="3" name="Px T1-10"/>
+      <Instance index="21" patch="57" module_index="3" name="Px T1-11"/>
+      <Instance index="22" patch="61" module_index="3" name="Px T1-12"/>
+      <Instance index="23" patch="65" module_index="3" name="Px T2-1"/>
+      <Instance index="24" patch="69" module_index="3" name="Px T2-2"/>
+      <Instance index="25" patch="73" module_index="3" name="Px T2-3"/>
+      <Instance index="26" patch="77" module_index="3" name="Px T2-4"/>
+      <Instance index="27" patch="81" module_index="3" name="Px T2-5"/>
+      <Instance index="28" patch="85" module_index="3" name="Px T2-6"/>
+      <Instance index="29" patch="89" module_index="3" name="Px T2-7"/>
+      <Instance index="30" patch="93" module_index="3" name="Px T2-8"/>
+      <Instance index="31" patch="97" module_index="3" name="Px T2-9"/>
+      <Instance index="32" patch="101" module_index="3" name="Px T2-10"/>
+      <Instance index="33" patch="105" module_index="3" name="Px T2-11"/>
+      <Instance index="34" patch="109" module_index="3" name="Px T2-12"/>
+      <Instance index="35" patch="113" module_index="3" name="Px T3-1"/>
+      <Instance index="36" patch="117" module_index="3" name="Px T3-2"/>
+      <Instance index="37" patch="121" module_index="3" name="Px T3-3"/>
+      <Instance index="38" patch="125" module_index="3" name="Px T3-4"/>
+      <Instance index="39" patch="129" module_index="3" name="Px T3-5"/>
+      <Instance index="40" patch="133" module_index="3" name="Px T3-6"/>
+      <Instance index="41" patch="137" module_index="3" name="Px T3-7"/>
+      <Instance index="42" patch="141" module_index="3" name="Px T3-8"/>
+      <Instance index="43" patch="145" module_index="3" name="Px T3-9"/>
+      <Instance index="44" patch="149" module_index="3" name="Px T3-10"/>
+      <Instance index="45" patch="153" module_index="3" name="Px T3-11"/>
+      <Instance index="46" patch="157" module_index="3" name="Px T3-12"/>
+      <Instance index="47" patch="161" module_index="3" name="Px T4-1"/>
+      <Instance index="48" patch="165" module_index="3" name="Px T4-2"/>
+      <Instance index="49" patch="169" module_index="3" name="Px T4-3"/>
+      <Instance index="50" patch="173" module_index="3" name="Px T4-4"/>
+      <Instance index="51" patch="177" module_index="3" name="Px T4-5"/>
+      <Instance index="52" patch="181" module_index="3" name="Px T4-6"/>
+      <Instance index="53" patch="185" module_index="3" name="Px T4-7"/>
+      <Instance index="54" patch="189" module_index="3" name="Px T4-8"/>
+      <Instance index="55" patch="193" module_index="3" name="Px T4-9"/>
+      <Instance index="56" patch="197" module_index="3" name="Px T4-10"/>
+      <Instance index="57" patch="201" module_index="3" name="Px T4-11"/>
+      <Instance index="58" patch="205" module_index="3" name="Px T4-12"/>
+      <Instance index="59" patch="209" module_index="3" name="Px B1-1"/>
+      <Instance index="60" patch="213" module_index="3" name="Px B1-2"/>
+      <Instance index="61" patch="217" module_index="3" name="Px B1-3"/>
+      <Instance index="62" patch="221" module_index="3" name="Px B1-4"/>
+      <Instance index="63" patch="225" module_index="3" name="Px B1-5"/>
+      <Instance index="64" patch="229" module_index="3" name="Px B1-6"/>
+      <Instance index="65" patch="233" module_index="3" name="Px B1-7"/>
+      <Instance index="66" patch="237" module_index="3" name="Px B1-8"/>
+      <Instance index="67" patch="241" module_index="3" name="Px B1-9"/>
+      <Instance index="68" patch="245" module_index="3" name="Px B1-10"/>
+      <Instance index="69" patch="249" module_index="3" name="Px B1-11"/>
+      <Instance index="70" patch="253" module_index="3" name="Px B1-12"/>
+      <Instance index="71" patch="257" module_index="3" name="Px B2-1"/>
+      <Instance index="72" patch="261" module_index="3" name="Px B2-2"/>
+      <Instance index="73" patch="265" module_index="3" name="Px B2-3"/>
+      <Instance index="74" patch="269" module_index="3" name="Px B2-4"/>
+      <Instance index="75" patch="273" module_index="3" name="Px B2-5"/>
+      <Instance index="76" patch="277" module_index="3" name="Px B2-6"/>
+      <Instance index="77" patch="281" module_index="3" name="Px B2-7"/>
+      <Instance index="78" patch="285" module_index="3" name="Px B2-8"/>
+      <Instance index="79" patch="289" module_index="3" name="Px B2-9"/>
+      <Instance index="80" patch="293" module_index="3" name="Px B2-10"/>
+      <Instance index="81" patch="297" module_index="3" name="Px B2-11"/>
+      <Instance index="82" patch="301" module_index="3" name="Px B2-12"/>
+      <Instance index="83" patch="305" module_index="3" name="Px B3-1"/>
+      <Instance index="84" patch="309" module_index="3" name="Px B3-2"/>
+      <Instance index="85" patch="313" module_index="3" name="Px B3-3"/>
+      <Instance index="86" patch="317" module_index="3" name="Px B3-4"/>
+      <Instance index="87" patch="321" module_index="3" name="Px B3-5"/>
+      <Instance index="88" patch="325" module_index="3" name="Px B3-6"/>
+      <Instance index="89" patch="329" module_index="3" name="Px B3-7"/>
+      <Instance index="90" patch="333" module_index="3" name="Px B3-8"/>
+      <Instance index="91" patch="337" module_index="3" name="Px B3-9"/>
+      <Instance index="92" patch="341" module_index="3" name="Px B3-10"/>
+      <Instance index="93" patch="345" module_index="3" name="Px B3-11"/>
+      <Instance index="94" patch="349" module_index="3" name="Px B3-12"/>
+      <Instance index="95" patch="353" module_index="3" name="Px B4-1"/>
+      <Instance index="96" patch="357" module_index="3" name="Px B4-2"/>
+      <Instance index="97" patch="361" module_index="3" name="Px B4-3"/>
+      <Instance index="98" patch="365" module_index="3" name="Px B4-4"/>
+      <Instance index="99" patch="369" module_index="3" name="Px B4-5"/>
+      <Instance index="100" patch="373" module_index="3" name="Px B4-6"/>
+      <Instance index="101" patch="377" module_index="3" name="Px B4-7"/>
+      <Instance index="102" patch="381" module_index="3" name="Px B4-8"/>
+      <Instance index="103" patch="385" module_index="3" name="Px B4-9"/>
+      <Instance index="104" patch="389" module_index="3" name="Px B4-10"/>
+      <Instance index="105" patch="393" module_index="3" name="Px B4-11"/>
+      <Instance index="106" patch="397" module_index="3" name="Px B4-12"/>
+    </Instances>
+    <Wheels index="2"/>
+    <VirtualFunctionBlocks index="3"/>
+    <FixtureMacroCollect index="5"/>
+  </FixtureType>
+</MA>

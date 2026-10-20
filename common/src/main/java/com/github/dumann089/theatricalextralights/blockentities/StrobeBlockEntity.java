@@ -35,11 +35,17 @@ public class StrobeBlockEntity extends ExtraLightsLightBlockEntity implements Ha
     /** Focus fixe pour le mode RGB only (faisceau serré type strobe). */
     private static final int FIXED_RGB_ONLY_FOCUS = 255;
     private static final int OPEN = 255;
-    /** Tache au sol (rayon Shimmer) : focus DMX 1 ≈ 3 blocs, focus 255 ≈ 20 blocs. */
-    private static final float MIN_LIGHT_SPREAD = 3.0f;
-    private static final float MAX_LIGHT_SPREAD = 20.0f;
-    private static final float CLOSE_EMISSION_DISTANCE = 0.75f;
-    private static final float FAR_EMISSION_DISTANCE = 7.5f;
+    /** Tache au sol (rayon Shimmer) : focus DMX 1 ≈ 18 blocs, focus 255 ≈ 40 blocs.
+     * Shimmer attenue en smoothstep(1 - d/r) : pour qu'un plateau a 8 blocs sous le strobe recoive
+     * la lumiere, le rayon doit etre bien plus grand que cette hauteur. */
+    private static final float MIN_LIGHT_SPREAD = 18.0f;
+    private static final float MAX_LIGHT_SPREAD = 40.0f;
+    /**
+     * Portee du raytrace qui place la lumiere. Courte et independante du focus : la lumiere reste
+     * pres de l'appareil et c'est le rayon qui porte jusqu'au plateau. Un strobe pointe vers la
+     * salle ne doit pas envoyer sa lumiere a 30 blocs de lui.
+     */
+    private static final float EMISSION_DISTANCE = 12.0f;
 
     private int activePersonalityIndex = FOCUS_STROBE_6CH_MODE;
     /** Canal strobe DMX (personnalité 6 canaux). */
@@ -192,11 +198,7 @@ public class StrobeBlockEntity extends ExtraLightsLightBlockEntity implements Ha
             return 50.0f;
         }
 
-        return Mth.lerp(
-                getNormalizedFocus(),
-                CLOSE_EMISSION_DISTANCE,
-                FAR_EMISSION_DISTANCE
-        );
+        return EMISSION_DISTANCE;
     }
 
     private float getNormalizedFocus() {
