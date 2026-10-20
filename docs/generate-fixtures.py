@@ -27,7 +27,7 @@ GREEN = ch("Green", "0 to 255", "Green component of the additive colour mix.")
 BLUE = ch("Blue", "0 to 255",
           "Blue component of the additive colour mix. With red and green at 255 too the light is white; all three at 0 gives a dark fixture even with the dimmer up.")
 FOCUS = ch("Focus", "0 to 255",
-           "Beam sharpness. 0 is a hard-edged beam and a crisp projected image; 255 is soft. On fixtures without a separate zoom channel it also widens the cone slightly.")
+           "Beam divergence. 0 is a tight, collimated beam (about 1 mrad, a pinpoint impact even at 30 blocks); 255 opens it to a soft, wide beam with a blurred impact.")
 FOCUS_CONE = ch("Focus", "0 tight to 255 wide",
                 "Cone width of the beam. Low values give a tight pencil beam, high values a wide wash. It also drives the size of the light spot on the ground.")
 PAN = ch("Pan", "0 to 255 = −180° to 180°",
@@ -94,7 +94,7 @@ LASER_CH = [
     ch("Pan", "0 to 255 = −80° to 80°", "Horizontal aim of the projector, 128 straight ahead."),
     ch("Tilt", "0 to 255 = 45° to −45°", "Vertical aim, centred on 127. Higher values point down."),
     FOCUS,
-    ch("Persistence", "0 to 255", "Length of the trail left by moving beams on the client. 0 is a clean beam, higher values leave a longer afterglow like a slow camera shutter."),
+    ch("Persistence", "0 to 255", "Scan speed as the eye sees it. 0 shows the pattern as separate beams with a bright scan head running along them; 255 is a fast scan the eye fuses into a continuous sheet (cones, planes) with brighter corners where the scanner dwells."),
 ]
 
 FIRE = ch("Fire", "0 idle, rising edge = one shot, 2 to 255 = 1 to 10 shots/s",

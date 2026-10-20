@@ -73,14 +73,13 @@ public class TheatricalExtraLightsClientFabric implements ClientModInitializer {
         });
 
         WorldRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, hitResult) -> {
-            if (com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.isRaymarchEngine()
-                    && ModShaders.canUseRaymarch()) {
-                Minecraft.getInstance()
-                        .renderBuffers()
-                        .bufferSource()
-                        .endBatch();
-
-                com.github.dumann089.theatricalextralights.client.render.beam.raymarch.SceneDepthCopy.capture();
+            boolean raymarch = com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.isRaymarchEngine()
+                    && ModShaders.canUseRaymarch();
+            boolean laser = com.github.dumann089.theatricalextralights.client.render.laser.LaserRaymarchRenderer.isAvailable();
+            if (raymarch || laser) {
+                // Geometrie opaque dans la profondeur, pas les quads de faisceau 2D.
+                com.github.dumann089.theatricalextralights.client.render.beam.raymarch.SceneDepthCopy
+                        .flushOpaqueAndCapture(Minecraft.getInstance().renderBuffers().bufferSource());
             }
 
             return true;
@@ -112,6 +111,15 @@ public class TheatricalExtraLightsClientFabric implements ClientModInitializer {
                     ),
                     DefaultVertexFormat.POSITION_COLOR_TEX,
                     shader -> ModShaders.beamRaymarchShader = shader
+            );
+
+            context.register(
+                    new ResourceLocation(
+                            "theatricalextralights",
+                            "laser_raymarch"
+                    ),
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    shader -> ModShaders.laserRaymarchShader = shader
             );
         });
     }

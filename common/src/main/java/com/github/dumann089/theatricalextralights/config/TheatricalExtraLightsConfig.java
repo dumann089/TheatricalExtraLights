@@ -51,6 +51,17 @@ public class TheatricalExtraLightsConfig {
     /** Ombres portees des blocs et entites dans le faisceau et sur la tache projetee. */
     private Boolean beamShadows = true;
 
+    /** Laser realiste : faisceaux fins et nappes integres dans la brume, impacts sur les surfaces. */
+    private Boolean laserRealistic = true;
+    /** Densite de brume vue par les lasers, 0 = air limpide (seuls les impacts restent). */
+    private Float laserHaze = 0.7f;
+    private Float laserBrightness = 1.0f;
+    /** Rayon du faisceau a la sortie, centimetres. */
+    private Float laserBeamRadiusCm = 1.0f;
+    private Boolean laserImpacts = true;
+    /** Tete de balayage visible quand la persistance DMX est basse. */
+    private Boolean laserScanFlicker = true;
+
     /**
      * Dimensionne la tache lumineuse des lyres sur la section du cone a la distance eclairee,
      * au lieu du rayon derive du seul focus par Theatrical, qui ignore la distance.
@@ -71,6 +82,29 @@ public class TheatricalExtraLightsConfig {
 
     private Integer ledFacadeMaxUniverses = 64;
 
+    private Boolean etherDreamEnabled = true;
+    private String etherDreamBindAddress = "0.0.0.0";
+    private Integer etherDreamTcpPort = 7765;
+    private Integer etherDreamBroadcastPort = 7654;
+    private Integer etherDreamBufferCapacity = 1800;
+    private Integer etherDreamMaxPointRate = 100000;
+    private Integer etherDreamHwRevision = 2;
+    private Integer etherDreamSwRevision = 2;
+    private String etherDreamMac = "02:00:00:ED:01:00";
+    /**
+     * Segments max d'une figure DAC par image. Au-dela, les points sont decimes et les courbes
+     * (un « 60 » en texte) deviennent anguleuses. Chaque segment coute a chaque pixel couvert.
+     */
+    private Integer laserDacMaxRays = 192;
+    private Integer laserDacBlankThreshold = 256;
+    /** Persistence window (ms) used to rebuild the scan picture: must cover a full ILDA frame (>= 1/fps). */
+    private Integer laserDacPersistenceMs = 90;
+    /** Volumetric haze budget per projector: raymarched needle rays and scan sheets. */
+    private Integer laserDacVolumetricRays = 24;
+    private Integer laserDacVolumetricSheets = 24;
+    /** Haze radius of a needle ray (blocks) and thickness of a scan sheet (blocks). */
+    private Float laserDacHazeRadius = 0.11f;
+    private Float laserDacSheetThickness = 0.07f;
     /** Velocidad de la transición suave de color/intensidad por tick. 1.0 = instantáneo. */
     private Float colorTransitionSpeed = 0.35f;
 
@@ -261,6 +295,65 @@ public class TheatricalExtraLightsConfig {
         int value = INSTANCE.raymarchMaxBeamsPerFrame != null ? INSTANCE.raymarchMaxBeamsPerFrame : 128;
         return Math.max(1, Math.min(512, value));
     }
+    /* ---- Laser realiste ---- */
+
+    public static boolean isLaserRealistic() {
+        return INSTANCE.laserRealistic == null || INSTANCE.laserRealistic;
+    }
+
+    public static void setLaserRealistic(boolean value) {
+        INSTANCE.laserRealistic = value;
+        save();
+    }
+
+    public static float getLaserHaze() {
+        float v = INSTANCE.laserHaze != null ? INSTANCE.laserHaze : 0.7f;
+        return Math.max(0.0f, Math.min(1.0f, v));
+    }
+
+    public static void setLaserHaze(float value) {
+        INSTANCE.laserHaze = Math.max(0.0f, Math.min(1.0f, value));
+        save();
+    }
+
+    public static float getLaserBrightness() {
+        float v = INSTANCE.laserBrightness != null ? INSTANCE.laserBrightness : 1.0f;
+        return Math.max(0.05f, Math.min(4.0f, v));
+    }
+
+    public static void setLaserBrightness(float value) {
+        INSTANCE.laserBrightness = Math.max(0.05f, Math.min(4.0f, value));
+        save();
+    }
+
+    public static float getLaserBeamRadiusCm() {
+        float v = INSTANCE.laserBeamRadiusCm != null ? INSTANCE.laserBeamRadiusCm : 1.0f;
+        return Math.max(0.2f, Math.min(6.0f, v));
+    }
+
+    public static void setLaserBeamRadiusCm(float value) {
+        INSTANCE.laserBeamRadiusCm = Math.max(0.2f, Math.min(6.0f, value));
+        save();
+    }
+
+    public static boolean isLaserImpactsEnabled() {
+        return INSTANCE.laserImpacts == null || INSTANCE.laserImpacts;
+    }
+
+    public static void setLaserImpacts(boolean value) {
+        INSTANCE.laserImpacts = value;
+        save();
+    }
+
+    public static boolean isLaserScanFlickerEnabled() {
+        return INSTANCE.laserScanFlicker == null || INSTANCE.laserScanFlicker;
+    }
+
+    public static void setLaserScanFlicker(boolean value) {
+        INSTANCE.laserScanFlicker = value;
+        save();
+    }
+
     public static float getLaserBeamLength() { return INSTANCE.laserBeamLength; }
     public static float getRgbBarBeamLength() { return INSTANCE.rgbBarBeamLength; }
     public static boolean shouldRenderLens() { return INSTANCE.renderLens; }
@@ -287,6 +380,92 @@ public class TheatricalExtraLightsConfig {
     public static float getColorTransitionSpeed() {
         float v = INSTANCE.colorTransitionSpeed != null ? INSTANCE.colorTransitionSpeed : 0.35f;
         return Math.max(0.01f, Math.min(1.0f, v));
+    }
+
+    public static boolean isEtherDreamEnabled() { return INSTANCE.etherDreamEnabled == null || INSTANCE.etherDreamEnabled; }
+    public static void setEtherDreamEnabled(boolean value) { INSTANCE.etherDreamEnabled = value; save(); }
+    public static String getEtherDreamBindAddress() {
+        return INSTANCE.etherDreamBindAddress == null || INSTANCE.etherDreamBindAddress.isBlank()
+                ? "0.0.0.0" : INSTANCE.etherDreamBindAddress.trim();
+    }
+    public static int getEtherDreamTcpPort() {
+        int port = INSTANCE.etherDreamTcpPort != null ? INSTANCE.etherDreamTcpPort : 7765;
+        return Math.max(1, Math.min(65535, port));
+    }
+    public static int getEtherDreamBroadcastPort() {
+        int port = INSTANCE.etherDreamBroadcastPort != null ? INSTANCE.etherDreamBroadcastPort : 7654;
+        return Math.max(1, Math.min(65535, port));
+    }
+    public static int getEtherDreamBufferCapacity() {
+        int value = INSTANCE.etherDreamBufferCapacity != null ? INSTANCE.etherDreamBufferCapacity : 1800;
+        return Math.max(256, Math.min(32768, value));
+    }
+    public static int getEtherDreamMaxPointRate() {
+        int value = INSTANCE.etherDreamMaxPointRate != null ? INSTANCE.etherDreamMaxPointRate : 100000;
+        return Math.max(1000, Math.min(200000, value));
+    }
+    public static int getEtherDreamHwRevision() {
+        return INSTANCE.etherDreamHwRevision != null ? INSTANCE.etherDreamHwRevision : 2;
+    }
+    public static int getEtherDreamSwRevision() {
+        return INSTANCE.etherDreamSwRevision != null ? INSTANCE.etherDreamSwRevision : 2;
+    }
+    public static byte[] getEtherDreamMac() {
+        byte[] parsed = parseMac(INSTANCE.etherDreamMac);
+        return parsed != null ? parsed : com.github.dumann089.theatricalextralights.laser.dac.LaserProtocol.DEFAULT_MAC.clone();
+    }
+    public static int getLaserDacMaxRays() {
+        int value = INSTANCE.laserDacMaxRays != null ? INSTANCE.laserDacMaxRays : 192;
+        return Math.max(8, Math.min(MAX_LASER_SEGMENTS, value));
+    }
+    public static void setLaserDacMaxRays(int value) {
+        INSTANCE.laserDacMaxRays = Math.max(8, Math.min(MAX_LASER_SEGMENTS, value));
+        save();
+    }
+    /** Doit rester egal a LaserFigure.MAX_SEGMENTS et a la borne de boucle de laser_raymarch.fsh. */
+    public static final int MAX_LASER_SEGMENTS = 512;
+    public static int getLaserDacPersistenceMs() {
+        int value = INSTANCE.laserDacPersistenceMs != null ? INSTANCE.laserDacPersistenceMs : 90;
+        return Math.max(20, Math.min(400, value));
+    }
+    public static int getLaserDacVolumetricRays() {
+        int value = INSTANCE.laserDacVolumetricRays != null ? INSTANCE.laserDacVolumetricRays : 24;
+        return Math.max(0, Math.min(32, value));
+    }
+    public static int getLaserDacVolumetricSheets() {
+        int value = INSTANCE.laserDacVolumetricSheets != null ? INSTANCE.laserDacVolumetricSheets : 24;
+        return Math.max(0, Math.min(32, value));
+    }
+    public static float getLaserDacHazeRadius() {
+        float value = INSTANCE.laserDacHazeRadius != null ? INSTANCE.laserDacHazeRadius : 0.11f;
+        return Math.max(0.03f, Math.min(0.5f, value));
+    }
+    public static float getLaserDacSheetThickness() {
+        float value = INSTANCE.laserDacSheetThickness != null ? INSTANCE.laserDacSheetThickness : 0.07f;
+        return Math.max(0.02f, Math.min(0.4f, value));
+    }
+    public static int getLaserDacBlankThreshold() {
+        int value = INSTANCE.laserDacBlankThreshold != null ? INSTANCE.laserDacBlankThreshold : 256;
+        return Math.max(1, Math.min(4096, value));
+    }
+
+    private static byte[] parseMac(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        String[] parts = raw.trim().split("[:\\-]");
+        if (parts.length != 6) {
+            return null;
+        }
+        byte[] mac = new byte[6];
+        try {
+            for (int i = 0; i < 6; i++) {
+                mac[i] = (byte) Integer.parseInt(parts[i], 16);
+            }
+            return mac;
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     /* ================= SETTERS ================= */

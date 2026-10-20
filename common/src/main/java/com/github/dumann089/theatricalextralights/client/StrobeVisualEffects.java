@@ -28,7 +28,7 @@ public final class StrobeVisualEffects {
             int b,
             int a
     ) {
-        VertexConsumer faceConsumer = bufferSource.getBuffer(TheatricalRenderTypes.BEAM);
+        VertexConsumer faceConsumer = bufferSource.getBuffer(ExtraLightsRenderTypes.BEAM);
         poseStack.pushPose();
         poseStack.translate(FACE_X, FACE_Y, FACE_Z);
         Matrix4f matrix = poseStack.last().pose();

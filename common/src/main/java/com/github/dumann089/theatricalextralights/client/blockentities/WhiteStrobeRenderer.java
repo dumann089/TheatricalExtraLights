@@ -17,7 +17,7 @@ import com.mojang.math.Axis;
 import dev.imabad.theatrical.TheatricalExpectPlatform;
 import dev.imabad.theatrical.blocks.HangableBlock;
 import dev.imabad.theatrical.client.LazyRenderers;
-import dev.imabad.theatrical.client.TheatricalRenderTypes;
+import com.github.dumann089.theatricalextralights.client.ExtraLightsRenderTypes;
 import com.github.dumann089.theatricalextralights.client.blockentities.ExtraLightsRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.LightTexture;
@@ -151,7 +151,7 @@ public class WhiteStrobeRenderer extends ExtraLightsRenderer<WhiteStrobeBlockEnt
                             isHanging
                     );
                     VertexConsumer beamConsumer =
-                            multiBufferSource.getBuffer(TheatricalRenderTypes.BEAM);
+                            multiBufferSource.getBuffer(ExtraLightsRenderTypes.BEAM);
 
                     float intensity = StrobeRenderHelper.renderedIntensity(blockEntity, partialTicks);
 

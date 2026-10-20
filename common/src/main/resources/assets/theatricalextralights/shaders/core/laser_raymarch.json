@@ -1,0 +1,41 @@
+{
+  "blend": {
+    "func": "add",
+    "srcrgb": "one",
+    "dstrgb": "one"
+  },
+  "vertex": "theatricalextralights:laser_raymarch",
+  "fragment": "theatricalextralights:laser_raymarch",
+  "attributes": [
+    "Position",
+    "Color",
+    "UV0"
+  ],
+  "samplers": [
+    { "name": "Sampler1" },
+    { "name": "Sampler2" }
+  ],
+  "uniforms": [
+    { "name": "InvProjMat", "type": "matrix4x4", "count": 16, "values": [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0] },
+    { "name": "ScreenSize", "type": "float", "count": 2, "values": [1.0, 1.0] },
+    { "name": "SegCount", "type": "int", "count": 1, "values": [0] },
+    { "name": "OriginV", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
+    { "name": "OriginW", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
+    { "name": "PixelAngle", "type": "float", "count": 1, "values": [0.0013] },
+    { "name": "BeamRadius", "type": "float", "count": 1, "values": [0.01] },
+    { "name": "Divergence", "type": "float", "count": 1, "values": [0.001] },
+    { "name": "HazeDensity", "type": "float", "count": 1, "values": [0.7] },
+    { "name": "Brightness", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "Intensity", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "Anisotropy", "type": "float", "count": 1, "values": [0.6] },
+    { "name": "Extinction", "type": "float", "count": 1, "values": [0.02] },
+    { "name": "TotalSpan", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "ScanHead", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "ScanTrail", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "ImpactEnabled", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "Striation", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "NoiseOctaves", "type": "int", "count": 1, "values": [3] },
+    { "name": "Time", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "Ambient", "type": "float", "count": 1, "values": [0.0] }
+  ]
+}

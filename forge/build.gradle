@@ -55,6 +55,9 @@ dependencies {
             exclude group: "maven.modrinth"
             exclude group: "icyllis.modernui"
             exclude group: "com.jozufozu.flywheel"
+            exclude group: "dev.engine-room.flywheel"
+            exclude group: "dev.engine-room"
+            exclude group: "org.embeddedt"
         }
     }
 }

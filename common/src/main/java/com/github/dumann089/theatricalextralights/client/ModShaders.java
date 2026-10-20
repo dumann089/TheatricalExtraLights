@@ -19,6 +19,7 @@ public class ModShaders {
     public static ShaderInstance goboProjectorShader;
     public static ShaderInstance volumetricBeamShader;
     public static ShaderInstance beamRaymarchShader;
+    public static ShaderInstance laserRaymarchShader;
 
     public static float configDensity = 0.15f;
     public static float configMaxAlpha = 0.25f;
@@ -32,6 +33,9 @@ public class ModShaders {
 
     public static final RenderStateShard.ShaderStateShard RAYMARCH_SHADER_STATE =
             new RenderStateShard.ShaderStateShard(() -> beamRaymarchShader);
+
+    public static final RenderStateShard.ShaderStateShard LASER_SHADER_STATE =
+            new RenderStateShard.ShaderStateShard(() -> laserRaymarchShader);
 
     public static final RenderStateShard.TransparencyStateShard ADDITIVE_TRANSPARENCY =
             new RenderStateShard.TransparencyStateShard("additive_transparency", () -> {
@@ -117,6 +121,11 @@ public class ModShaders {
         return beamRaymarchShader != null && !isIrisShaderpackActive();
     }
 
+    /** Le laser realiste partage les prerequis du raymarch : shader charge, pas d'Iris. */
+    public static boolean canUseLaserRaymarch() {
+        return laserRaymarchShader != null && !isIrisShaderpackActive();
+    }
+
     public static void updateRaymarchConfig() {
         if (beamRaymarchShader == null) {
             return;
@@ -176,6 +185,36 @@ public class ModShaders {
                     com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig.getVolumetricBeamFadeLength()
             );
         }
+    }
+
+    private static RenderType laserRaymarchRenderType;
+
+    /**
+     * Passe ecran du laser : additive pure, sans test de profondeur (l'occlusion vient du depth
+     * copie dans le shader), sans culling (le quad est emis en coordonnees ecran).
+     */
+    public static RenderType getLaserRaymarchRenderType() {
+        if (laserRaymarchRenderType == null) {
+            RenderType.CompositeState state = RenderType.CompositeState.builder()
+                    .setShaderState(LASER_SHADER_STATE)
+                    .setTextureState(RenderStateShard.NO_TEXTURE)
+                    .setTransparencyState(PURE_ADDITIVE_TRANSPARENCY)
+                    .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .createCompositeState(false);
+            laserRaymarchRenderType = RenderType.create(
+                    "laser_raymarch",
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    VertexFormat.Mode.QUADS,
+                    256,
+                    false,
+                    true,
+                    state
+            );
+        }
+        return laserRaymarchRenderType;
     }
 
     public static RenderType getRaymarchRenderType(ResourceLocation texture) {

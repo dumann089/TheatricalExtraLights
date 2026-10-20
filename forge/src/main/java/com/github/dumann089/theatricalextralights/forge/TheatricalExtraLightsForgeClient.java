@@ -53,18 +53,15 @@ public final class TheatricalExtraLightsForgeClient {
             return;
         }
 
-        if (!TheatricalExtraLightsConfig.isRaymarchEngine()
-                || !ModShaders.canUseRaymarch()) {
+        boolean raymarch = TheatricalExtraLightsConfig.isRaymarchEngine() && ModShaders.canUseRaymarch();
+        boolean laser = com.github.dumann089.theatricalextralights.client.render.laser.LaserRaymarchRenderer.isAvailable();
+        if (!raymarch && !laser) {
             return;
         }
 
-        // Flush de los batches pendientes para incluir su profundidad.
-        Minecraft.getInstance()
-                .renderBuffers()
-                .bufferSource()
-                .endBatch();
-
-        SceneDepthCopy.capture();
+        // Geometrie opaque des block entities dans la profondeur, mais pas les quads de
+        // faisceau 2D : ils troueraient les volumes qui passent derriere.
+        SceneDepthCopy.flushOpaqueAndCapture(Minecraft.getInstance().renderBuffers().bufferSource());
     }
 
     @SubscribeEvent
@@ -130,6 +127,18 @@ public final class TheatricalExtraLightsForgeClient {
                             DefaultVertexFormat.POSITION_COLOR_TEX
                     ),
                     shader -> ModShaders.beamRaymarchShader = shader
+            );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            new ResourceLocation(
+                                    "theatricalextralights",
+                                    "laser_raymarch"
+                            ),
+                            DefaultVertexFormat.POSITION_COLOR_TEX
+                    ),
+                    shader -> ModShaders.laserRaymarchShader = shader
             );
 
         } catch (IOException e) {
