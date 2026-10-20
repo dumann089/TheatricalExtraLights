@@ -100,6 +100,9 @@ public class Blocks {
     public static final RegistrySupplier<Block> VERTICALSCROLLER_BLOCK = BLOCKS.register("verticalscroller", verticalscrollerBlock::new);
     public static final RegistrySupplier<Block> WASHLED_BLOCK = BLOCKS.register("washled", washledBlock::new);
     public static final RegistrySupplier<Block> MOVING_BAR_BLOCK = BLOCKS.register("moving_bar", MovingbarBlock::new);
+    public static final RegistrySupplier<Block> DENSE_RGB_BAR_BLOCK = BLOCKS.register("dense_rgb_bar", DenseRGBbarBlock::new);
+    public static final RegistrySupplier<Block> DENSE_VERTICAL_BAR_BLOCK = BLOCKS.register("dense_vertical_bar", DenseVerticalbarBlock::new);
+    public static final RegistrySupplier<Block> DENSE_MOVING_BAR_BLOCK = BLOCKS.register("dense_moving_bar", DenseMovingbarBlock::new);
     public static final RegistrySupplier<Block> MOVING_MINI_BAR_BLOCK = BLOCKS.register("moving_mini_bar", MovingMiniBarBlock::new);
 
     public static final RegistrySupplier<Block> SPOT_XTREME_GOBO_BLOCK = BLOCKS.register("spot_xtreme_gobo", SpotXtremeGoboBlock::new);

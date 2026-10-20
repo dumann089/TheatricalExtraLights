@@ -55,6 +55,18 @@ public class Items {
             "moving_bar",
             () -> new BlockItem(Blocks.MOVING_BAR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
     );
+    public static final RegistrySupplier<Item> DENSE_RGB_BAR = ITEMS.register(
+            "dense_rgb_bar",
+            () -> new BlockItem(Blocks.DENSE_RGB_BAR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
+    public static final RegistrySupplier<Item> DENSE_VERTICAL_BAR = ITEMS.register(
+            "dense_vertical_bar",
+            () -> new BlockItem(Blocks.DENSE_VERTICAL_BAR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
+    public static final RegistrySupplier<Item> DENSE_MOVING_BAR = ITEMS.register(
+            "dense_moving_bar",
+            () -> new BlockItem(Blocks.DENSE_MOVING_BAR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
     public static final RegistrySupplier<Item> MOVING_MINI_BAR = ITEMS.register(
             "moving_mini_bar",
             () -> new BlockItem(Blocks.MOVING_MINI_BAR_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))

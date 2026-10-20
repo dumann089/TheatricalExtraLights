@@ -1,0 +1,62 @@
+package com.github.dumann089.theatricalextralights.blockentities;
+
+import com.github.dumann089.theatricalextralights.blocks.RGBbarBlock;
+import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
+import dev.imabad.theatrical.api.Fixture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.state.BlockState;
+
+/** Barre LED horizontale dense : 46 pixels, un par LED du modele ; voir {@link PixelBarBlockEntity}. */
+public class DenseRGBBarBlockEntity extends PixelBarBlockEntity {
+
+    public static final int PIXEL_COUNT = 46;
+
+    public DenseRGBBarBlockEntity(BlockPos pos, BlockState state) {
+        super(BlockEntities.DENSE_RGB_BAR.get(), pos, state, PIXEL_COUNT);
+    }
+
+    @Override
+    public Fixture getFixture() {
+        return Fixtures.DENSE_RGB_BAR.get();
+    }
+
+    @Override
+    protected int classicChannelCount() {
+        return 4;
+    }
+
+    @Override
+    protected void consumeClassic(byte[] values) {
+        intensity = convertByteToInt(values[0]);
+        red = convertByteToInt(values[1]);
+        green = convertByteToInt(values[2]);
+        blue = convertByteToInt(values[3]);
+    }
+
+    @Override
+    public int getDeviceTypeId() {
+        return 0x02;
+    }
+
+    @Override
+    public String getModelName() {
+        return "Dense RGB Bar";
+    }
+
+    @Override
+    public boolean isUpsideDown() {
+        return getBlockState().getValue(RGBbarBlock.HANGING) && getBlockState().getValue(RGBbarBlock.HANG_DIRECTION) == Direction.UP;
+    }
+
+    @Override
+    public ResourceLocation getFixtureId() {
+        return Fixtures.DENSE_RGB_BAR.getId();
+    }
+
+    @Override
+    public String getTranslationKey() {
+        return "block.theatricalextralights.dense_rgb_bar";
+    }
+}

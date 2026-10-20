@@ -66,6 +66,9 @@ float animationMask(float u, float v, float radius) {
 // jusqu'a 8 boites d'entites. Un point est ombre si le segment point→source traverse un
 // solide.
 uniform sampler2D Sampler4;
+// Rampe de couleur le long de la largeur d'une nappe de barre LED (une texel par tranche).
+uniform sampler2D Sampler5;
+uniform float ColorRamp;   // 1 : nappe de barre, couleur lue dans Sampler5 selon u, profil en travers seulement
 uniform float ShadowEnabled;
 uniform vec3 VoxelOrigin;   // coin min de la grille, monde
 uniform float VoxelCell;    // taille d'une cellule, blocs
@@ -277,6 +280,36 @@ bool intersectBounds(
         return false;
     }
 
+    if (ColorRamp > 0.5) {
+        // Nappe de barre LED : section rectangulaire et rayon constant, au lieu de l'ellipse du
+        // cone qui amincit la nappe vers ses deux bouts et efface la barre du bout d'une chaine.
+        float R = max(BaseRadius, 1.0e-3);
+        float q0 = ts0;
+        float q1 = ts1;
+        if (abs(du) > 1.0e-7) {
+            float a0 = (-R - ou) / du;
+            float a1 = (R - ou) / du;
+            q0 = max(q0, min(a0, a1));
+            q1 = min(q1, max(a0, a1));
+        } else if (abs(ou) > R) {
+            return false;
+        }
+        if (abs(dv) > 1.0e-7) {
+            float b0 = (-R - ov) / dv;
+            float b1 = (R - ov) / dv;
+            q0 = max(q0, min(b0, b1));
+            q1 = min(q1, max(b0, b1));
+        } else if (abs(ov) > R) {
+            return false;
+        }
+        if (q1 <= q0) {
+            return false;
+        }
+        tEnter = q0;
+        tExit = q1;
+        return true;
+    }
+
     float a = du * du + dv * dv - k * k * dzc * dzc;
     float b = 2.0 * (
         ou * du +
@@ -479,13 +512,18 @@ void main() {
     float marchLen = tExit - tEnter;
 
     int steps = clamp(StepCount, 4, 48);
-    // Close-up LOD: if the cone starts near the camera it fills the view.
-    // Fewer samples, larger dt — single-scatter energy stays the same.
-    float closeLod = mix(0.28, 1.0, smoothstep(0.75, 14.0, tEnter));
-    float longLod = mix(1.0, 0.55, smoothstep(8.0, 32.0, marchLen));
-    float lod = min(closeLod, longLod);
-    int minSteps = tEnter < 1.5 ? 3 : 4;
-    steps = max(minSteps, int(float(steps) * lod + 0.5));
+    if (ColorRamp < 0.5) {
+        // Close-up LOD: if the cone starts near the camera it fills the view.
+        // Fewer samples, larger dt — single-scatter energy stays the same.
+        float closeLod = mix(0.28, 1.0, smoothstep(0.75, 14.0, tEnter));
+        float longLod = mix(1.0, 0.55, smoothstep(8.0, 32.0, marchLen));
+        float lod = min(closeLod, longLod);
+        int minSteps = tEnter < 1.5 ? 3 : 4;
+        steps = max(minSteps, int(float(steps) * lod + 0.5));
+    }
+    // Nappe de barre : la marche ne traverse que l'epaisseur de la nappe, elle est courte de toute
+    // facon. Le LOD de proximite y dessinait un cercle net autour du regard, la ou le nombre de pas
+    // change et la texture de la haze avec lui.
 
     float dt = marchLen / float(steps);
     float t = tEnter + dt * ign(gl_FragCoord.xy);
@@ -578,6 +616,22 @@ void main() {
             vec2(u, v)
         ) / radius;
 
+        // Nappe de barre LED : la largeur suit la barre, donc pas de coeur gaussien le long de u
+        // mais un bord doux ; le profil ne joue qu'en travers (v), et la couleur de chaque tranche
+        // vient de la rampe, ou chaque LED a peint sa couleur fois son niveau.
+        float edgeU = 1.0;
+        vec3 rampTint = vec3(1.0);
+        if (ColorRamp > 0.5) {
+            float u01 = abs(u) / radius;
+            if (u01 > 1.0) {
+                t += dt;
+                continue;
+            }
+            edgeU = 1.0 - smoothstep(0.96, 1.0, u01);
+            radial01 = abs(v) / radius;
+            rampTint = texture(Sampler5, vec2(clamp(0.5 + 0.5 * u / radius, 0.0, 1.0), 0.5)).rgb;
+        }
+
         if (radial01 > 1.0) {
             t += dt;
             continue;
@@ -621,7 +675,10 @@ void main() {
             t
         );
 
-        float gobo = sampleGobo(
+        // Nappe de barre : pas de gobo. Le gobo « ouvert » est un disque a bord sombre, et une nappe
+        // rectangulaire large en depasse aux deux bouts : ses derniers 9 % de chaque cote lisaient du
+        // noir, une barre entiere au bout d'une chaine.
+        float gobo = ColorRamp > 0.5 ? 1.0 : sampleGobo(
             toPos,
             zDist
         );
@@ -711,10 +768,17 @@ void main() {
             + zDist * BeamDirW
             + (u * wScale) * AxisUW
             + (v * hScale) * AxisVW;
-        float shadow = shadowFactor(wposS, BeamOriginW, VoxelCell * 0.5);
+        // Nappe de barre : la source est une ligne, pas un point. L'ombre se cherche vers le point de
+        // la barre juste derriere l'echantillon ; vers le centre de la nappe, le trajet traverserait
+        // les blocs des barres voisines de la chaine et noircirait les deux bouts.
+        vec3 lightW = BeamOriginW;
+        if (ColorRamp > 0.5) {
+            lightW = BeamOriginW + (u * wScale) * AxisUW;
+        }
+        float shadow = shadowFactor(wposS, lightW, VoxelCell * 0.5);
 
         vec3 radiance =
-            tint *
+            tint * rampTint * edgeU *
             (
                 Intensity *
                 falloff *

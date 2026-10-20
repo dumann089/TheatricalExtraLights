@@ -58,7 +58,8 @@ Client-side virtual DAC used by the **Ether Dream Laser Projector** block, see [
 | `laserDacBlankThreshold` | `256` | Colour level under which a point counts as blanked. |
 | `laserDacPersistenceMs` | `90` | Window over which received points are fused into one picture; raise it if the drawing flickers. |
 | `laserDacHazeRadius` | `0.11` | Halo radius around each ray, in blocks. |
-| `rgbBarBeamLength` | `9.0` | Reach of the RGB bar glow, minimum 1. |
+| `rgbBarBeamLength` | `9.0` | Length of the LED bar beams in blocks, flat and volumetric, for every RGB, vertical, moving and dense bar, 1 to 64. A beam that hits a block first stops there, otherwise it fades out at this length. Also in the settings screen (General tab, 1 to 64 m). |
+| `rgbBarBeamIntensity` | `1.0` | Brightness multiplier for the haze sheets of the LED bars (RGB Bar, Vertical RGB Bar, Moving Bar), 0 to 4. Also the **Bar beam intensity** slider of the settings screen. |
 
 ## Pyro
 

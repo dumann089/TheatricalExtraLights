@@ -133,6 +133,29 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
             float customIntensity,
             float baseRadius
     ) {
+        submitVolumetricBeam(blockEntity, beamPose, partialTicks, minAngleDeg, maxAngleDeg, goboLibrary, goboSlot,
+                focusNorm, widthScale, heightScale, beamIndex, customColor, customIntensity, baseRadius,
+                (float) blockEntity.getDistance());
+    }
+
+    /** Meme chose, avec une longueur de faisceau imposee (bornee par l'appelant a la distance de l'obstacle). */
+    protected void submitVolumetricBeam(
+            T blockEntity,
+            PoseStack beamPose,
+            float partialTicks,
+            float minAngleDeg,
+            float maxAngleDeg,
+            GoboLibrary goboLibrary,
+            int goboSlot,
+            float focusNorm,
+            float widthScale,
+            float heightScale,
+            int beamIndex,
+            int customColor,
+            float customIntensity,
+            float baseRadius,
+            float length
+    ) {
         if (!TheatricalExtraLightsConfig.isVolumetricBeamEnabled() || customIntensity <= 0.0f) return;
 
         org.joml.Matrix4f headMatrix = beamPose.last().pose();
@@ -151,7 +174,7 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
                 axisU,
                 axisV,
                 focusNorm,
-                (float) blockEntity.getDistance(),
+                length,
                 tanHalfAngle,
                 customColor,
                 customIntensity,

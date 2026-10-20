@@ -130,6 +130,38 @@ P_4CH_IRGB = P("4-Channel iRGB", [INTENSITY, RED, GREEN, BLUE])
 P_1CH = P("1-Channel Mode", [INTENSITY], "The colour is fixed by the block.")
 P_1CH_JET = P("1-Channel Mode", [INTENSITY_JET], "Height, thickness and, where available, cone angle or spread are set in the fixture screen, not on DMX.")
 
+def _pixel_channels(count):
+    out = []
+    for n in range(1, count + 1):
+        out += [ch(f"Pixel {n} dimmer", "0 off to 255 full", f"Dimmer of pixel {n}. 0 turns the pixel off whatever its colour. There is no master dimmer in this mode; the dynamic light in the room follows the brightest pixel."),
+                ch(f"Pixel {n} red", "0 to 255", f"Red of pixel {n}."),
+                ch(f"Pixel {n} green", "0 to 255", f"Green of pixel {n}."),
+                ch(f"Pixel {n} blue", "0 to 255", f"Blue of pixel {n}.")]
+    return out
+
+
+def _pixel_note(count, order):
+    return (f"Pixels are numbered 1 to {count} {order}. Each pixel lights its cell and its LED dot; a single lit pixel throws one thin sheet of light into "
+            f"the haze, and neighbouring lit pixels of the same colour merge into one sheet that widens with them. There is no master dimmer: to fade the whole bar, "
+            f"select the fixture and use its dimmer. A ready-made [grandMA2 fixture file](/guide/grandma2) exists for this mode, "
+            f"with the pixels as sub-fixtures 1.1 to 1.{count}.")
+
+
+P_RGBBAR_PIXEL = P("36-Channel Pixel Mode (9x Dim/RGB)", _pixel_channels(9),
+                   _pixel_note(9, "from left to right, seen from the front of the bar"))
+P_VBAR_PIXEL = P("36-Channel Pixel Mode (9x Dim/RGB)", _pixel_channels(9),
+                 _pixel_note(9, "from the bottom to the top of the bar as it stands"))
+P_DRGBBAR_PIXEL = P("184-Channel Pixel Mode (46x Dim/RGB)", _pixel_channels(46),
+                    _pixel_note(46, "from left to right, seen from the front of the bar"))
+P_DVBAR_PIXEL = P("184-Channel Pixel Mode (46x Dim/RGB)", _pixel_channels(46),
+                  _pixel_note(46, "from the bottom to the top of the bar as it stands"))
+P_DMBAR_PIXEL = P("98-Channel Pixel Mode (Pan, Tilt + 24x Dim/RGB)", [PAN, TILT] + _pixel_channels(24),
+                  _pixel_note(24, "from left to right, seen from the front of the head")
+                  + " Pan and tilt sit on the main fixture, channels 1 and 2, with the same ranges as the 7-Channel Mode; there is no focus channel.")
+P_MBAR_PIXEL = P("34-Channel Pixel Mode (Pan, Tilt + 8x Dim/RGB)", [PAN, TILT] + _pixel_channels(8),
+                 _pixel_note(8, "from left to right, seen from the front of the head")
+                 + " Pan and tilt sit on the main fixture, channels 1 and 2, with the same ranges as the 7-Channel Mode; there is no focus channel.")
+
 COLOR_PRESETS = ["Red", "Green", "Blue", "Yellow", "Orange", "Purple", "Magenta", "Lightblue", "White"]
 P_PRESETS = [P(c, [ch("Intensity", "0 off to 255 full", f"Master dimmer of the fixed {c.lower()} colour.")]) for c in COLOR_PRESETS] + \
             [P("iRGB", [INTENSITY, RED, GREEN, BLUE], "Free colour mixing instead of a fixed preset.")]
@@ -201,9 +233,12 @@ for id_, name, intro in [
     ("washlight", "Wash FX648", "LED wash moving head."),
     ("washled", "Wash Led", "Compact LED wash moving head."),
     ("miniwash", "Mini Wash", "Small LED wash moving head."),
-    ("moving_bar", "Moving Bar", "Tilting LED bar with a wash texture."),
 ]:
     FIXTURES.append(F(id_, name, "Moving heads & beams", intro, [P_7CH_ONLY], MH_NOTES))
+FIXTURES.append(F("moving_bar", "Moving Bar", "Moving heads & beams", "Tilting LED bar with eight pixels and a wash texture.",
+                  [P_7CH_ONLY, P_MBAR_PIXEL], MH_NOTES))
+FIXTURES.append(F("dense_moving_bar", "Dense Moving RGB Bar", "Moving heads & beams", "The Moving Bar with twenty-four pixels, one every sixteenth of a block, for fine chases and gradients.",
+                  [P_7CH_ONLY, P_DMBAR_PIXEL], MH_NOTES))
 
 _FAMILY = "Moving heads & beams"
 ATOMIC_TILT_CH = ch("Tilt", "0 to 255", "Tilt of the yoke over its full travel.")
@@ -283,12 +318,14 @@ for id_, name, intro in [("a1x1par64", "2x2 Par64 (Block/Color Preset)", "Block 
                          ("a6x3par64_vertical", "6x3 Par64 Vertical (Color Preset)", "Vertical array of eighteen PAR 64 cans.")]:
     FIXTURES.append(F(id_, name, "PARs & LED panels", intro + " Nine one-channel colour presets or a four-channel RGB mode.", P_PRESETS,
                       ["Pick the colour as a personality when the desk only has one dimmer channel to spare, or iRGB for free mixing."]))
-for id_, name, intro in [("par_led", "LED Par", "LED PAR with colour mixing."), ("led_panel_2", "LED Panel 2", "Flat LED panel."),
-                         ("big_panel", "Big Panel 3x3", "Nine-cell LED panel, driven as one."), ("big_panel2", "Big Panel 3x2", "Six-cell LED panel, driven as one."),
-                         ("rgb_bar", "RGB Bar", "Horizontal LED bar with a soft glow whose reach is `rgbBarBeamLength` in the config."),
-                         ("vertical_bar", "Vertical RGB Bar", "Vertical LED bar."), ("mini_bar", "Mini RGB Bar", "Short LED bar."),
-                         ("truss_3lights", "Truss 3x3 Lights", "Truss piece with nine built-in lights, driven as one.")]:
-    FIXTURES.append(F(id_, name, "PARs & LED panels", intro, [P_4CH]))
+for id_, name, intro, pers in [("par_led", "LED Par", "LED PAR with colour mixing.", [P_4CH]), ("led_panel_2", "LED Panel 2", "Flat LED panel.", [P_4CH]),
+                               ("big_panel", "Big Panel 3x3", "Nine-cell LED panel, driven as one.", [P_4CH]), ("big_panel2", "Big Panel 3x2", "Six-cell LED panel, driven as one.", [P_4CH]),
+                               ("rgb_bar", "RGB Bar", "Horizontal LED bar with nine pixels and a soft glow whose reach is `rgbBarBeamLength` in the config.", [P_4CH, P_RGBBAR_PIXEL]),
+                               ("vertical_bar", "Vertical RGB Bar", "Vertical LED bar with nine pixels.", [P_4CH, P_VBAR_PIXEL]), ("mini_bar", "Mini RGB Bar", "Short LED bar.", [P_4CH]),
+                               ("dense_rgb_bar", "Dense RGB Bar", "The RGB Bar with forty-six pixels, about one every sixteenth of a block, for fine chases, gradients and pixel-mapped effects. Adjacent dense bars fuse their haze sheets.", [P_4CH, P_DRGBBAR_PIXEL]),
+                               ("dense_vertical_bar", "Dense Vertical RGB Bar", "The Vertical RGB Bar with forty-six pixels, one every sixteenth of a block.", [P_4CH, P_DVBAR_PIXEL]),
+                               ("truss_3lights", "Truss 3x3 Lights", "Truss piece with nine built-in lights, driven as one.", [P_4CH])]:
+    FIXTURES.append(F(id_, name, "PARs & LED panels", intro, pers))
 FIXTURES.append(F("led_facade", "LED Facade", "A pixel-mapped LED wall. Paint the lit pixels in its screen, choose the resolution and smoothing, and drive every pixel from the desk.", [
     P("4-Channel Pixel (per lit pixel)", [ch("Pixel dimmer", "0 to 255", "Dimmer of this pixel."), ch("Pixel red", "0 to 255", "Red of this pixel."),
                                           ch("Pixel green", "0 to 255", "Green of this pixel."), ch("Pixel blue", "0 to 255", "Blue of this pixel.")],
