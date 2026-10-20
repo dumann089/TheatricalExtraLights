@@ -4,6 +4,7 @@ public enum TheatricalExtraLightsScreens {
     WATER_GENERIC,
     WATER_MANUAL,
     WATER_CONE,
+    BIGSCROLLER_GELS,
     CHANNEL_MENU,
     CHANNEL_PANTILT,
     MOUNT_WRENCH,

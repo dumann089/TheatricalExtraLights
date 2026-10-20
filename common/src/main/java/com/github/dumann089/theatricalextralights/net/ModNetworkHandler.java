@@ -26,5 +26,11 @@ public class ModNetworkHandler {
         CHANNEL.register(SetMountTransformPacket.class, SetMountTransformPacket::encode, SetMountTransformPacket::decode, SetMountTransformPacket::handle);
         CHANNEL.register(SetLedFacadeConfigPacket.class, SetLedFacadeConfigPacket::encode, SetLedFacadeConfigPacket::decode, SetLedFacadeConfigPacket::handle);
         CHANNEL.register(SetLedFacadePixelsPacket.class, SetLedFacadePixelsPacket::encode, SetLedFacadePixelsPacket::decode, SetLedFacadePixelsPacket::handle);
+        CHANNEL.register(
+                SetBigScrollerGelConfigPacket.class,
+                SetBigScrollerGelConfigPacket::encode,
+                SetBigScrollerGelConfigPacket::decode,
+                SetBigScrollerGelConfigPacket::handle
+        );
     }
 }

@@ -355,7 +355,7 @@ public class Profile3GoboRenderer extends ExtraLightsFixtureRenderer<Profile3Gob
                 // ── Lens glow & lens cap ─────────────────────────────────────────
                 poseStack.pushPose();
                 poseStack.translate(0.5f, 0.950f, -0.1075f);
-                renderLensGlow(builder, poseStack, color, 0.17f);
+                renderLensGlow(builder, poseStack, color, 0.17f, intensity);
                 poseStack.popPose();
 
                 renderLens(bufferSource, poseStack, alpha, color,
