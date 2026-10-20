@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MA xmlns:xml="http://www.w3.org/XML/1998/namespace" major_vers="3" minor_vers="2" stream_vers="2">
+  <Info datetime="2026-9-26T22:00:00" showfile="ma fixture builder"/>
+  <FixtureType index="0" name="THEATRICAL LED PANEL 2" mode="64CH Pixel">
+    <InfoItems>
+      <Info>Theatrical Extra Lights LED Panel 2 in the 64-channel pixel personality: a 4 x 4 grid, Dimmer/Red/Green/Blue per pixel, row by row from the top, left to right seen from the front. The pixels are sub-fixtures 1.1 to 1.16; the main fixture has no channels and selecting it addresses every pixel. Requires mod personality "64-Channel Pixel Mode (4x4 Dim/RGB)".</Info>
+    </InfoItems>
+    <short_name>TEL-PanelPx</short_name>
+    <manufacturer>Nailec</manufacturer>
+    <short_manufacturer>Nailec</short_manufacturer>
+    <Modules index="0">
+      <Module index="0" name="MAIN" class="LED" beamtype="Wash" beam_angle="28" beam_intensity="3000">
+        <Body>
+          <Size x="1.0" y="1.0" z="0.08"/>
+        </Body>
+      </Module>
+      <Module index="1" name="PIXEL" class="LED" beamtype="Wash" beam_angle="28" beam_intensity="3000">
+        <Body>
+          <Size x="0.25" y="0.25" z="0.08"/>
+        </Body>
+        <ChannelType index="0" attribute="DIM" feature="DIMMER" preset="DIMMER" coarse="1" default="0" highlight_value="100" react_to_master="1">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="DIM" subattribute_user_name="Dim" attribute="DIM" attribute_user_name="Dim" feature="DIMMER" feature_user_name="Dimmer" preset="DIMMER" preset_user_name="Dimmer">
+            <ChannelSet index="0" name="closed" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="open" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="1" attribute="COLORRGB1" feature="COLORRGB" preset="COLOR" coarse="2" default="255" highlight_value="100" color="ff0000">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB1" subattribute_user_name="Red" attribute="COLORRGB1" attribute_user_name="Red" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="2" attribute="COLORRGB2" feature="COLORRGB" preset="COLOR" coarse="3" default="255" highlight_value="100" color="00ff00">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB2" subattribute_user_name="Green" attribute="COLORRGB2" attribute_user_name="Green" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+        <ChannelType index="3" attribute="COLORRGB3" feature="COLORRGB" preset="COLOR" coarse="4" default="255" highlight_value="100" color="0000ff">
+          <ChannelFunction index="0" from="0" to="100" min_dmx_24="0" max_dmx_24="16777215" physfrom="0" physto="1" subattribute="COLORRGB3" subattribute_user_name="Blue" attribute="COLORRGB3" attribute_user_name="Blue" feature="COLORRGB" feature_user_name="Color RGB" preset="COLOR" preset_user_name="Color">
+            <ChannelSet index="0" name="off" from_dmx="0" to_dmx="0"/>
+            <ChannelSet index="1" name="full" from_dmx="255" to_dmx="255"/>
+          </ChannelFunction>
+        </ChannelType>
+      </Module>
+    </Modules>
+    <Instances index="1">
+      <Instance index="0" patch="1" module_index="0" name="Main"/>
+      <Instance index="1" patch="1" module_index="1" name="Px R1 C1"/>
+      <Instance index="2" patch="5" module_index="1" name="Px R1 C2"/>
+      <Instance index="3" patch="9" module_index="1" name="Px R1 C3"/>
+      <Instance index="4" patch="13" module_index="1" name="Px R1 C4"/>
+      <Instance index="5" patch="17" module_index="1" name="Px R2 C1"/>
+      <Instance index="6" patch="21" module_index="1" name="Px R2 C2"/>
+      <Instance index="7" patch="25" module_index="1" name="Px R2 C3"/>
+      <Instance index="8" patch="29" module_index="1" name="Px R2 C4"/>
+      <Instance index="9" patch="33" module_index="1" name="Px R3 C1"/>
+      <Instance index="10" patch="37" module_index="1" name="Px R3 C2"/>
+      <Instance index="11" patch="41" module_index="1" name="Px R3 C3"/>
+      <Instance index="12" patch="45" module_index="1" name="Px R3 C4"/>
+      <Instance index="13" patch="49" module_index="1" name="Px R4 C1"/>
+      <Instance index="14" patch="53" module_index="1" name="Px R4 C2"/>
+      <Instance index="15" patch="57" module_index="1" name="Px R4 C3"/>
+      <Instance index="16" patch="61" module_index="1" name="Px R4 C4"/>
+    </Instances>
+    <Wheels index="2"/>
+    <VirtualFunctionBlocks index="3"/>
+    <FixtureMacroCollect index="5"/>
+  </FixtureType>
+</MA>

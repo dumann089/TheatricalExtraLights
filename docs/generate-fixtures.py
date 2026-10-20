@@ -336,7 +336,7 @@ for id_, name, intro in [("a1x1par64", "2x2 Par64 (Block/Color Preset)", "Block 
                          ("a6x3par64_vertical", "6x3 Par64 Vertical (Color Preset)", "Vertical array of eighteen PAR 64 cans.")]:
     FIXTURES.append(F(id_, name, "PARs & LED panels", intro + " Nine one-channel colour presets or a four-channel RGB mode.", P_PRESETS,
                       ["Pick the colour as a personality when the desk only has one dimmer channel to spare, or iRGB for free mixing."]))
-for id_, name, intro, pers in [("par_led", "LED Par", "LED PAR with colour mixing.", [P_4CH]), ("led_panel_2", "LED Panel 2", "Flat LED panel.", [P_4CH]),
+for id_, name, intro, pers in [("par_led", "LED Par", "LED PAR with colour mixing.", [P_4CH]), ("led_panel_2", "LED Panel 2", "Flat LED panel, driven as one or as a 4x4 or 8x8 pixel grid.", [P_4CH, P("64-Channel Pixel Mode (4x4 Dim/RGB)", _pixel_channels(16), "Sixteen pixels, row by row from the top, left to right seen from the front."), P("256-Channel Pixel Mode (8x8 Dim/RGB)", _pixel_channels(64), "Sixty-four pixels, row by row from the top, left to right seen from the front.")]),
                                ("big_panel", "Big Panel 3x3", "Nine-cell LED panel, driven as one.", [P_4CH]), ("big_panel2", "Big Panel 3x2", "Six-cell LED panel, driven as one.", [P_4CH]),
                                ("rgb_bar", "RGB Bar", "Horizontal LED bar with nine pixels and a soft glow whose reach is `rgbBarBeamLength` in the config.", [P_4CH, P_RGBBAR_PIXEL]),
                                ("vertical_bar", "Vertical RGB Bar", "Vertical LED bar with nine pixels.", [P_4CH, P_VBAR_PIXEL]), ("mini_bar", "Mini RGB Bar", "Short LED bar.", [P_4CH]),

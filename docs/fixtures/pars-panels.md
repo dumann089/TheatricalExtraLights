@@ -48,7 +48,7 @@ One page per fixture, each channel explained. 53 fixtures.
 | [2x8 Par64 (Color Preset)](/fixtures/a2x8par64) | 10 modes |
 | [6x3 Par64 Vertical (Color Preset)](/fixtures/a6x3par64_vertical) | 10 modes |
 | [LED Par](/fixtures/par_led) | 4-Channel Mode (4) |
-| [LED Panel 2](/fixtures/led_panel_2) | 4-Channel Mode (4) |
+| [LED Panel 2](/fixtures/led_panel_2) | 4-Channel Mode (4), 64-Channel Pixel Mode (4x4 Dim/RGB) (64), 256-Channel Pixel Mode (8x8 Dim/RGB) (256) |
 | [Big Panel 3x3](/fixtures/big_panel) | 4-Channel Mode (4) |
 | [Big Panel 3x2](/fixtures/big_panel2) | 4-Channel Mode (4) |
 | [RGB Bar](/fixtures/rgb_bar) | 4-Channel Mode (4), 36-Channel Pixel Mode (9x Dim/RGB) (36) |

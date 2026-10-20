@@ -123,10 +123,35 @@ public class LEDPanel2Renderer extends ExtraLightsRenderer<LEDPanel2BlockEntity>
                     poseStack.translate(0, 0f, -0.01f);
                     Matrix4f m = poseStack.last().pose();
                     Matrix3f normal = poseStack.last().normal();
-                    addVertex(beamConsumer, m, normal, r, g, b, a, 0, 1 , 0);
-                    addVertex(beamConsumer, m, normal, r, g, b, a,  1, 1, 0);
-                    addVertex(beamConsumer, m, normal, r, g, b, a, 1, 0, 0);
-                    addVertex(beamConsumer, m, normal, r, g, b, a,0, 0, 0);
+                    if (!blockEntity.isPixelMode()) {
+                        addVertex(beamConsumer, m, normal, r, g, b, a, 0, 1, 0);
+                        addVertex(beamConsumer, m, normal, r, g, b, a, 1, 1, 0);
+                        addVertex(beamConsumer, m, normal, r, g, b, a, 1, 0, 0);
+                        addVertex(beamConsumer, m, normal, r, g, b, a, 0, 0, 0);
+                    } else {
+                        // Grille de pixels, rangee 0 en haut, colonne 0 a gauche vue de face (face vers -Z,
+                        // la gauche du spectateur est +X), avec un joint entre les pixels.
+                        int n = blockEntity.getGrid();
+                        float cell = 1f / n;
+                        float gap = cell * 0.06f;
+                        for (int row = 0; row < n; row++) {
+                            float y1 = 1f - row * cell - gap;
+                            float y0 = 1f - (row + 1) * cell + gap;
+                            for (int col = 0; col < n; col++) {
+                                int p = row * n + col;
+                                int dim = blockEntity.pixelDim(p);
+                                int c = blockEntity.pixelColour(p);
+                                if (dim <= 0 || c == 0) continue;
+                                float x1 = 1f - col * cell - gap;
+                                float x0 = 1f - (col + 1) * cell + gap;
+                                int pr = (c >> 16) & 0xFF, pg = (c >> 8) & 0xFF, pb = c & 0xFF;
+                                addVertex(beamConsumer, m, normal, pr, pg, pb, dim, x0, y1, 0);
+                                addVertex(beamConsumer, m, normal, pr, pg, pb, dim, x1, y1, 0);
+                                addVertex(beamConsumer, m, normal, pr, pg, pb, dim, x1, y0, 0);
+                                addVertex(beamConsumer, m, normal, pr, pg, pb, dim, x0, y0, 0);
+                            }
+                        }
+                    }
                     poseStack.popPose();
                 }
 
