@@ -25,6 +25,8 @@ public class TheatricalExtraLightsConfig {
     private Float rgbBarBeamLength = 9.0f;
     /** Multiplicateur des nappes de haze des barres LED (RGB Bar, Vertical RGB Bar, Moving Bar) ; 1 = reglage d'origine. */
     private Float rgbBarBeamIntensity = 1.0f;
+    /** Multiplicateur de portee du jet CO2 (Flow2Jet) ; 1 = environ 9 blocs a pleine pression. */
+    private Float co2JetReach = 1.0f;
     private Boolean renderLens = true;
     private Float maxGoboDistance = 500.0f;
     /** Multiplicador de brilho do gobo projetado (shader GoboBrightness). */
@@ -362,6 +364,10 @@ public class TheatricalExtraLightsConfig {
         float v = INSTANCE.rgbBarBeamIntensity != null ? INSTANCE.rgbBarBeamIntensity : 1.0f;
         return Math.max(0f, Math.min(4.0f, v));
     }
+    public static float getCo2JetReach() {
+        float v = INSTANCE.co2JetReach != null ? INSTANCE.co2JetReach : 1.0f;
+        return Math.max(0.5f, Math.min(3.0f, v));
+    }
     public static boolean shouldRenderLens() { return INSTANCE.renderLens; }
     public static float getMaxGoboDistance() { return INSTANCE.maxGoboDistance; }
     public static float getGoboBrightness() {
@@ -483,6 +489,7 @@ public class TheatricalExtraLightsConfig {
     public static void setLaserBeamLength(float value) { INSTANCE.laserBeamLength = Math.max(20f, value); save(); }
     public static void setRgbBarBeamLength(float value) { INSTANCE.rgbBarBeamLength = Math.max(1f, Math.min(64f, value)); save(); }
     public static void setRgbBarBeamIntensity(float value) { INSTANCE.rgbBarBeamIntensity = Math.max(0f, Math.min(4.0f, value)); save(); }
+    public static void setCo2JetReach(float value) { INSTANCE.co2JetReach = Math.max(0.5f, Math.min(3.0f, value)); save(); }
     public static void setRenderLens(boolean value) { INSTANCE.renderLens = value; save(); }
     public static void setMaxGoboDistance(float value) { INSTANCE.maxGoboDistance = value; save(); }
     public static void setGoboBrightness(float value) {

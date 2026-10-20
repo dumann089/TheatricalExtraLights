@@ -151,6 +151,15 @@ public final class TheatricalExtraLightsForgeClient {
                     ),
                     shader -> ModShaders.laserRaymarchShader = shader
             );
+
+            event.registerShader(
+                    new ShaderInstance(
+                            event.getResourceProvider(),
+                            new ResourceLocation("theatricalextralights", "co2_plume"),
+                            DefaultVertexFormat.POSITION_COLOR_TEX
+                    ),
+                    shader -> ModShaders.co2PlumeShader = shader
+            );
         } catch (IOException e) {
             throw new RuntimeException("Error cargando los shaders para Theatrical Extra Lights", e);
         }

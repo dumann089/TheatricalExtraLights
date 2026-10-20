@@ -1,101 +1,45 @@
 package com.github.dumann089.theatricalextralights.client.particle;
 
-import com.github.dumann089.theatricalextralights.firework.FireworkRenderDistances;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
-import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
-import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 
-/** Colonne CO₂ — jet continu, collision blocs, pas de boules distinctes. */
+/** Coeur du jet : la colonne dense et serree des premiers metres, blanche et nette, vite dissoute. */
 @Environment(EnvType.CLIENT)
-public class Co2JetCoreParticle extends TextureSheetParticle {
-    private final SpriteSet sprites;
-    private final float startSize;
-    private final float peakSize;
+public class Co2JetCoreParticle extends Co2FogParticle {
+    private static final float DRAG = 0.905f;
+    private static final float TURBULENCE = 0.004f;
 
-    protected Co2JetCoreParticle(
-            ClientLevel level,
-            double x,
-            double y,
-            double z,
-            double dirX,
-            double dirY,
-            double dirZ,
-            SpriteSet sprites,
-            RandomSource random
-    ) {
-        super(level, x, y, z, dirX, dirY, dirZ);
-        this.sprites = sprites;
+    private static SpriteSet spriteSet;
 
-        xd = dirX;
-        yd = dirY;
-        zd = dirZ;
-
-        hasPhysics = true;
-        gravity = 0.0f;
-        friction = 0.94f;
-        lifetime = 38 + random.nextInt(22);
-        float distanceScale = FireworkRenderDistances.flameParticleSizeScale(x, y, z);
-        startSize = (0.14f + random.nextFloat() * 0.06f) * distanceScale;
-        peakSize = startSize * (2.4f + random.nextFloat() * 1.1f);
-        quadSize = startSize * 0.85f;
-        alpha = 0.22f + random.nextFloat() * 0.08f;
-        rCol = 0.88f + random.nextFloat() * 0.06f;
-        gCol = 0.88f + random.nextFloat() * 0.06f;
-        bCol = 0.92f + random.nextFloat() * 0.04f;
-        pickSprite(sprites);
+    /** @param pressure 0..1, intensite DMX. */
+    Co2JetCoreParticle(ClientLevel level, Vec3 pos, Vec3 velocity, Vector3f axis, RandomSource random, float pressure) {
+        super(level, pos, velocity, axis, spriteSet, random,
+                0.04f + random.nextFloat() * 0.02f,
+                0.09f + random.nextFloat() * 0.03f,
+                (0.18f + random.nextFloat() * 0.06f) * (0.8f + 0.2f * pressure),
+                0.50f + random.nextFloat() * 0.10f,
+                DRAG,
+                TURBULENCE,
+                0.25f,
+                5 + random.nextInt(4));
     }
 
-    @Override
-    public ParticleRenderType getRenderType() {
-        return ExtraLightsRenderTypes.co2JetRenderType();
-    }
-
-    @Override
-    public void tick() {
-        xo = x;
-        yo = y;
-        zo = z;
-        if (age++ >= lifetime) {
-            remove();
-            return;
-        }
-
-        xd += (random.nextDouble() - 0.5) * 0.003;
-        yd += (random.nextDouble() - 0.5) * 0.003;
-        zd += (random.nextDouble() - 0.5) * 0.003;
-        move(xd, yd, zd);
-
-        if (onGround) {
-            xd *= 0.3;
-            yd *= 0.12;
-            zd *= 0.3;
-        }
-
-        float life = (float) age / (float) lifetime;
-        quadSize = Mth.lerp(life * life * life, startSize, peakSize);
-        if (life < 0.55f) {
-            alpha = 0.24f + life * 0.52f;
-        } else {
-            float fade = (life - 0.55f) / 0.45f;
-            alpha = (1.0f - fade) * (1.0f - fade) * 0.58f;
-        }
-        setSpriteFromAge(sprites);
+    static boolean ready() {
+        return spriteSet != null;
     }
 
     @Environment(EnvType.CLIENT)
     public static class Provider implements ParticleProvider<SimpleParticleType> {
-        private final SpriteSet sprites;
-
         public Provider(SpriteSet sprites) {
-            this.sprites = sprites;
+            spriteSet = sprites;
         }
 
         @Override
@@ -109,7 +53,9 @@ public class Co2JetCoreParticle extends TextureSheetParticle {
                 double dirY,
                 double dirZ
         ) {
-            return new Co2JetCoreParticle(level, x, y, z, dirX, dirY, dirZ, sprites, level.random);
+            Vec3 velocity = new Vec3(dirX, dirY, dirZ);
+            Vec3 axis = velocity.lengthSqr() > 1.0e-8 ? velocity.normalize() : new Vec3(0, 1, 0);
+            return new Co2JetCoreParticle(level, new Vec3(x, y, z), velocity, new Vector3f((float) axis.x, (float) axis.y, (float) axis.z), level.random, 1f);
         }
     }
 }

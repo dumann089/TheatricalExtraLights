@@ -19,9 +19,9 @@
     "subtitle": "subtitles.theatricalextralights.block.flow2jet.loop",
     "sounds": [
       {
-        "name": "theatricalextralights:block/co2",
-        "volume": 0.12,
-        "attenuation_distance": 12
+        "name": "theatricalextralights:block/flow2jet",
+        "volume": 1.0,
+        "attenuation_distance": 24
       }
     ]
   },
