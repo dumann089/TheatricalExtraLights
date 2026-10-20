@@ -60,6 +60,7 @@ Client-side virtual DAC used by the **Ether Dream Laser Projector** block, see [
 | `laserDacHazeRadius` | `0.11` | Halo radius around each ray, in blocks. |
 | `rgbBarBeamLength` | `9.0` | Length of the LED bar beams in blocks, flat and volumetric, for every RGB, vertical, moving and dense bar, 1 to 64. A beam that hits a block first stops there, otherwise it fades out at this length. Also in the settings screen (General tab, 1 to 64 m). |
 | `rgbBarBeamIntensity` | `1.0` | Brightness multiplier for the haze sheets of the LED bars (RGB Bar, Vertical RGB Bar, Moving Bar), 0 to 4. Also the **Bar beam intensity** slider of the settings screen. |
+| `co2JetReach` | `1.0` | Reach multiplier for the Flow2Jet CO2 plume, 0.5 to 3. Also the **CO2 jet reach** slider of the settings screen. |
 
 ## Pyro
 

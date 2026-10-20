@@ -390,5 +390,6 @@
   "screen.laser_projector.state.idle": "Idle",
   "screen.laser_projector.state.prepared": "Prepared",
   "screen.laser_projector.state.playing": "Playing",
-  "screen.laser_projector.state.estop": "E-Stop"
+  "screen.laser_projector.state.estop": "E-Stop",
+  "tel.settings.co2reach": "Portée du jet CO₂"
 }

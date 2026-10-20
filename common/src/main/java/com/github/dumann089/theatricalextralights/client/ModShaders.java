@@ -20,6 +20,7 @@ public class ModShaders {
     public static ShaderInstance volumetricBeamShader;
     public static ShaderInstance beamRaymarchShader;
     public static ShaderInstance laserRaymarchShader;
+    public static ShaderInstance co2PlumeShader;
 
     public static float configDensity = 0.15f;
     public static float configMaxAlpha = 0.25f;
@@ -36,6 +37,22 @@ public class ModShaders {
 
     public static final RenderStateShard.ShaderStateShard LASER_SHADER_STATE =
             new RenderStateShard.ShaderStateShard(() -> laserRaymarchShader);
+
+    public static final RenderStateShard.ShaderStateShard CO2_PLUME_SHADER_STATE =
+            new RenderStateShard.ShaderStateShard(() -> co2PlumeShader);
+
+    /** Alpha premultiplie : la fumee couvre ce qui est derriere elle. */
+    public static final RenderStateShard.TransparencyStateShard PREMULTIPLIED_TRANSPARENCY =
+            new RenderStateShard.TransparencyStateShard("premultiplied_transparency", () -> {
+                RenderSystem.enableBlend();
+                RenderSystem.blendFunc(
+                        GlStateManager.SourceFactor.ONE,
+                        GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA
+                );
+            }, () -> {
+                RenderSystem.disableBlend();
+                RenderSystem.defaultBlendFunc();
+            });
 
     public static final RenderStateShard.TransparencyStateShard ADDITIVE_TRANSPARENCY =
             new RenderStateShard.TransparencyStateShard("additive_transparency", () -> {
@@ -124,6 +141,38 @@ public class ModShaders {
     /** Le laser realiste partage les prerequis du raymarch : shader charge, pas d'Iris. */
     public static boolean canUseLaserRaymarch() {
         return laserRaymarchShader != null && !isIrisShaderpackActive();
+    }
+
+    /** Le panache CO2 volumetrique partage les prerequis du raymarch : shader charge, pas d'Iris. */
+    public static boolean canUseCo2Plume() {
+        return co2PlumeShader != null && !isIrisShaderpackActive();
+    }
+
+    private static RenderType co2PlumeRenderType;
+
+    /** Passe ecran du panache CO2 : premultiplie, profondeur lue dans le shader, boite proxy avec culling. */
+    public static RenderType getCo2PlumeRenderType() {
+        if (co2PlumeRenderType == null) {
+            RenderType.CompositeState state = RenderType.CompositeState.builder()
+                    .setShaderState(CO2_PLUME_SHADER_STATE)
+                    .setTextureState(RenderStateShard.NO_TEXTURE)
+                    .setTransparencyState(PREMULTIPLIED_TRANSPARENCY)
+                    .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
+                    .setCullState(RenderStateShard.CULL)
+                    .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .createCompositeState(false);
+            co2PlumeRenderType = RenderType.create(
+                    "co2_plume",
+                    DefaultVertexFormat.POSITION_COLOR_TEX,
+                    VertexFormat.Mode.QUADS,
+                    256,
+                    false,
+                    true,
+                    state
+            );
+        }
+        return co2PlumeRenderType;
     }
 
     public static void updateRaymarchConfig() {

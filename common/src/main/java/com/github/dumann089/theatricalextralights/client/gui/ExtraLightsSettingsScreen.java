@@ -195,7 +195,10 @@ public class ExtraLightsSettingsScreen extends Screen {
                 TheatricalExtraLightsConfig::setMaxGoboDistance));
         y += widgetHeight + rowGap;
 
-        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.barbeamlength",
+        addRenderableWidget(slider(contentLeft, y, half, "tel.settings.co2reach",
+                0.5f, 3f, TheatricalExtraLightsConfig.getCo2JetReach(), 1, "x",
+                TheatricalExtraLightsConfig::setCo2JetReach));
+        addRenderableWidget(slider(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.barbeamlength",
                 1f, 64f, TheatricalExtraLightsConfig.getRgbBarBeamLength(), 1, " m",
                 TheatricalExtraLightsConfig::setRgbBarBeamLength));
     }

@@ -11,12 +11,19 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** Fade des particules CO₂ sur place dès que le trigger s'arrête. */
+/**
+ * Coupure de vanne : le panache se detache de la buse. Un front de coupure remonte le jet a la
+ * vitesse du gaz ; derriere lui la fumee s'eteint, devant lui elle continue de monter et se dilue
+ * avec sa propre duree de vie.
+ */
 @Environment(EnvType.CLIENT)
 public final class Flow2JetDissipation {
-    private static final float FADE_DURATION_TICKS = 7f;
-    private static final float COLUMN_RADIUS = 1.35f;
-    private static final float MAX_COLUMN_ALONG = 3.2f;
+    /** Vitesse du front de coupure, blocs/tick. */
+    private static final float FRONT_SPEED = 0.55f;
+    private static final float FRONT_SOFTNESS = 1.2f;
+    private static final float PLUME_RADIUS = 2.2f;
+    private static final float MAX_PLUME_ALONG = 12f;
+    private static final float LINGER_TICKS = 12f;
 
     private static final Map<BlockPos, JetPlume> STOPPED = new ConcurrentHashMap<>();
 
@@ -45,30 +52,27 @@ public final class Flow2JetDissipation {
         STOPPED.remove(blockPos);
     }
 
+    /** 1 = intacte, 0 = derriere le front de coupure. */
     public static float alphaMultiplier(double x, double y, double z, long gameTime) {
         float multiplier = 1f;
         Iterator<Map.Entry<BlockPos, JetPlume>> iterator = STOPPED.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<BlockPos, JetPlume> entry = iterator.next();
-            JetPlume plume = entry.getValue();
-            float fade = plume.fadeFor(x, y, z, gameTime);
-            if (fade < 0.001f && gameTime - plume.stopGameTime > FADE_DURATION_TICKS + 4) {
+            JetPlume plume = iterator.next().getValue();
+            if (gameTime - plume.stopGameTime > MAX_PLUME_ALONG / FRONT_SPEED + LINGER_TICKS) {
                 iterator.remove();
                 continue;
             }
-            if (fade < multiplier) {
-                multiplier = fade;
-            }
+            multiplier = Math.min(multiplier, plume.fadeFor(x, y, z, gameTime));
         }
         return multiplier;
     }
 
-    public static float motionDamping(double x, double y, double z, long gameTime) {
-        float alpha = alphaMultiplier(x, y, z, gameTime);
-        if (alpha >= 0.98f) {
+    /** Derriere le front, le gaz n'est plus pousse : il ralentit. */
+    public static float motionDamping(float alphaMultiplier) {
+        if (alphaMultiplier >= 0.98f) {
             return 1f;
         }
-        return 0.04f + alpha * alpha * 0.2f;
+        return 0.6f + 0.4f * alphaMultiplier;
     }
 
     private static final class JetPlume {
@@ -83,35 +87,26 @@ public final class Flow2JetDissipation {
         }
 
         private float fadeFor(double x, double y, double z, long gameTime) {
-            if (!isInsidePlume(x, y, z)) {
-                return 1f;
-            }
-
             float elapsed = gameTime - stopGameTime;
             if (elapsed <= 0f) {
                 return 1f;
             }
-
-            float t = Mth.clamp(elapsed / FADE_DURATION_TICKS, 0f, 1f);
-            return 1f - t * t * t;
-        }
-
-        private boolean isInsidePlume(double x, double y, double z) {
             double relX = x - nozzle.x;
             double relY = y - nozzle.y;
             double relZ = z - nozzle.z;
             float along = (float) (relX * axis.x() + relY * axis.y() + relZ * axis.z());
-            if (along < -0.2f || along > MAX_COLUMN_ALONG) {
-                return false;
+            if (along < -0.6f || along > MAX_PLUME_ALONG) {
+                return 1f;
             }
-
-            double axisX = axis.x();
-            double axisY = axis.y();
-            double axisZ = axis.z();
-            double perpX = relX - axisX * along;
-            double perpY = relY - axisY * along;
-            double perpZ = relZ - axisZ * along;
-            return perpX * perpX + perpY * perpY + perpZ * perpZ <= COLUMN_RADIUS * COLUMN_RADIUS;
+            double perpX = relX - axis.x() * along;
+            double perpY = relY - axis.y() * along;
+            double perpZ = relZ - axis.z() * along;
+            if (perpX * perpX + perpY * perpY + perpZ * perpZ > PLUME_RADIUS * PLUME_RADIUS) {
+                return 1f;
+            }
+            float front = elapsed * FRONT_SPEED;
+            float behind = Mth.clamp((front - along) / FRONT_SOFTNESS + 0.5f, 0f, 1f);
+            return 1f - behind;
         }
     }
 }

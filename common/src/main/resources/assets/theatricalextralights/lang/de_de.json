@@ -356,5 +356,6 @@
   "tel.settings.laser.brightness": "Laserhelligkeit",
   "tel.settings.laser.radius": "Strahlradius",
   "tel.settings.laser.detail": "Laser-Detail (Segmente)",
-  "tel.settings.laser.note": "Ohne Dunst bleiben nur die Auftreffpunkte sichtbar, wie in echt."
+  "tel.settings.laser.note": "Ohne Dunst bleiben nur die Auftreffpunkte sichtbar, wie in echt.",
+  "tel.settings.co2reach": "Reichweite CO₂-Jet"
 }
