@@ -218,6 +218,7 @@ public class BlockEntities {
     public static final RegistrySupplier<BlockEntityType<Blinder2x2BlockEntity>> BLINDER2X2 = BLOCK_ENTITIES.register("blinder2x2", () -> BlockEntityType.Builder.of(Blinder2x2BlockEntity::new, Blocks.BLINDER2X2_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<Blinder2x2warmBlockEntity>> BLINDER2X2WARM = BLOCK_ENTITIES.register("blinder2x2warm", () -> BlockEntityType.Builder.of(Blinder2x2warmBlockEntity::new, Blocks.BLINDER2X2WARM_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<Blinder1x1BlockEntity>> BLINDER1X1 = BLOCK_ENTITIES.register("blinder1x1", () -> BlockEntityType.Builder.of(Blinder1x1BlockEntity::new, Blocks.BLINDER1X1_BLOCK.get()).build(null));
+    public static final RegistrySupplier<BlockEntityType<StageBlinder200BlazeBlockEntity>> STAGE_BLINDER_200_BLAZE = BLOCK_ENTITIES.register("stage_blinder_200_blaze", () -> BlockEntityType.Builder.of(StageBlinder200BlazeBlockEntity::new, Blocks.STAGE_BLINDER_200_BLAZE_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<Blinder1x2BlockEntity>> BLINDER1X2 = BLOCK_ENTITIES.register("blinder1x2", () -> BlockEntityType.Builder.of(Blinder1x2BlockEntity::new, Blocks.BLINDER1X2_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<MiniBarBlockEntity>> MINI_BAR = BLOCK_ENTITIES.register("mini_bar", () -> BlockEntityType.Builder.of(MiniBarBlockEntity::new, Blocks.MINI_BAR_BLOCK.get()).build(null));
 

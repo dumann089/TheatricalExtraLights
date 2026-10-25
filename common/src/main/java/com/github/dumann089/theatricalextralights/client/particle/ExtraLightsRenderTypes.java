@@ -1,5 +1,6 @@
 package com.github.dumann089.theatricalextralights.client.particle;
 
+import com.github.dumann089.theatricalextralights.client.render.pyro.FlameBloom;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -34,7 +35,8 @@ public final class ExtraLightsRenderTypes {
 
         @Override
         public void end(Tesselator tesselator) {
-            tesselator.end();
+            // Dessine le lot, et le bloom des flammes quand il est actif.
+            FlameBloom.drawFlameBatch(tesselator.getBuilder());
             RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
             RenderSystem.depthMask(true);
         }

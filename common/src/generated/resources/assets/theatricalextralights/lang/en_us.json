@@ -199,6 +199,7 @@
   "block.theatricalextralights.parscroller": "Par64 (Scroller)",
   "block.theatricalextralights.blinder2x2": "2x2 Blinder",
   "block.theatricalextralights.blinder1x1": "Blinder 1x1",
+  "block.theatricalextralights.stage_blinder_200_blaze": "Showtec Stage Blinder 200 Blaze",
   "block.theatricalextralights.blinder1x2": "Blinder 1x2",
   "block.theatricalextralights.blinder2x2warm": "2x2 Blinder (Warm)",
   "block.theatricalextralights.source_four_warm": "Source Four (Warm)",
@@ -422,6 +423,7 @@
   "screen.pyro.flame_style.jet": "Jet",
   "screen.pyro.flame_style.burst": "Burst",
   "tel.settings.flamebloom": "Flame bloom",
+  "tel.settings.co2reach": "CO2 jet reach",
   "tel.settings.flamebloomstrength": "Bloom",
   "tel.command.config.opened": "Extra Lights settings opened.",
   "category.theatricalextralights": "Theatrical Extra Lights",
@@ -442,6 +444,5 @@
   "screen.laser_projector.state.idle": "Idle",
   "screen.laser_projector.state.prepared": "Prepared",
   "screen.laser_projector.state.playing": "Playing",
-  "screen.laser_projector.state.estop": "E-Stop",
-  "tel.settings.co2reach": "CO2 jet reach"
+  "screen.laser_projector.state.estop": "E-Stop"
 }

@@ -268,13 +268,19 @@ ATOMIC_BAR = [
                               "100-129 ramp up and down; 130-159 random; 160-189 lightning bursts; 190-219 spikes; "
                               "220-255 sparkle (each bar segment flashes on its own in the pixel modes)."),
 ]
+ATOMIC_TILT_BAR = [ATOMIC_BAR[0],
+    ATOMIC_BAR[1],
+    ch("Flash rate", "0 steady, 1 to 255 runs 0.5 to 25 flashes a second",
+       "0 turns the strobe off and the head stays lit steadily at the Intensity level; 1 to 255 flashes 0.5 to 25 times a second on top of it."),
+    ATOMIC_BAR[3],
+]
 ATOMIC_NOTES = ["Every flash is timed from the game clock, so all clients see the same flashes. A flash shorter than a frame still shows for one frame.",
                 "The room light follows the flashes tick by tick."]
 FIXTURES.append(F("atomictilt", "Atomic Tilt", "A strobe head on a tilting yoke, no pan.", [
     P("6-Channel RGB + Focus + Tilt", [INTENSITY, RED, GREEN, BLUE, FOCUS_CONE, ATOMIC_TILT_CH]),
     P("7-Channel RGB + Focus + Strobe + Tilt", [INTENSITY, RED, GREEN, BLUE, FOCUS_CONE, STROBE, ATOMIC_TILT_CH]),
-    P("6-Channel Atomic + Focus + Tilt", ATOMIC_BAR + [FOCUS_CONE, ATOMIC_TILT_CH], "White head driven like a Martin Atomic: intensity, duration, rate, effects."),
-    P("9-Channel Atomic RGB + Focus + Tilt", ATOMIC_BAR + [RED, GREEN, BLUE, FOCUS_CONE, ATOMIC_TILT_CH], "The Atomic engine with a colour."),
+    P("6-Channel Atomic + Focus + Tilt", ATOMIC_TILT_BAR + [FOCUS_CONE, ATOMIC_TILT_CH], "White head driven like a Martin Atomic: intensity, duration, rate, effects."),
+    P("9-Channel Atomic RGB + Focus + Tilt", ATOMIC_TILT_BAR + [RED, GREEN, BLUE, FOCUS_CONE, ATOMIC_TILT_CH], "The Atomic engine with a colour."),
 ], ATOMIC_NOTES))
 MMB_BEAM = lambda n: [ch(f"Beam {n} intensity", "0 to 255", f"Dimmer of beam {n} (1 is at one end of the bar, 7 at the other)."),
                       ch(f"Beam {n} tilt", "0 to 255", f"Tilt of beam {n}."),
@@ -359,6 +365,10 @@ FIXTURES += [
     F("blinder2x2", "2x2 Blinder", "Four-lamp blinder with colour mixing.", [P_4CH_IRGB]),
     F("blinder1x1", "Blinder 1x1", "Single-lamp blinder with colour mixing and a strobe channel.",
       [P("5-Channel iRGB + Strobe", [INTENSITY, RED, GREEN, BLUE, STROBE])]),
+    F("stage_blinder_200_blaze", "Showtec Stage Blinder 200 Blaze",
+      "Round single-head blinder with a cylindrical housing, ventilated body and rectangular yoke.",
+      [P("4-Channel Dimmer RGB", [INTENSITY, RED, GREEN, BLUE])],
+      ["Place against a wall or the side of a vertical truss to put the bracket behind the head and aim the lens outward. The dimmer sets total output; RGB sets the colour of the lens glow and blinder beam."]),
     F("blinder1x2", "Blinder 1x2", "Two-lamp blinder, the 1x1 head doubled on one yoke, with colour mixing and a strobe channel.",
       [P("5-Channel iRGB + Strobe", [INTENSITY, RED, GREEN, BLUE, STROBE])]),
     F("blinder_warm", "Blinder (warm)", "Eight-lamp blinder, fixed warm tungsten.", [P_1CH, P_WARM4X2_PIXEL]),

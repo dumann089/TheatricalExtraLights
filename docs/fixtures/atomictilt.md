@@ -79,7 +79,7 @@ White head driven like a Martin Atomic: intensity, duration, rate, effects.
 |---|---|---|
 | 1 | Intensity | 0 to 255 |
 | 2 | Flash duration | 0 to 255 |
-| 3 | Flash rate | 0 to 255 |
+| 3 | Flash rate | 0 steady, 1 to 255 runs 0.5 to 25 flashes a second |
 | 4 | Effects | 0 to 255 |
 | 5 | Focus | 0 tight to 255 wide |
 | 6 | Tilt | 0 to 255 |
@@ -90,7 +90,7 @@ White head driven like a Martin Atomic: intensity, duration, rate, effects.
 
 **2 · Flash duration** — Length of each flash, 12 ms at 0 to 650 ms at 255.
 
-**3 · Flash rate** — 0 stops the strobe (as on the real unit); 1 to 255 runs 0.5 to 25 flashes a second.
+**3 · Flash rate** — 0 turns the strobe off and the head stays lit steadily at the Intensity level; 1 to 255 flashes 0.5 to 25 times a second on top of it.
 
 **4 · Effects** — 0-9 plain strobe; 10-39 blinder, lamp on continuously; 40-69 ramp up; 70-99 ramp down; 100-129 ramp up and down; 130-159 random; 160-189 lightning bursts; 190-219 spikes; 220-255 sparkle (each bar segment flashes on its own in the pixel modes).
 
@@ -106,7 +106,7 @@ The Atomic engine with a colour.
 |---|---|---|
 | 1 | Intensity | 0 to 255 |
 | 2 | Flash duration | 0 to 255 |
-| 3 | Flash rate | 0 to 255 |
+| 3 | Flash rate | 0 steady, 1 to 255 runs 0.5 to 25 flashes a second |
 | 4 | Effects | 0 to 255 |
 | 5 | Red | 0 to 255 |
 | 6 | Green | 0 to 255 |
@@ -120,7 +120,7 @@ The Atomic engine with a colour.
 
 **2 · Flash duration** — Length of each flash, 12 ms at 0 to 650 ms at 255.
 
-**3 · Flash rate** — 0 stops the strobe (as on the real unit); 1 to 255 runs 0.5 to 25 flashes a second.
+**3 · Flash rate** — 0 turns the strobe off and the head stays lit steadily at the Intensity level; 1 to 255 flashes 0.5 to 25 times a second on top of it.
 
 **4 · Effects** — 0-9 plain strobe; 10-39 blinder, lamp on continuously; 40-69 ramp up; 70-99 ramp down; 100-129 ramp up and down; 130-159 random; 160-189 lightning bursts; 190-219 spikes; 220-255 sparkle (each bar segment flashes on its own in the pixel modes).
 
