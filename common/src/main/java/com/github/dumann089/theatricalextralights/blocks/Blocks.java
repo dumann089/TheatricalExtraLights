@@ -222,6 +222,7 @@ public class Blocks {
     public static final RegistrySupplier<Block> BLINDER2X2_BLOCK = BLOCKS.register("blinder2x2", Blinder2x2Block::new);
     public static final RegistrySupplier<Block> BLINDER2X2WARM_BLOCK = BLOCKS.register("blinder2x2warm", Blinder2x2warmBlock::new);
     public static final RegistrySupplier<Block> BLINDER1X1_BLOCK = BLOCKS.register("blinder1x1", Blinder1x1Block::new);
+    public static final RegistrySupplier<Block> STAGE_BLINDER_200_BLAZE_BLOCK = BLOCKS.register("stage_blinder_200_blaze", StageBlinder200BlazeBlock::new);
     public static final RegistrySupplier<Block> BLINDER1X2_BLOCK = BLOCKS.register("blinder1x2", Blinder1x2Block::new);
     public static final RegistrySupplier<Block> MINI_BAR_BLOCK = BLOCKS.register("mini_bar", MiniBarBlock::new);
     public static final RegistrySupplier<Block> MOVING_VL2C_BEAMS_BLOCK = BLOCKS.register("moving_vl2c_beams", MovingVL2CBeamsBlock::new);

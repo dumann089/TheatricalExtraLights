@@ -49,6 +49,10 @@ public final class BlinderRenderHelper {
                 new float[]{0.5f},
                 new float[]{6.25f / 16f},
                 0.34375f, 2.25f / 16f, 2.5f / 16f);
+        /** The circular diffuser of the Stage Blinder 200 Blaze. */
+        public static final Lamps STAGE_BLAZE = new Lamps(
+                new float[]{0.5f}, new float[]{6.5f / 16f},
+                5.52f / 16f, 4.7f / 16f, 4.7f / 16f);
         /** blinder1x2 : la tete du 1x1 a x = 5/16 et 11/16. */
         public static final Lamps DUAL_1X2 = new Lamps(
                 new float[]{5f / 16f, 11f / 16f},
@@ -99,12 +103,7 @@ public final class BlinderRenderHelper {
     /** Part de l'eblouissement et de la couronne : une lampe seule, puis huit lampes. */
     private static final float ARRAY_SHARE_ONE_LAMP = 0.6f;
     private static final float ARRAY_SHARE_EIGHT_LAMPS = 1.0f;
-    /**
-     * Les disques sont poses devant la face, le long de l'axe de l'appareil : la lumiere est devant
-     * le blinder, pas dans sa carrosserie. Puis un peu tires vers la camera, pour passer devant les
-     * parties de la carrosserie plus proches de l'oeil (dessous, yoke).
-     */
-    private static final float FORWARD_OFFSET = 0.6f;
+    /** Pull the legacy blinder glow toward the camera so it clears the housing. */
     private static final float TOWARD_CAMERA = 0.6f;
     /**
      * L'eblouissement n'existe que devant l'appareil : plein quand la camera est a moins d'une
@@ -178,9 +177,15 @@ public final class BlinderRenderHelper {
                 viewPose.pushPose();
                 headTransform.accept(viewPose);
                 lamp.apply(viewPose);
-                StrobeVisualEffects.renderFace(bufferSource, viewPose, lamp, hr, hg, hb, (int) (a * lampShow));
+                if (lamps == Lamps.STAGE_BLAZE) {
+                    renderCircularFace(bufferSource, viewPose, lampRadius, hr, hg, hb, (int) (a * lampShow));
+                } else {
+                    StrobeVisualEffects.renderFace(bufferSource, viewPose, lamp, hr, hg, hb, (int) (a * lampShow));
+                }
                 viewPose.popPose();
-                Vector3f centre = placeDisc(worldCentre(headTransform, lamp), forward);
+                Vector3f centre = lamps == Lamps.STAGE_BLAZE
+                        ? placeDiscAtLens(worldCentre(headTransform, lamp), forward)
+                        : placeDisc(worldCentre(headTransform, lamp), forward);
                 StrobeVisualEffects.renderGlowDot(bufferSource, viewPose, camera, centre, hot,
                         lampRadius * LAMP_DISC_RADIUS, level * front * lampShow);
                 StrobeVisualEffects.renderGlowDot(bufferSource, viewPose, camera, centre, color,
@@ -188,7 +193,8 @@ public final class BlinderRenderHelper {
             }
         }
 
-        Vector3f glareCentre = placeDisc(arrayCentre, forward);
+        Vector3f glareCentre = lamps == Lamps.STAGE_BLAZE
+                ? placeDiscAtLens(arrayCentre, forward) : placeDisc(arrayCentre, forward);
         float arrayRadius = Math.max(array.halfW(), array.halfH());
         float share = ARRAY_SHARE_ONE_LAMP + (ARRAY_SHARE_EIGHT_LAMPS - ARRAY_SHARE_ONE_LAMP)
                 * Math.min(1f, (lamps.count() - 1) / 7f);
@@ -206,7 +212,31 @@ public final class BlinderRenderHelper {
 
     /** Devant la face le long de l'axe de l'appareil, puis un peu vers la camera. */
     private static Vector3f placeDisc(Vector3f facePoint, Vector3f forward) {
-        return towardCamera(new Vector3f(forward).mul(FORWARD_OFFSET).add(facePoint));
+        return towardCamera(facePoint);
+    }
+
+    private static Vector3f placeDiscAtLens(Vector3f facePoint, Vector3f forward) {
+        // Camera-space pull changes depth without shifting the projected centre of the lens.
+        // It keeps the camera-facing glare disc clear of the diffuser at oblique angles.
+        return towardCamera(new Vector3f(facePoint).add(new Vector3f(forward).mul(0.035f)));
+    }
+
+    /** The same blinder face buffer, tessellated to match the round diffuser. */
+    private static void renderCircularFace(MultiBufferSource.BufferSource buffers, PoseStack pose,
+                                           float radius, int r, int g, int b, int a) {
+        VertexConsumer vertices = buffers.getBuffer(ExtraLightsRenderTypes.BEAM);
+        Matrix4f matrix = pose.last().pose();
+        Matrix3f normal = pose.last().normal();
+        for (int i = 0; i < 24; i++) {
+            double p0 = i * Math.PI / 12.0;
+            double p1 = (i + 1) * Math.PI / 12.0;
+            addVertex(vertices, matrix, normal, r, g, b, a, 0, 0, 0);
+            addVertex(vertices, matrix, normal, r, g, b, a,
+                    radius * (float) Math.cos(p1), radius * (float) Math.sin(p1), 0);
+            addVertex(vertices, matrix, normal, r, g, b, a,
+                    radius * (float) Math.cos(p0), radius * (float) Math.sin(p0), 0);
+            addVertex(vertices, matrix, normal, r, g, b, a, 0, 0, 0);
+        }
     }
 
     private static float smoothstep(float edge0, float edge1, float x) {

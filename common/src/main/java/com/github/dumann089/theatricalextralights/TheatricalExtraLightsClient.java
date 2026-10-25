@@ -140,6 +140,7 @@ public class TheatricalExtraLightsClient {
         BlockEntityRendererRegistry.register(BlockEntities.BLINDER2X2.get(), Blinder2x2Renderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.BLINDER2X2WARM.get(), Blinder2x2warmRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.BLINDER1X1.get(), Blinder1x1Renderer::new);
+        BlockEntityRendererRegistry.register(BlockEntities.STAGE_BLINDER_200_BLAZE.get(), StageBlinder200BlazeRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.BLINDER1X2.get(), Blinder1x2Renderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MINI_BAR.get(), MiniBarRenderer::new);
         

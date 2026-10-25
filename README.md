@@ -60,7 +60,7 @@ Hundreds of placeable fixtures across creative tabs **Theatrical: Extra Lights**
 - **Moving heads** — Moving 500, Beam 7R, Mac VIP, Sharpy+, Robit Spot, Verve Spot, VL2/VL6, scans, gobo variants…
 - **Wash & spot** — Source Four, followspot, searchlight, wash LED, mini wash, VL 6000
 - **PAR & panels** — LED Par, Par 1000, x8 Par64, 2×2 / 2×8 / 6×3 Par64 arrays, big panels, shaped LED panels
-- **Blinders & strobes** — 4×2, 2×2, 1×2 and 1×1 blinders, atomic strobe (1 to 400ch, Atomic-style duration/rate/effects, pixel bar, RGB plate and a 96-pixel map), atomic tilt (RGB or Atomic modes), white strobe
+- **Blinders & strobes** — 4×2, 2×2, 1×2 and 1×1 blinders, Showtec Stage Blinder 200 Blaze (4ch dimmer/RGB), atomic strobe (1 to 400ch, Atomic-style duration/rate/effects, pixel bar, RGB plate and a 96-pixel map), atomic tilt (RGB or Atomic modes), white strobe
 - **Effects** — laser, laser mirror, LED fountain, RGB / vertical bars and their dense 46-pixel versions, scrollers, invisible light
 - **Water jets** — jets, cones, bloom, fog, organ pipes, moving fan, and more
 - **Pyro** — 50+ firework launchers, Pyro Fan, RGB launcher, confetti, gerbs, flame projector, **flame thrower**, daytime powder *(see [Pyro](#pyro-theatrical-pyro-tab) below)*

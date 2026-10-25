@@ -449,6 +449,8 @@ public class Fixtures {
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "blinder2x2warm"), Blinder2x2warmFixture::new);
     public static final RegistrySupplier<Fixture> BLINDER1X1 =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "blinder1x1"), Blinder1x1Fixture::new);
+    public static final RegistrySupplier<Fixture> STAGE_BLINDER_200_BLAZE =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "stage_blinder_200_blaze"), StageBlinder200BlazeFixture::new);
     public static final RegistrySupplier<Fixture> BLINDER1X2 =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "blinder1x2"), Blinder1x2Fixture::new);
     public static final RegistrySupplier<Fixture> MINI_BAR =
