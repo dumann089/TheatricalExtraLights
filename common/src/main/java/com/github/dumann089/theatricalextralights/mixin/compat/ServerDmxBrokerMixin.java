@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * {@link com.github.dumann089.theatricalextralights.mixin.ExtraLightsMixinPlugin}
  * skips this mixin when the class is absent.
  */
+/*
 @Mixin(targets = "dev.imabad.theatrical.networks.ServerDmxBroker", remap = false)
 public class ServerDmxBrokerMixin {
 
@@ -34,3 +35,4 @@ public class ServerDmxBrokerMixin {
         }
     }
 }
+*/

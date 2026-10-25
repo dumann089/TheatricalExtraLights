@@ -11,10 +11,12 @@
     "client.shimmer.ReloadShaderManagerMixin",
     "client.sfx.SoundBufferAccessor",
     "client.sfx.SoundBufferLibraryMixin",
-    "client.sfx.SoundBufferMixin"
+    "client.sfx.SoundBufferMixin",
+    "compat.BaseLightBlockEntityMixin",
+    "compat.LazyRenderersMixin",
+    "compat.TheatricalClientMixin"
   ],
   "mixins": [
-    "compat.BlockEntityTheatricalDmxExtendedMixin",
-    "compat.ServerDmxBrokerMixin"
+    "compat.BlockEntityTheatricalDmxExtendedMixin"
   ]
 }

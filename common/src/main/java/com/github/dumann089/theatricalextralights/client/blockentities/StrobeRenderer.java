@@ -277,7 +277,7 @@ public class StrobeRenderer extends ExtraLightsFixtureRenderer<StrobeBlockEntity
                 float level = StrobeRenderHelper.renderedIntensity(blockEntity, partialTick) / 255f;
                 renderStrobeFlash(bufferSource, poseStack, camera, blockEntity,
                         pose -> preparePoseStack(blockEntity, pose, facing, partialTick, isFlipped, blockstate, isHanging),
-                        StrobeVisualEffects.Face.STROBE, blockEntity.getColour(), level, true);
+                        StrobeVisualEffects.Face.STROBE, blockEntity.getDisplayColour(partialTick), level, true);
 
             }
 

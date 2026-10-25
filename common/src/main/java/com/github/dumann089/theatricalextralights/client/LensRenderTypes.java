@@ -10,15 +10,15 @@ import net.minecraft.resources.ResourceLocation;
 public class LensRenderTypes {
 
     public static final RenderType LENS = RenderType.create(
-            "Lens", // namespace único
-            DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, // agrega lightmap
+            "lens",
+            DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP,
             VertexFormat.Mode.QUADS,
             256,
             false,
-            true,
+            true, // Al ser 'true' (sortOnUpload), el buffer ordenará los quads correctamente al activar Depth Write
             RenderType.CompositeState.builder()
                     .setShaderState(new RenderStateShard.ShaderStateShard(
-                            GameRenderer::getPositionColorTexLightmapShader // shader con lightmap
+                            GameRenderer::getPositionColorTexLightmapShader
                     ))
                     .setTextureState(new RenderStateShard.TextureStateShard(
                             new ResourceLocation("theatricalextralights", "textures/misc/lens.png"),
@@ -28,19 +28,22 @@ public class LensRenderTypes {
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
                     .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
                     .setCullState(RenderStateShard.NO_CULL)
-                    .setWriteMaskState(RenderStateShard.COLOR_WRITE) // sin depth write para transparencia
+                    // 1. AÑADIDO: Fuerza el renderizado al búfer correcto en Gráficos Fabulosos
+                    .setOutputState(RenderStateShard.ITEM_ENTITY_TARGET)
+                    // 2. ELIMINADO: .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    // Al eliminarlo, usará COLOR_DEPTH_WRITE por defecto para respetar el agua en Gráficos Rápido/Detallado
                     .createCompositeState(false)
     );
     public static final RenderType FLAME = RenderType.create(
-            "flame", // namespace único
-            DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, // agrega lightmap
+            "flame",
+            DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP,
             VertexFormat.Mode.QUADS,
             256,
             false,
-            true,
+            true, // Al ser 'true' (sortOnUpload), el buffer ordenará los quads correctamente al activar Depth Write
             RenderType.CompositeState.builder()
                     .setShaderState(new RenderStateShard.ShaderStateShard(
-                            GameRenderer::getPositionColorTexLightmapShader // shader con lightmap
+                            GameRenderer::getPositionColorTexLightmapShader
                     ))
                     .setTextureState(new RenderStateShard.TextureStateShard(
                             new ResourceLocation("theatricalextralights", "textures/particle/firework_core.png"),
@@ -50,7 +53,10 @@ public class LensRenderTypes {
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
                     .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
                     .setCullState(RenderStateShard.NO_CULL)
-                    .setWriteMaskState(RenderStateShard.COLOR_WRITE) // sin depth write para transparencia
+                    // 1. AÑADIDO: Fuerza el renderizado al búfer correcto en Gráficos Fabulosos
+                    .setOutputState(RenderStateShard.ITEM_ENTITY_TARGET)
+                    // 2. ELIMINADO: .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    // Al eliminarlo, usará COLOR_DEPTH_WRITE por defecto para respetar el agua en Gráficos Rápido/Detallado
                     .createCompositeState(false)
     );
 }

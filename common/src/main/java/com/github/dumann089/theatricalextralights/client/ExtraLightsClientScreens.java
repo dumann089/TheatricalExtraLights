@@ -3,17 +3,21 @@ package com.github.dumann089.theatricalextralights.client;
 import com.github.dumann089.theatricalextralights.TheatricalExtraLightsScreens;
 import com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.FollowspotConsoleBlockEntity;
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.GelScrollerConfigurable;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.blockentities.LaserBlockEntity;
 import com.github.dumann089.theatricalextralights.blockentities.LaserProjectorBlockEntity;
 import com.github.dumann089.theatricalextralights.client.gui.PyroConfigScreen;
 import com.github.dumann089.theatricalextralights.blockentities.LedFacadeBlockEntity;
+import com.github.dumann089.theatricalextralights.blockentities.bigscrollerBlockEntity;
+import com.github.dumann089.theatricalextralights.client.gui.BigScrollerGelScreen;
 import com.github.dumann089.theatricalextralights.client.gui.ExtraLightsConfigScreen;
 import com.github.dumann089.theatricalextralights.client.gui.LaserProjectorScreen;
 import com.github.dumann089.theatricalextralights.client.gui.FixtureMountScreen;
 import com.github.dumann089.theatricalextralights.client.gui.FollowspotConsoleScreen;
 import com.github.dumann089.theatricalextralights.client.gui.LaserConfigScreen;
 import com.github.dumann089.theatricalextralights.client.gui.LedFacadeScreen;
+import com.github.dumann089.theatricalextralights.client.gui.PyroConfigScreen;
 import com.github.dumann089.theatricalextralights.client.gui.WaterJetConfigScreen;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
 import net.fabricmc.api.EnvType;
@@ -40,6 +44,13 @@ public class ExtraLightsClientScreens {
         }
 
         switch (screenType) {
+            case BIGSCROLLER_GELS -> {
+                if (blockEntity instanceof GelScrollerConfigurable configurable) {
+                    mc.setScreen(new BigScrollerGelScreen(configurable, pos));
+                }
+                return;
+            }
+
             case FOLLOWSPOT_CONSOLE -> {
                 if (blockEntity instanceof FollowspotConsoleBlockEntity console) {
                     mc.setScreen(new FollowspotConsoleScreen(console, pos));
@@ -79,7 +90,8 @@ public class ExtraLightsClientScreens {
                     case WATER_GENERIC -> WaterJetConfigScreen.Mode.GENERIC;
                     case WATER_MANUAL -> WaterJetConfigScreen.Mode.MANUAL;
                     case WATER_CONE -> WaterJetConfigScreen.Mode.CONE;
-                    default -> throw new IllegalStateException("Unexpected screen type: " + screenType);
+                    default -> throw new IllegalStateException(
+                            "Unexpected screen type: " + screenType);
                 };
 
                 yield new WaterJetConfigScreen(
@@ -112,7 +124,7 @@ public class ExtraLightsClientScreens {
                     ? new PyroConfigScreen(lightBE, safety, pos)
                     : new ExtraLightsConfigScreen(lightBE, pos, lightBE.getTranslationKey(), false);
 
-            case MOUNT_WRENCH, FOLLOWSPOT_CONSOLE, LED_FACADE, LASER_PROJECTOR -> null;
+            case MOUNT_WRENCH, FOLLOWSPOT_CONSOLE, LED_FACADE, LASER_PROJECTOR, BIGSCROLLER_GELS -> null;
         };
 
         if (screen != null) {

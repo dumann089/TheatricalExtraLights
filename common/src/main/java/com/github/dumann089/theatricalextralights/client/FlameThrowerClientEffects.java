@@ -25,7 +25,7 @@ public final class FlameThrowerClientEffects {
     }
 
     public static void tick(FlameThrowerBlockEntity blockEntity) {
-        boolean active = blockEntity.getIntensity() > 0;
+        boolean active = blockEntity.getDisplayIntensity(1f) > 0;
         Minecraft minecraft = Minecraft.getInstance();
         BlockPos pos = blockEntity.getBlockPos();
         Vec3 center = pos.getCenter();
@@ -71,7 +71,7 @@ public final class FlameThrowerClientEffects {
                 pos,
                 facing,
                 headRenderAngle,
-                blockEntity.getIntensity(),
+                blockEntity.getDisplayIntensity(1f),
                 level.random
         );
     }

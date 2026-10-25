@@ -66,7 +66,7 @@ public class AtomictiltRenderer extends ExtraLightsFixtureRenderer<AtomictiltBlo
                 float level = StrobeRenderHelper.renderedIntensity(blockEntity, partialTick) / 255f;
                 renderStrobeFlash(bufferSource, poseStack, camera, blockEntity,
                         pose -> preparePoseStack(blockEntity, pose, facing, partialTick, isFlipped, blockstate, isHanging),
-                        StrobeVisualEffects.Face.ATOMIC_TILT, blockEntity.getColour(), level, true);
+                        StrobeVisualEffects.Face.ATOMIC_TILT, blockEntity.getDisplayColour(partialTick), level, true);
             }
 
             @Override

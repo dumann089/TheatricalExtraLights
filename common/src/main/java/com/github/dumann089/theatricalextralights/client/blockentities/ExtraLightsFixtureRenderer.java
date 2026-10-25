@@ -3,6 +3,7 @@ package com.github.dumann089.theatricalextralights.client.blockentities;
 import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
 import com.github.dumann089.theatricalextralights.client.StrobeVisualEffects;
+import com.github.dumann089.theatricalextralights.client.LensBloomCompat;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamSpotState;
@@ -11,6 +12,7 @@ import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsCo
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.util.Mth;
 import dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity;
 import dev.imabad.theatrical.blocks.HangableBlock;
 import dev.imabad.theatrical.blocks.light.MovingLightBlock;
@@ -272,6 +274,11 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
                 .endVertex();
     }
 
+    /** Blends a color channel toward white. amount=0 keeps the color, 1 = pure white. */
+    private static int whiten(int channel, float amount) {
+        return (int) Math.min(255, channel + (255 - channel) * amount);
+    }
+
     // ── Beam 2D ─────────────────────────────────────────────────────────────
 
     protected void renderLightBeam2D(VertexConsumer builder, PoseStack stack, T tileEntityFixture, Camera camera, float alpha, float beamSize, float length, int color, float focusMultiplier) {
@@ -497,13 +504,15 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
 
         VertexConsumer lensConsumer = multiBufferSource.getBuffer(LensRenderTypes.LENS);
 
+        final float LENS_WHITEN = 0.65f;
+
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
         int b = color & 0xFF;
-        int a  = (int) (alpha * 255 * 0.90f);
-        int lr = (int)(r * 0.90f);
-        int lg = (int)(g * 0.90f);
-        int lb = (int)(b * 0.90f);
+        int a  = (int) (alpha * 255);
+        int lr = whiten(r, LENS_WHITEN);
+        int lg = whiten(g, LENS_WHITEN);
+        int lb = whiten(b, LENS_WHITEN);
 
         poseStack.pushPose();
         poseStack.translate(translateX, translateY, translateZ);
@@ -520,16 +529,33 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
 
     // ── Lens Glow ───────────────────────────────────────────────────────────
 
-    protected void renderLensGlow(VertexConsumer builder, PoseStack stack, int color, float size) {
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
+      protected void renderLensGlow(VertexConsumer builder, PoseStack stack, int color, float size, float intensity) {
+        final float GLOW_WHITEN      = 0.80f;
+        final float intensityFrac    = Mth.clamp(intensity / 255f, 0f, 1f);
+
+        // cor pura (sem escalar) — usada pro miolo branco
+        int cr = (color >> 16) & 0xFF;
+        int cg = (color >> 8)  & 0xFF;
+        int cb =  color        & 0xFF;
+
+        // cor escalada pela intensidade — usada pro bloom
+        int pr = (int) (cr * intensityFrac);
+        int pg = (int) (cg * intensityFrac);
+        int pb = (int) (cb * intensityFrac);
+
+        // miolo: clareia a cor pura e faz o FADE pelo alpha (não pela cor)
+        int r = whiten(cr, GLOW_WHITEN);
+        int g = whiten(cg, GLOW_WHITEN);
+        int b = whiten(cb, GLOW_WHITEN);
+        int a = (int) (255 * intensityFrac);
 
         Matrix4f m = stack.last().pose();
 
-        addBeamVertex(builder, m, r, g, b, 255, -size,  size, 0f);
-        addBeamVertex(builder, m, r, g, b, 255,  size,  size, 0f);
-        addBeamVertex(builder, m, r, g, b, 255,  size, -size, 0f);
-        addBeamVertex(builder, m, r, g, b, 255, -size, -size, 0f);
+        addBeamVertex(builder, m, r, g, b, a, -size,  size, 0f);
+        addBeamVertex(builder, m, r, g, b, a,  size,  size, 0f);
+        addBeamVertex(builder, m, r, g, b, a,  size, -size, 0f);
+        addBeamVertex(builder, m, r, g, b, a, -size, -size, 0f);
+
+        LensBloomCompat.renderBloomedQuad(stack, pr, pg, pb, size);
     }
 }

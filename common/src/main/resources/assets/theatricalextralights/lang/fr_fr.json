@@ -393,6 +393,7 @@
   "tel.settings.laser.etherdream": "DAC Ether Dream",
   "tel.settings.laser.haze": "Brume",
   "tel.settings.barbeam": "Intensité faisceau des barres",
+  "tel.settings.barbeamlength": "Longueur faisceau des barres",
   "tel.settings.laser.brightness": "Luminosité laser",
   "tel.settings.laser.radius": "Rayon du faisceau",
   "tel.settings.laser.detail": "Détail laser (segments)",

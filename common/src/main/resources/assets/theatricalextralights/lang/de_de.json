@@ -353,6 +353,7 @@
   "tel.settings.laser.etherdream": "Ether-Dream-DAC",
   "tel.settings.laser.haze": "Dunst",
   "tel.settings.barbeam": "Intensität LED-Bar-Strahl",
+  "tel.settings.barbeamlength": "Balken-Strahllänge",
   "tel.settings.laser.brightness": "Laserhelligkeit",
   "tel.settings.laser.radius": "Strahlradius",
   "tel.settings.laser.detail": "Laser-Detail (Segmente)",

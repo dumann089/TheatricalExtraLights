@@ -205,9 +205,12 @@ public class ExtraLightsSettingsScreen extends Screen {
                 TheatricalExtraLightsConfig::setFlameBloomStrength));
         y += widgetHeight + rowGap;
 
-        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.co2reach",
+        addRenderableWidget(slider(contentLeft, y, half, "tel.settings.co2reach",
                 0.5f, 3f, TheatricalExtraLightsConfig.getCo2JetReach(), 1, "x",
                 TheatricalExtraLightsConfig::setCo2JetReach));
+        addRenderableWidget(slider(contentLeft + half + COLUMN_GAP, y, half, "tel.settings.barbeamlength",
+                1f, 64f, TheatricalExtraLightsConfig.getRgbBarBeamLength(), 1, " m",
+                TheatricalExtraLightsConfig::setRgbBarBeamLength));
     }
 
     // Onglet Faisceau ------------------------------------------------------
@@ -232,7 +235,7 @@ public class ExtraLightsSettingsScreen extends Screen {
         y += widgetHeight + rowGap;
 
         addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.maxbeams",
-                1f, 128f, TheatricalExtraLightsConfig.getRaymarchMaxBeamsPerFrame(), 0, "",
+                1f, 512f, TheatricalExtraLightsConfig.getRaymarchMaxBeamsPerFrame(), 0, "",
                 v -> TheatricalExtraLightsConfig.setRaymarchMaxBeamsPerFrame(Math.round(v))));
         y += widgetHeight + rowGap;
 
@@ -262,6 +265,16 @@ public class ExtraLightsSettingsScreen extends Screen {
         addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.spotmax",
                 4f, 128f, TheatricalExtraLightsConfig.getSpotMaxRadius(), 0, " m",
                 TheatricalExtraLightsConfig::setSpotMaxRadius));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.gobobrightness",
+                0f, 4f, TheatricalExtraLightsConfig.getGoboBrightness(), 2, " x",
+                TheatricalExtraLightsConfig::setGoboBrightness));
+        y += widgetHeight + rowGap;
+
+        addRenderableWidget(slider(contentLeft, y, contentWidth, "tel.settings.gobosurfacetint",
+                0f, 1f, TheatricalExtraLightsConfig.getGoboSurfaceTint(), 2, "",
+                TheatricalExtraLightsConfig::setGoboSurfaceTint));
     }
 
     // Onglet Laser ---------------------------------------------------------

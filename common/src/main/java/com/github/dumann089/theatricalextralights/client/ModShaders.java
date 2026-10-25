@@ -69,6 +69,27 @@ public class ModShaders {
                 RenderSystem.defaultBlendFunc();
             });
 
+    /**
+     * Normal "over" alpha blending (dest*(1-a) + src*a), used only for the gobo projector.
+     * ADDITIVE_TRANSPARENCY above just adds colour on top of whatever is already on screen, so in a
+     * pitch-black room a fully-open gobo pixel (alpha ~1) only ever reaches LightColor*GoboBrightness -
+     * it never actually overwrites the dark destination. DECAL_TRANSPARENCY instead replaces the
+     * destination in proportion to alpha, so a fully-open gobo pixel (alpha -> 1) becomes exactly
+     * LightColor, i.e. the surface reads as fully, brightly lit in the gobo's colour and shape, the
+     * same way a real profile spot overpowers whatever a wall looked like before it was lit.
+     */
+    public static final RenderStateShard.TransparencyStateShard DECAL_TRANSPARENCY =
+            new RenderStateShard.TransparencyStateShard("gobo_decal_transparency", () -> {
+                RenderSystem.enableBlend();
+                RenderSystem.blendFunc(
+                        GlStateManager.SourceFactor.SRC_ALPHA,
+                        GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA
+                );
+            }, () -> {
+                RenderSystem.disableBlend();
+                RenderSystem.defaultBlendFunc();
+            });
+
     public static final RenderStateShard.TransparencyStateShard PURE_ADDITIVE_TRANSPARENCY =
             new RenderStateShard.TransparencyStateShard("pure_additive_transparency", () -> {
                 RenderSystem.enableBlend();
@@ -307,7 +328,7 @@ public class ModShaders {
                                             false
                                     )
                             )
-                            .setTransparencyState(ADDITIVE_TRANSPARENCY)
+                            .setTransparencyState(DECAL_TRANSPARENCY)
                             .setCullState(RenderStateShard.NO_CULL)
                             .setLightmapState(RenderStateShard.NO_LIGHTMAP)
                             .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
@@ -341,7 +362,7 @@ public class ModShaders {
                                     )
                             )
                             .setTexturingState(CLAMP_TEXTURING)
-                            .setTransparencyState(ADDITIVE_TRANSPARENCY)
+                            .setTransparencyState(DECAL_TRANSPARENCY)
                             .setDepthTestState(
                                     new RenderStateShard.DepthTestStateShard(
                                             "lequal_depth",

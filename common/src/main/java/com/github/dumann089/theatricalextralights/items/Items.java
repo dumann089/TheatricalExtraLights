@@ -479,6 +479,10 @@ public class Items {
             "fixture_wrench",
             FixtureWrenchItem::new
     );
+    public static final RegistrySupplier<Item> FIXTURE_TRACKER = ITEMS.register(
+            "fixture_tracker",
+            FixtureTrackerItem::new
+    );
     public static final RegistrySupplier<Item> TRUSS_3LIGHTS = ITEMS.register(
         "truss_3lights",
         () -> new BlockItem(Blocks.TRUSS_3LIGHTS.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
@@ -546,6 +550,10 @@ public class Items {
     public static final RegistrySupplier<Item> IRIS_700_GOBO = ITEMS.register(
             "iris_700_gobo",
             () -> new BlockItem(Blocks.IRIS_700_GOBO_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
+    public static final RegistrySupplier<Item> PROFILE3_GOBO = ITEMS.register(
+            "profile3_gobo",
+            () -> new BlockItem(Blocks.PROFILE3_GOBO_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
     );
     public static final RegistrySupplier<Item> PRO_SPOT_GOBO = ITEMS.register(
             "pro_spot_gobo",

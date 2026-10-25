@@ -1,0 +1,23 @@
+{
+    "blend": {
+        "func": "add",
+        "srcrgb": "one",
+        "dstrgb": "zero"
+    },
+    "vertex": "shimmer:blit",
+    "fragment": "shimmer:unreal_composite",
+    "attributes": [ "Position" ],
+    "samplers": [
+        { "name": "DiffuseSampler" },
+        { "name": "HighLight" },
+        { "name": "BlurTexture1" },
+        { "name": "BlurTexture2" },
+        { "name": "BlurTexture3" },
+        { "name": "BlurTexture4" }
+    ],
+    "uniforms": [
+        { "name": "OutSize",         "type": "float", "count": 2, "values": [ 1.5, 1.5 ] },
+        { "name": "BloomRadius",     "type": "float", "count": 1, "values": [ 2.0 ] },
+        { "name": "BloomIntensive", "type": "float", "count": 1, "values": [ 12.0 ] }
+    ]
+}

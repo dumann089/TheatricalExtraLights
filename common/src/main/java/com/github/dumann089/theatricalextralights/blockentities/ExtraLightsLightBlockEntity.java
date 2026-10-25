@@ -2,6 +2,7 @@ package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasExtendedBeamChannels;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.SmoothedLight;
 import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.util.FollowspotDmxHelper;
@@ -12,11 +13,16 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.util.Mth;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
+import java.util.UUID;
+import com.github.dumann089.theatricalextralights.util.FixtureTrackingRegistry;
 import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
 /**
@@ -69,7 +75,45 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
      */
     @Override
     public int getLightLuminance() {
-        return (int) (Math.max(0f, getIntensity()) / 255f * 15f);
+        return (int) (Math.max(0f, getDisplayIntensity(1f)) / 255f * 15f);
+    }
+
+    /**
+     * Mesma conta do {@code BaseLightBlockEntity} original ({@code intensidade << 24 | cor}), só que
+     * com a cor/intensidade suavizadas — e com o shutter/strobe da fixture por cima, como antes.
+     */
+    @Override
+    public int getLightColour() {
+        return ((int) getDisplayIntensity(1f) << 24) | (getDisplayColour(1f) & 0xFFFFFF);
+    }
+
+    /**
+     * Intensidade (0-255) pra DESENHAR: dimmer suavizado pelo mixin × fator de shutter/strobe da
+     * fixture ({@link #getIntensity()} já embute o shutter nas fixtures que têm). Se o mixin não
+     * estiver ativo, cai na interpolação original de 1 tick — ou seja, o comportamento de antes,
+     * sem suavização, nunca uma fixture apagada.
+     */
+    public float getDisplayIntensity(float partialTicks) {
+        if (this instanceof SmoothedLight smoothed) {
+            return Math.max(0f, smoothed.getSmoothedIntensity(partialTicks)) * shutterFactor();
+        }
+        return getPrevIntensity() + (getIntensity() - getPrevIntensity()) * partialTicks;
+    }
+
+    /** Cor RGB (0xRRGGBB) suavizada pra desenhar. Sem o mixin, a cor crua de sempre. */
+    public int getDisplayColour(float partialTicks) {
+        if (this instanceof SmoothedLight smoothed) {
+            return smoothed.getSmoothedColour(partialTicks);
+        }
+        return getColour();
+    }
+
+    /** 0..1: quanto do dimmer o shutter/strobe deixa passar agora (1 = sem shutter). */
+    private float shutterFactor() {
+        if (intensity <= 0) {
+            return 1f;
+        }
+        return Mth.clamp(getIntensity() / (float) intensity, 0f, 1f);
     }
 
     /** Position d'emission avec repli sur le bloc si aucun raytrace n'a encore ete fait. */
@@ -326,6 +370,9 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         if (intensity > 0) {
             return true;
         }
+        if (getDisplayIntensity(1f) > 0.5f) {
+            return true;
+        }
         if (getChannelCount() > 7 && this instanceof HasExtendedBeamChannels ext) {
             return ext.getGobo() > 0 || ext.getGoboSpin() > 0;
         }
@@ -367,6 +414,83 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         }
     }
 
+    // ─── Fixture Tracker ──────────────────────────────────────────────────────
+
+    /** Entidade que o feixe segue (null = sem rastreamento). */
+    private UUID trackedEntity;
+    /** Angulos exatos (float) do rastreamento: pan/tilt inteiros quantizados travariam movimentos pequenos. */
+    private float trackPan;
+    private float trackTilt;
+    private boolean trackAngles;
+
+    /** So cabecas moveis (com modelo de pan ou tilt) podem rastrear. */
+    public boolean supportsTracking() {
+        try {
+            var f = getFixture();
+            return f != null && (f.hasPanModel() || f.hasTiltModel());
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    public UUID getTrackedEntity() {
+        return trackedEntity;
+    }
+
+    public void setTrackedEntity(UUID id) {
+        this.trackedEntity = id;
+        this.trackAngles = false;
+        if (level instanceof ServerLevel serverLevel) {
+            FixtureTrackingRegistry.setTracking(serverLevel, getBlockPos(), id != null);
+        }
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            BlockEntitySync.sendData(this);
+        }
+    }
+
+    public boolean hasTrackAngles() {
+        return trackAngles;
+    }
+
+    public float getTrackPan() {
+        return trackPan;
+    }
+
+    public float getTrackTilt() {
+        return trackTilt;
+    }
+
+    /** Aplica os angulos calculados pelo FixtureTrackingHelper (so no servidor). */
+    public void applyTrackedAngles(float newPan, float newTilt, boolean snap) {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        trackPan = newPan;
+        trackTilt = newTilt;
+        trackAngles = true;
+        int qp = FollowspotDmxHelper.quantizePan(newPan);
+        int qt = FollowspotDmxHelper.quantizeTilt(newTilt);
+        if (this.pan == qp && this.tilt == qt) {
+            return;
+        }
+        prevPan = snap ? qp : this.pan;
+        prevTilt = snap ? qt : this.tilt;
+        this.pan = qp;
+        this.tilt = qt;
+        setChanged();
+        BlockEntitySync.sendData(this);
+    }
+
+    /** Ao carregar o chunk, volta a registrar o bloco que ja estava rastreando. */
+    @Override
+    public void setLevel(Level newLevel) {
+        super.setLevel(newLevel);
+        if (trackedEntity != null && newLevel instanceof ServerLevel serverLevel) {
+            FixtureTrackingRegistry.setTracking(serverLevel, getBlockPos(), true);
+        }
+    }
+
     @Override
     public CompoundTag getUpdateTag() {
         CompoundTag tag = super.getUpdateTag();
@@ -386,6 +510,9 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         tag.putInt("prevTilt", prevTilt);
         tag.putInt("prevFocus", prevFocus);
         writeMountTransform(tag);
+        if (trackedEntity != null) {
+            tag.putUUID("TrackedEntity", trackedEntity);
+        }
         if (this instanceof HasSafetyArm) {
             tag.putBoolean("Armed", safetyArmed);
         }
@@ -447,6 +574,8 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         prevBlue = savedPrevBlue;
 
         readMountTransform(tag);
+        trackedEntity = tag.hasUUID("TrackedEntity") ? tag.getUUID("TrackedEntity") : null;
+        trackAngles = false;
         if (this instanceof HasSafetyArm) {
             safetyArmed = !tag.contains("Armed") || tag.getBoolean("Armed");
         }

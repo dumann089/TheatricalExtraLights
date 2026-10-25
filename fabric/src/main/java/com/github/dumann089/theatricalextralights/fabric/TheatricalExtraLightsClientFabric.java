@@ -4,12 +4,15 @@ import com.github.dumann089.theatricalextralights.TheatricalExtraLightsClient;
 import com.github.dumann089.theatricalextralights.client.ConfettiCannonClientSetup;
 import com.github.dumann089.theatricalextralights.client.ConfettiCannonItemRenderer;
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
+import com.github.dumann089.theatricalextralights.client.LensBloomCompat;
 import com.github.dumann089.theatricalextralights.client.ModShaders;
 import com.github.dumann089.theatricalextralights.client.firework.DetachedPyroSparks;
+import com.github.dumann089.theatricalextralights.client.firework.FireworkRocketLateRender;
 import com.github.dumann089.theatricalextralights.client.model.ConfettiCannonModel;
 import com.github.dumann089.theatricalextralights.items.Items;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import dev.imabad.theatrical.compat.ModCompat;
+import dev.imabad.theatrical.TheatricalClient;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
@@ -33,12 +36,19 @@ public class TheatricalExtraLightsClientFabric implements ClientModInitializer {
         FollowspotCameraFabric.init();
         SettingsCommandFabric.init();
 
-        WorldRenderEvents.AFTER_ENTITIES.register(context -> {
+        WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
             Minecraft minecraft = Minecraft.getInstance();
 
             if (minecraft.level == null) {
                 return;
             }
+
+            TheatricalClient.renderWorldLast(
+                    context.matrixStack(),
+                    context.projectionMatrix(),
+                    context.camera(),
+                    context.tickDelta()
+            );
 
             var buffers = minecraft.renderBuffers().bufferSource();
 
@@ -48,6 +58,16 @@ public class TheatricalExtraLightsClientFabric implements ClientModInitializer {
                     context.camera(),
                     context.tickDelta()
             );
+
+            FireworkRocketLateRender.render(
+                    context.matrixStack(),
+                    buffers,
+                    context.camera(),
+                    context.tickDelta(),
+                    context.frustum()
+            );
+
+            buffers.endBatch(LensRenderTypes.FLAME);
 
             buffers.endBatch(LensRenderTypes.LENS);
         });

@@ -18,6 +18,8 @@ uniform float GoboRotation;
 uniform float WheelTransition;
 uniform float Intensity;
 uniform float Focus;
+uniform float GoboBrightness;
+uniform float SurfaceTintStrength;
 uniform vec3 LightColor;
 uniform vec2 ScreenSize;
 uniform float OcclusionEnabled;
@@ -58,6 +60,10 @@ uniform vec3 AxisVW;
 // jusqu'a 8 boites d'entites. Un point est ombre si le segment point→source traverse un
 // solide.
 uniform sampler2D Sampler4;
+// Live snapshot of the scene's own colour buffer (terrain, entities, item frames - whatever is
+// actually on screen), captured right before this quad is drawn. Used to tint the gobo with the real
+// colour of whatever it lands on, regardless of what kind of thing that is.
+uniform sampler2D Sampler5;
 uniform float ShadowEnabled;
 uniform vec3 VoxelOrigin;   // coin min de la grille, monde
 uniform float VoxelCell;    // taille d'une cellule, blocs
@@ -90,6 +96,13 @@ float voxelSolid(vec3 wp) {
     vec3 i = floor(c);
     vec2 uv = vec2((i.x + 0.5) / VoxelSize, (i.z * VoxelSize + i.y + 0.5) / (VoxelSize * VoxelSize));
     return texture(Sampler4, uv).r;
+}
+
+// Reads the live scene-colour snapshot (Sampler5) at this fragment's own screen position - i.e.
+// whatever the game actually drew there this frame, be it a block, a mob, an armor stand, a dropped
+// item, anything. gl_FragCoord.xy is in window pixels, so dividing by ScreenSize gives 0..1 UV.
+vec3 sampleSceneColor() {
+    return texture(Sampler5, gl_FragCoord.xy / ScreenSize).rgb;
 }
 
 bool segmentHitsBox(vec3 a, vec3 b, vec3 bmin, vec3 bmax) {
@@ -149,8 +162,6 @@ float shadowFactor(vec3 wp, vec3 lightW, float startOffset) {
     }
     return 1.0;
 }
-
-const float GOBO_BRIGHTNESS=0.55;
 
 // Convention A/B (grandMA) : le bord de la lame relie les deux coins A et B.
 float bladeMask(vec2 p, vec2 n, float insA, float insB, float soft){
@@ -317,11 +328,34 @@ void main(){
     float edgeStart=mix(0.88,0.72,focusNorm);
     float edgeFade=1.0-smoothstep(edgeStart,1.0,radial);
 
-    float finalFactor=goboAlpha*edgeFade*Intensity*GOBO_BRIGHTNESS*VertexColor.a;
+    // "Open" parts of the gobo (goboAlpha close to 1) should come out close to the fixture's full
+    // LightColor, like a real projector lighting a wall - not a faint tint of it.
+    float finalFactor=clamp(goboAlpha*edgeFade*Intensity*GoboBrightness*VertexColor.a,0.0,1.0);
 
     if(finalFactor<=0.001)discard;
 
-    vec3 finalColor=LightColor*goboColor*finalFactor;
+    // additive_transparency is glBlendFunc(SRC_ALPHA, ONE), i.e. dest + src.rgb * src.a: the hardware
+    // already multiplies by alpha once. fragColor.rgb must therefore be the straight (non-premultiplied)
+    // colour - premultiplying it here as well (color * finalFactor) applied finalFactor twice, which
+    // squared the opacity and made every projection look like a dim, washed-out tint instead of a
+    // bright, clearly shaped patch of light.
+    // Pure gobo colour/shape, ignoring whatever is actually there - what we always had.
+    vec3 flatLight=LightColor*goboColor;
+
+    // Whatever is really on screen at this exact pixel (block, mob, player, dropped item, anything -
+    // captured straight off the rendered frame, so it works the same no matter what kind of thing it
+    // is). In true darkness this is still ~black: Minecraft has already thrown away all texture detail
+    // by the time this draws, so there is nothing left to "reveal" there - but anywhere the surface
+    // already has some real light/colour of its own (another torch nearby, a colourful mob, daylight),
+    // this keeps that instead of flattening it to one flat tone.
+    vec3 sceneColor=sampleSceneColor();
+
+    // Taking the brighter of the two per channel means this can only ever match or beat the flat
+    // version above - a pitch-black spot still gets the full, clean gobo colour (max(~0,flat)=flat), it
+    // never ends up darker or less visible than before.
+    vec3 lit=max(sceneColor,flatLight);
+
+    vec3 finalColor=mix(flatLight,lit,SurfaceTintStrength);
 
     fragColor=vec4(finalColor,finalFactor);
 }

@@ -88,7 +88,7 @@ public class Beam7RFixture extends Fixture {
 
     @Override
     public float getBeamWidth() {
-        return 0.00f;
+        return 0.15f;
     }
 
     @Override

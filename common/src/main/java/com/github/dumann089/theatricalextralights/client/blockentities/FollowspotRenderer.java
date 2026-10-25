@@ -121,7 +121,7 @@ public class FollowspotRenderer extends ExtraLightsFixtureRenderer<FollowspotBlo
     }
     @Override
     public void beforeRenderBeam(FollowspotBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockstate, boolean isHanging, int packedLight, int packedOverlay) {
-        if (blockEntity.getIntensity() <= 0) {
+        if (blockEntity.getDisplayIntensity(partialTicks) <= 0) {
             return;
         }
         LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
@@ -145,11 +145,8 @@ public class FollowspotRenderer extends ExtraLightsFixtureRenderer<FollowspotBlo
                     preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
                 }
 
-                float intensity = operatorView
-                        ? blockEntity.getIntensity()
-                        : blockEntity.getPrevIntensity()
-                        + (blockEntity.getIntensity() - blockEntity.getPrevIntensity()) * partialTick;
-                int color = blockEntity.getColour();
+                float intensity = blockEntity.getDisplayIntensity(partialTick);
+                int color = blockEntity.getDisplayColour(partialTick);
                 float alpha = (intensity / 255f) * (float) TheatricalConfig.INSTANCE.CLIENT.beamOpacity;
                 float[] beam = blockEntity.getFixture().getBeamStartPosition();
                 float rawLength = FollowspotBeamHelper.getBeamLength(blockEntity, renderPan, renderTilt);

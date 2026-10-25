@@ -211,7 +211,7 @@ public abstract class PixelBarRenderer<T extends PixelBarBlockEntity> extends Ex
                 poseStack.translate(offset.x, offset.y, offset.z);
                 preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
 
-                float intensity = (blockEntity.getPrevIntensity() + ((blockEntity.getIntensity()) - blockEntity.getPrevIntensity()) * partialTick);
+                float intensity = com.github.dumann089.theatricalextralights.client.StrobeRenderHelper.displayIntensity(blockEntity, partialTick);
                 float alpha = pixelMode ? 1f : intensity / 255f;
 
                 poseStack.translate(s.faceX(), s.faceY(), s.faceZ());

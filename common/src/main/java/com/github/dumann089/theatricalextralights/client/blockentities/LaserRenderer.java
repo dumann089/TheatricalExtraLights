@@ -145,7 +145,7 @@ public class LaserRenderer extends ExtraLightsRenderer<LaserBlockEntity> {
     public void beforeRenderBeam(LaserBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer,
                                  MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped,
                                  BlockState blockstate, boolean isHanging, int packedLight, int packedOverlay) {
-        if (blockEntity.getIntensity() <= 0 || blockEntity.isEmergencyStop()) {
+        if (blockEntity.getDisplayIntensity(partialTicks) <= 0 || blockEntity.isEmergencyStop()) {
             // Vaciar el rastro cuando el fixture está apagado para que no se quede congelado
             blockEntity.getTrailBuffer().clear();
             return;
@@ -181,13 +181,13 @@ public class LaserRenderer extends ExtraLightsRenderer<LaserBlockEntity> {
         if (be.getLevel() == null) {
             return;
         }
-        float intensity = be.getPrevIntensity() + ((be.getIntensity() - be.getPrevIntensity()) * partialTicks);
+        float intensity = be.getDisplayIntensity(partialTicks);
         float intensity01 = Mth.clamp(intensity / 255f, 0f, 1f);
         if (intensity01 <= 0.001f) {
             return;
         }
 
-        int c1 = be.getColour();
+        int c1 = be.getDisplayColour(partialTicks);
         int c2 = be.getColour2();
         int c3 = be.getColour3();
         if (c2 == 0) c2 = c1;
@@ -484,10 +484,10 @@ public class LaserRenderer extends ExtraLightsRenderer<LaserBlockEntity> {
 
         VertexConsumer beamConsumer = bufferSource.getBuffer(ExtraLightsRenderTypes.BEAM);
 
-        float intensity = blockEntity.getPrevIntensity() + ((blockEntity.getIntensity() - blockEntity.getPrevIntensity()) * partialTick);
+        float intensity = blockEntity.getDisplayIntensity(partialTick);
         float intensity01 = intensity / 255f;
 
-        int c1 = blockEntity.getColour();
+        int c1 = blockEntity.getDisplayColour(partialTick);
         int c2 = blockEntity.getColour2();
         int c3 = blockEntity.getColour3();
         if (c2 == 0) c2 = c1;

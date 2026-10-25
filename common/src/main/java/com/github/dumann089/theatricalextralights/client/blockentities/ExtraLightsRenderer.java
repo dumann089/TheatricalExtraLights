@@ -1,5 +1,6 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
+import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
 import com.github.dumann089.theatricalextralights.client.WaterJetClientEffects;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -50,7 +51,7 @@ public abstract class ExtraLightsRenderer<T extends BaseLightBlockEntity> extend
                                  MultiBufferSource multiBufferSource, Direction facing, float partialTicks,
                                  boolean isFlipped, BlockState blockState, boolean isHanging, int packedLight,
                                  int packedOverlay) {
-        if (blockEntity.getIntensity() <= 0 || !WaterJetClientEffects.isWaterJetFixture(blockEntity)) {
+        if (StrobeRenderHelper.displayIntensity(blockEntity, partialTicks) <= 0 || !WaterJetClientEffects.isWaterJetFixture(blockEntity)) {
             return;
         }
         LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {

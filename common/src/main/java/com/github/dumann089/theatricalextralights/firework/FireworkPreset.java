@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.function.Supplier;
 
 public enum FireworkPreset {
+    MINE_COMET("firework_mine_comet", "Mine Comet", BurstPatterns.MineComet::new, 0xFF4A4A, 0xFFB3B3),
     RED_COMET("firework_red_comet", "Red Comet", BurstPatterns.Comet::new, 0xFF4A4A, 0xFFB3B3),
     BLUE_COMET("firework_blue_comet", "Blue Comet", BurstPatterns.Comet::new, 0x4D8DFF, 0xB8D3FF),
     GREEN_COMET("firework_green_comet", "Green Comet", BurstPatterns.Comet::new, 0x55FF7A, 0xC6FFD3),

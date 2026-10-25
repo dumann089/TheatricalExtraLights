@@ -73,14 +73,14 @@ public final class Flow2JetClientEffects {
     }
 
     public static void tick(Flow2JetBlockEntity blockEntity) {
-        boolean active = blockEntity.getIntensity() > 0;
+        boolean active = blockEntity.getDisplayIntensity(1f) > 0;
         Minecraft minecraft = Minecraft.getInstance();
         BlockPos pos = blockEntity.getBlockPos();
         Vec3 center = pos.getCenter();
 
         boolean playerCanHear = minecraft.player != null
                 && minecraft.player.distanceToSqr(center) <= HEAR_DISTANCE_SQ;
-        float intensityFactor = FixtureJetDirection.intensityFactor((int) blockEntity.getIntensity());
+        float intensityFactor = FixtureJetDirection.intensityFactor((int) blockEntity.getDisplayIntensity(1f));
         float volume = LOOP_VOLUME_MIN + LOOP_VOLUME_RANGE * intensityFactor;
         boolean shouldPlaySound = active && playerCanHear;
 
@@ -139,7 +139,7 @@ public final class Flow2JetClientEffects {
             // Particules seulement quand le panache volumetrique n'est pas disponible (Iris, shader absent).
             if (!Co2PlumeRenderer.available()) {
                 int ticksActive = ACTIVE_TICKS.compute(pos, (key, ticks) -> ticks == null ? 0 : Math.min(ticks + 1, 1_000_000));
-                Flow2JetParticleSpawner.spawnJet(level, jet.nozzle(), jet.axis(), (int) blockEntity.getIntensity(), ticksActive, level.random);
+                Flow2JetParticleSpawner.spawnJet(level, jet.nozzle(), jet.axis(), (int) blockEntity.getDisplayIntensity(1f), ticksActive, level.random);
             }
         } else {
             PlumeState plume = PLUMES.get(pos);

@@ -116,7 +116,7 @@ public class BlinderwarmRenderer extends ExtraLightsRenderer<BlinderwarmBlockEnt
             int packedLight,
             int packedOverlay
     ) {
-        if (blockEntity.getIntensity() > 0) {
+        if (blockEntity.getDisplayIntensity(partialTicks) > 0) {
             LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
 
                 @Override
@@ -126,7 +126,8 @@ public class BlinderwarmRenderer extends ExtraLightsRenderer<BlinderwarmBlockEnt
                             pose -> {
                                 pose.translate(offset.x, offset.y, offset.z);
                                 preparePoseStack(blockEntity, pose, facing, partialTick, isFlipped, blockstate, isHanging);
-                            }, BlinderRenderHelper.Lamps.STANDARD_4X2);
+                            }, BlinderRenderHelper.Lamps.STANDARD_4X2,
+                            BlinderRenderHelper.warmLampWeights(blockEntity));
                 }
                 @Override
                 public Vec3 getPos(float partialTick) {

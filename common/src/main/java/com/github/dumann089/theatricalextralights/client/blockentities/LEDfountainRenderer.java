@@ -230,7 +230,7 @@ public class LEDfountainRenderer extends ExtraLightsFixtureRenderer<LEDFountainB
                     poseStack.translate(localLensOffset.x, localLensOffset.y, localLensOffset.z);
                     if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {
                         renderLightBeam2D(builder, poseStack, blockEntity, camera,
-                                alpha, 0.00f, (float) blockEntity.getDistance(), color, 0.007f);
+                                0f, 0.00f, (float) blockEntity.getDistance(), color, 0.007f);
                     } else {
                         renderLightBeam4D(builder, poseStack, blockEntity, partialTick,
                                 alpha, 0.00f, (float) blockEntity.getDistance(), color, 0.007f);
@@ -242,7 +242,7 @@ public class LEDfountainRenderer extends ExtraLightsFixtureRenderer<LEDFountainB
 
                 poseStack.pushPose();
                 poseStack.translate(localLensOffset.x, localLensOffset.y, localLensOffset.z);
-                renderLensGlow(builder, poseStack, color, 0.14f);
+                renderLensGlow(builder, poseStack, color, 0.14f, intensity);
                 poseStack.popPose();
 
                 renderLens(bufferSource, poseStack, alpha, color, 0.14f, (float)localLensOffset.x, (float)localLensOffset.y, (float)localLensOffset.z);
@@ -276,7 +276,7 @@ public class LEDfountainRenderer extends ExtraLightsFixtureRenderer<LEDFountainB
 
             if (TheatricalExtraLightsConfig.shouldRender2DBeam()) {
                 renderLightBeam2D(builder, poseStack, blockEntity, camera,
-                        beamAlpha, beamThickness, beamLength, color, startThick);
+                        0f, beamThickness, beamLength, color, startThick);
             } else {
                 renderLightBeam4D(builder, poseStack, blockEntity, partialTick,
                         beamAlpha, beamThickness, beamLength, color, startThick);

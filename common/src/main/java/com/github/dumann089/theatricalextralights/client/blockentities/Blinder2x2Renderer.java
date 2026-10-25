@@ -114,7 +114,7 @@ public class Blinder2x2Renderer extends ExtraLightsRenderer<Blinder2x2BlockEntit
             int packedLight,
             int packedOverlay
     ) {
-        if (blockEntity.getIntensity() > 0) {
+        if (blockEntity.getDisplayIntensity(partialTicks) > 0) {
             LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
 
                 @Override

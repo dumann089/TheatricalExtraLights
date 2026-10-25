@@ -9,7 +9,6 @@ import com.github.dumann089.theatricalextralights.client.ExtraLightsClientScreen
 import com.github.dumann089.theatricalextralights.client.ModParticleClient;
 import com.github.dumann089.theatricalextralights.client.blockentities.*;
 import com.github.dumann089.theatricalextralights.client.entities.FireworkRocketRenderer;
-import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelManager;
 import com.github.dumann089.theatricalextralights.compat.FireworkLightCompat;
 import com.github.dumann089.theatricalextralights.entities.ModEntities;
 import com.github.dumann089.theatricalextralights.laser.dac.LaserDacRuntime;
@@ -28,6 +27,7 @@ public class TheatricalExtraLightsClient {
         ModParticleClient.registerProviders();
         ModKeybinds.register();
         ModNetworking.register();
+
 
         BlockEntityRendererRegistry.register(BlockEntities.MOVING_SCAN.get(), MovingScanRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MOVING_VL2C.get(), MovingVL2CRenderer::new);
@@ -152,6 +152,7 @@ public class TheatricalExtraLightsClient {
         BlockEntityRendererRegistry.register(BlockEntities.A6X3PAR64_VERTICAL.get(), a6x3par64_verticalRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.SPOT_XTREME_GOBO.get(), SpotXtremeGoboRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.VL6C_GOBO.get(), VL6CGoboRenderer::new);
+        BlockEntityRendererRegistry.register(BlockEntities.PROFILE3_GOBO.get(), Profile3GoboRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.IRIS_700_GOBO.get(), Iris700GoboRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.PRO_SPOT_GOBO.get(), ProSpotGoboRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MINI_SCAN_GOBO.get(), MiniScanGobosRenderer::new);

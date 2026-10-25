@@ -100,7 +100,12 @@ public class par56_yellowBlockEntity extends ExtraLightsLightBlockEntity impleme
 
     @Override
     public float getPartialIntensity(float partialTicks) {
-        return getPrevIntensity() + (getIntensity() - getPrevIntensity()) * partialTicks;
+        return getDisplayIntensity(partialTicks);
+    }
+
+    @Override
+    public int getPartialColour(float partialTicks) {
+        return getDisplayColour(partialTicks);
     }
 
     @Override

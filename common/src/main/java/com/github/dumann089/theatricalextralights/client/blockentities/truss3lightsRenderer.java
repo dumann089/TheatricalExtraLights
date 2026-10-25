@@ -106,7 +106,7 @@ public class truss3lightsRenderer extends ExtraLightsRenderer<truss3lightsBlockE
     }
     @Override
     public void beforeRenderBeam(truss3lightsBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockstate, boolean isHanging, int packedLight, int packedOverlay) {
-        if(blockEntity.getIntensity() > 0){
+        if (blockEntity.getDisplayIntensity(partialTicks) > 0){
             LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
                 @Override
                 public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
@@ -116,8 +116,8 @@ public class truss3lightsRenderer extends ExtraLightsRenderer<truss3lightsBlockE
                     preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
                     VertexConsumer beamConsumer = multiBufferSource.getBuffer(ExtraLightsRenderTypes.BEAM);
 //            poseStack.translate(blockEntity.getFixture().getBeamStartPosition()[0], blockEntity.getFixture().getBeamStartPosition()[1], blockEntity.getFixture().getBeamStartPosition()[2]);
-                    float intensity = (blockEntity.getPrevIntensity() + ((blockEntity.getIntensity()) - blockEntity.getPrevIntensity()) * partialTicks);
-                    int color = blockEntity.getColour();
+                    float intensity = blockEntity.getDisplayIntensity(partialTicks);
+                    int color = blockEntity.getDisplayColour(partialTicks);
                     int r = (color >> 16) & 0xFF;
                     int g = (color >> 8) & 0xFF;
                     int b = color & 0xFF;

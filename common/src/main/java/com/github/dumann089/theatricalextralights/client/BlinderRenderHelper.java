@@ -103,7 +103,12 @@ public final class BlinderRenderHelper {
     /** Part de l'eblouissement et de la couronne : une lampe seule, puis huit lampes. */
     private static final float ARRAY_SHARE_ONE_LAMP = 0.6f;
     private static final float ARRAY_SHARE_EIGHT_LAMPS = 1.0f;
-    /** Pull the legacy blinder glow toward the camera so it clears the housing. */
+    /**
+     * Les disques sont centres sur les lampes, puis tires vers la camera le long de la ligne de vue
+     * pour passer devant la carrosserie (dessous, yoke) sans bouger a l'ecran. Ils etaient d'abord
+     * avances le long de l'axe de l'appareil : vu de biais, cette avance sortait de la ligne de vue
+     * et le halo glissait a cote des lampes.
+     */
     private static final float TOWARD_CAMERA = 0.6f;
     /**
      * L'eblouissement n'existe que devant l'appareil : plein quand la camera est a moins d'une
@@ -131,12 +136,26 @@ public final class BlinderRenderHelper {
     public static void renderLamps(BaseLightBlockEntity blockEntity, MultiBufferSource.BufferSource bufferSource,
                                    PoseStack viewPose, Camera camera, float partialTick,
                                    Consumer<PoseStack> headTransform, Lamps lamps) {
+        renderLamps(blockEntity, bufferSource, viewPose, camera, partialTick, headTransform, lamps, null);
+    }
+
+    /**
+     * Comme {@link #renderLamps(BaseLightBlockEntity, MultiBufferSource.BufferSource, PoseStack, Camera,
+     * float, Consumer, Lamps)}, chaque lampe a son propre niveau.
+     *
+     * @param lampWeights poids de chaque lampe, 0..1, relatif a l'intensite de l'appareil (sa lampe
+     *                    la plus forte vaut 1). Ordre DMX : vu de face, rangee du haut d'abord, de
+     *                    gauche a droite. {@code null} : toutes les lampes au niveau de l'appareil.
+     */
+    public static void renderLamps(BaseLightBlockEntity blockEntity, MultiBufferSource.BufferSource bufferSource,
+                                   PoseStack viewPose, Camera camera, float partialTick,
+                                   Consumer<PoseStack> headTransform, Lamps lamps, float[] lampWeights) {
         float intensity = StrobeRenderHelper.renderedIntensity(blockEntity, partialTick);
         if (intensity <= 0f) {
             return;
         }
         float level = Math.min(1f, intensity / 255f);
-        int color = blockEntity.getColour();
+        int color = StrobeRenderHelper.displayColour(blockEntity, partialTick);
         int hot = whiten(color, LAMP_WHITEN);
         int white = whiten(color, GLARE_WHITEN);
         int hr = (hot >> 16) & 0xFF;
@@ -160,16 +179,40 @@ public final class BlinderRenderHelper {
             // Vue de dos : seul le verre des lampes, que la carrosserie cache de toute facon.
             return;
         }
-        float glare = (float) Math.pow(level, GLARE_LEVEL_EXPONENT) * front;
-        float haze = (float) Math.pow(level, HAZE_LEVEL_EXPONENT) * front;
+        // L'eblouissement et la couronne suivent la lumiere totale de l'appareil : en mode pixel, la
+        // moyenne des lampes, pas la plus forte. Sans poids, la moyenne vaut le niveau : rendu inchange.
+        float mean = 1f;
+        if (lampWeights != null) {
+            float sum = 0f;
+            for (float w : lampWeights) {
+                sum += w;
+            }
+            mean = lampWeights.length > 0 ? sum / lampWeights.length : 1f;
+        }
+        float arrayLevel = level * mean;
+        float glare = (float) Math.pow(arrayLevel, GLARE_LEVEL_EXPONENT) * front;
+        float haze = (float) Math.pow(arrayLevel, HAZE_LEVEL_EXPONENT) * front;
         // A pleine puissance de face, les lampes disparaissent dans l'eblouissement : les quatre
         // cellules ne se distinguent plus. Elles reviennent quand l'appareil baisse.
         float lampShow = 1f - glare;
 
-        for (float x : lamps.xs()) {
-            for (float y : lamps.ys()) {
+        int cols = lamps.xs().length;
+        int rows = lamps.ys().length;
+        for (int xi = 0; xi < cols; xi++) {
+            float x = lamps.xs()[xi];
+            for (int yi = 0; yi < rows; yi++) {
+                float y = lamps.ys()[yi];
                 if (lampShow <= 0.01f) {
                     continue;
+                }
+                // Vu de face la face est en -Z : la gauche du spectateur est vers +X, le haut vers +Y.
+                float weight = 1f;
+                if (lampWeights != null) {
+                    int index = (rows - 1 - yi) * cols + (cols - 1 - xi);
+                    weight = index < lampWeights.length ? lampWeights[index] : 0f;
+                    if (weight <= 0f) {
+                        continue;
+                    }
                 }
                 // Le verre de la lampe est fondu (pas additif) et se dessine apres l'eblouissement :
                 // a pleine puissance il peindrait quatre carres orange sur le blanc. Il suit lampShow.
@@ -178,18 +221,21 @@ public final class BlinderRenderHelper {
                 headTransform.accept(viewPose);
                 lamp.apply(viewPose);
                 if (lamps == Lamps.STAGE_BLAZE) {
-                    renderCircularFace(bufferSource, viewPose, lampRadius, hr, hg, hb, (int) (a * lampShow));
+                    renderCircularFace(bufferSource, viewPose, lampRadius, hr, hg, hb, (int) (a * weight * lampShow));
                 } else {
-                    StrobeVisualEffects.renderFace(bufferSource, viewPose, lamp, hr, hg, hb, (int) (a * lampShow));
+                    StrobeVisualEffects.renderFace(bufferSource, viewPose, lamp, hr, hg, hb, (int) (a * weight * lampShow));
                 }
                 viewPose.popPose();
                 Vector3f centre = lamps == Lamps.STAGE_BLAZE
                         ? placeDiscAtLens(worldCentre(headTransform, lamp), forward)
                         : placeDisc(worldCentre(headTransform, lamp), forward);
+                float lampLevel = level * weight;
+                float lampHaze = lampWeights == null ? haze
+                        : (float) Math.pow(lampLevel, HAZE_LEVEL_EXPONENT) * front;
                 StrobeVisualEffects.renderGlowDot(bufferSource, viewPose, camera, centre, hot,
-                        lampRadius * LAMP_DISC_RADIUS, level * front * lampShow);
+                        lampRadius * LAMP_DISC_RADIUS, lampLevel * front * lampShow);
                 StrobeVisualEffects.renderGlowDot(bufferSource, viewPose, camera, centre, color,
-                        lampRadius * LAMP_BLOOM_RADIUS, haze * LAMP_BLOOM_STRENGTH * lampShow);
+                        lampRadius * LAMP_BLOOM_RADIUS, lampHaze * LAMP_BLOOM_STRENGTH * lampShow);
             }
         }
 
@@ -210,7 +256,7 @@ public final class BlinderRenderHelper {
         }
     }
 
-    /** Devant la face le long de l'axe de l'appareil, puis un peu vers la camera. */
+    /** Sur la lampe, tire vers la camera : meme position a l'ecran, devant la carrosserie. */
     private static Vector3f placeDisc(Vector3f facePoint, Vector3f forward) {
         return towardCamera(facePoint);
     }
@@ -284,7 +330,7 @@ public final class BlinderRenderHelper {
             return;
         }
 
-        int color = blockEntity.getColour();
+        int color = StrobeRenderHelper.displayColour(blockEntity, partialTicks);
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
         int b = color & 0xFF;
@@ -300,6 +346,28 @@ public final class BlinderRenderHelper {
         addVertex(beamConsumer, matrix, normal, r, g, b, a, face.halfW(), -face.halfH(), 0f);
         addVertex(beamConsumer, matrix, normal, r, g, b, a, -face.halfW(), -face.halfH(), 0f);
         poseStack.popPose();
+    }
+
+    /**
+     * Poids des lampes d'un blinder warm en mode pixel, relatifs a sa lampe la plus forte, ou
+     * {@code null} en mode un canal.
+     */
+    public static float[] warmLampWeights(com.github.dumann089.theatricalextralights.blockentities.WarmBlinderBlockEntity blinder) {
+        if (!blinder.isPixelMode()) {
+            return null;
+        }
+        int n = blinder.getLampCount();
+        int peak = 0;
+        for (int i = 0; i < n; i++) {
+            peak = Math.max(peak, blinder.getLampLevel(i));
+        }
+        float[] weights = new float[n];
+        if (peak > 0) {
+            for (int i = 0; i < n; i++) {
+                weights[i] = blinder.getLampLevel(i) / (float) peak;
+            }
+        }
+        return weights;
     }
 
     public static Vec3 lazyRenderPos(BaseLightBlockEntity blockEntity) {

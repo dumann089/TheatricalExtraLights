@@ -44,6 +44,33 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
     private final Vector3f uVS = new Vector3f();
     private final Vector3f vVS = new Vector3f();
 
+    // --- otimizacoes (sem efeito visual) ---------------------------------------------------
+    /** Lados do poligono do volume proxy. Par, para poder triangular as tampas em quads. */
+    private static final int HULL_N = 12;
+    /** Fator para o poligono circunscrever (e nao so inscrever) a elipse da secao do cone. */
+    private static final float HULL_CIRC = (float) (1.0 / Math.cos(Math.PI / HULL_N));
+    private static final float[] HULL_COS = new float[HULL_N];
+    private static final float[] HULL_SIN = new float[HULL_N];
+    static {
+        for (int i = 0; i < HULL_N; i++) {
+            double a = Math.PI * 2.0 * i / HULL_N;
+            HULL_COS[i] = (float) Math.cos(a);
+            HULL_SIN[i] = (float) Math.sin(a);
+        }
+    }
+    private static final String[] OCC_MIN = new String[BeamShadowOccluders.MAX_BOXES];
+    private static final String[] OCC_MAX = new String[BeamShadowOccluders.MAX_BOXES];
+    static {
+        for (int i = 0; i < BeamShadowOccluders.MAX_BOXES; i++) {
+            OCC_MIN[i] = "OccMin" + i;
+            OCC_MAX[i] = "OccMax" + i;
+        }
+    }
+    /** Vertices do proxy em espaco de view: 2 aneis de HULL_N pontos (xyz). */
+    private final float[] hullView = new float[2 * HULL_N * 3];
+    private final double[] sortDist = new double[MAX_BEAMS];
+    private final Matrix4f projMat = new Matrix4f();
+
     private RaymarchBeamRenderer() {
         for (int i = 0; i < MAX_BEAMS; i++) {
             slots[i] = new BeamSlot();
@@ -157,7 +184,8 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
             }
 
             Minecraft mc = Minecraft.getInstance();
-            invProj.set(RenderSystem.getProjectionMatrix());
+            projMat.set(RenderSystem.getProjectionMatrix());
+            invProj.set(projMat);
             invProj.invert();
 
             float time = (mc.level != null ? mc.level.getGameTime() : 0) + partialTick;
@@ -179,7 +207,6 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
             Vector3f look = camera.getLookVector();
 
             sortFarToNear(camPos);
-
             poseStack.pushPose();
             poseStack.translate(-camPos.x, -camPos.y, -camPos.z);
             Matrix4f viewMat = new Matrix4f(poseStack.last().pose());
@@ -194,6 +221,14 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 double dy = midY - camPos.y;
                 double dz = midZ - camPos.z;
                 if (dx * look.x() + dy * look.y() + dz * look.z() < -s.scanLen) {
+                    continue;
+                }
+
+                // Volume proxy justo ao cone. Se os eixos nao forem ortonormais, cai na caixa antiga.
+                boolean hullOk = computeHull(s, viewMat);
+                // Feixe inteiramente fora do frustum: a GPU descartaria tudo mesmo, entao nem
+                // gastamos CPU com uniforms, sombras e estado.
+                if (hullOk && hullOutsideFrustum()) {
                     continue;
                 }
 
@@ -300,7 +335,11 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
                 Tesselator tess = Tesselator.getInstance();
                 BufferBuilder bb = tess.getBuilder();
                 bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-                drawConeProxy(bb, viewMat, s, endRadius);
+                if (hullOk) {
+                    emitHull(bb);
+                } else {
+                    drawConeProxy(bb, viewMat, s, endRadius);
+                }
                 BufferUploader.drawWithShader(bb.end());
                 renderType.clearRenderState();
             }
@@ -342,8 +381,8 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
         shader.safeGetUniform("OccCount").set((float) n);
         for (int i = 0; i < n; i++) {
             var b = snap.boxes().get(i);
-            shader.safeGetUniform("OccMin" + i).set((float) b.minX, (float) b.minY, (float) b.minZ);
-            shader.safeGetUniform("OccMax" + i).set((float) b.maxX, (float) b.maxY, (float) b.maxZ);
+            shader.safeGetUniform(OCC_MIN[i]).set((float) b.minX, (float) b.minY, (float) b.minZ);
+            shader.safeGetUniform(OCC_MAX[i]).set((float) b.maxX, (float) b.maxY, (float) b.maxZ);
         }
     }
 
@@ -356,12 +395,13 @@ public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
     private void sortFarToNear(Vec3 camPos) {
         for (int i = 0; i < activeBeamCount; i++) {
             drawOrder[i] = i;
+            sortDist[i] = distSq(slots[i], camPos);
         }
         for (int i = 1; i < activeBeamCount; i++) {
             int key = drawOrder[i];
-            double keyD = distSq(slots[key], camPos);
+            double keyD = sortDist[key];
             int j = i - 1;
-            while (j >= 0 && distSq(slots[drawOrder[j]], camPos) < keyD) {
+            while (j >= 0 && sortDist[drawOrder[j]] < keyD) {
                 drawOrder[j + 1] = drawOrder[j];
                 j--;
             }

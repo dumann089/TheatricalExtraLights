@@ -131,7 +131,7 @@ public class ParScrollerRenderer extends ExtraLightsFixtureRenderer<ParScrollerB
             int packedLight,
             int packedOverlay
     ) {
-        if (blockEntity.getIntensity() > 0) {
+        if (blockEntity.getDisplayIntensity(partialTicks) > 0) {
             LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
 
                 @Override
@@ -142,9 +142,8 @@ public class ParScrollerRenderer extends ExtraLightsFixtureRenderer<ParScrollerB
                     poseStack.translate(offset.x, offset.y, offset.z);
                     preparePoseStack(blockEntity, poseStack, facing, partialTick, isFlipped, blockstate, isHanging);
 
-                    float intensity = blockEntity.getPrevIntensity()
-                            + (blockEntity.getIntensity() - blockEntity.getPrevIntensity()) * partialTick;
-                    int color = blockEntity.getColour();
+                    float intensity = blockEntity.getDisplayIntensity(partialTick);
+                    int color = blockEntity.getDisplayColour(partialTick);
                     float alpha = (intensity / 255f) * beamOpacity.floatValue();
 
                     // BEAM
@@ -165,7 +164,7 @@ public class ParScrollerRenderer extends ExtraLightsFixtureRenderer<ParScrollerB
                     // LENS 2D GLOW
                     poseStack.pushPose();
                     poseStack.translate(0.5f, 0.56f, 0.04);
-                    renderLensGlow(builder, poseStack, color, 0.15f);
+                    renderLensGlow(builder, poseStack, color, 0.15f, intensity);
                     poseStack.popPose();
 
                     // LENS
