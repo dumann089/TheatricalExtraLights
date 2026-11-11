@@ -13,7 +13,6 @@ import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsCo
 import com.github.dumann089.theatricalextralights.util.FramingShutterState;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.util.GlobalGoboManager;
-import com.github.dumann089.theatricalextralights.util.StageDeckOcclusion;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
@@ -205,11 +204,8 @@ public class GoboGPUProjector {
         final Vec3 axisU = frame[1];
         final Vec3 axisV = frame[2];
 
-        final float facetMaxDistance = StageDeckOcclusion.clampBeamLength(
-                be.getLevel(), be.getBlockPos(), origin, beamDir, maxDistance);
-
         Vec3 rayStart = origin.add(beamDir.scale(0.35f));
-        Vec3 rayEnd = origin.add(beamDir.scale(facetMaxDistance));
+        Vec3 rayEnd = origin.add(beamDir.scale(maxDistance));
         BlockHitResult hitResult = cachedClip(be.getLevel(), facet, rayStart, rayEnd);
 
         final boolean hasOcclusion = hitResult.getType() != HitResult.Type.MISS;
@@ -222,7 +218,7 @@ public class GoboGPUProjector {
         final float finalFocus = Math.min(1.0f, (be.getFocus() + be.getFrost()) / 255.0f);
         final float finalIntensity = intensity;
         final float finalTanHalfAngle = tanHalfAngle;
-        final float finalMaxDistance = facetMaxDistance;
+        final float finalMaxDistance = maxDistance;
         final float finalRotation = be.getGoboRotation();
         final ResourceLocation finalTexture = texture;
         final ResourceLocation finalNextTexture = nextTexture;
@@ -238,8 +234,8 @@ public class GoboGPUProjector {
                 TheatricalExtraLightsConfig.isBeamShadowsEnabled()
                         ? com.github.dumann089.theatricalextralights.client.render.beam.shadow.BeamShadowOccluders.get(
                                 be.getLevel(), finalBlockPos, origin, beamDir,
-                                (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : facetMaxDistance),
-                                (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : facetMaxDistance) * tanHalfAngle + finalBaseRadius)
+                                (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance),
+                                (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance) * tanHalfAngle + finalBaseRadius)
                         : null;
         final int finalColor = be.getPartialColour(partialTicks) == 0 ? 0xFFFFFF : be.getPartialColour(partialTicks);
 
