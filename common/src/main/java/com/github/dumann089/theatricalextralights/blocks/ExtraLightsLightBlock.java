@@ -53,13 +53,9 @@ public abstract class ExtraLightsLightBlock extends BaseLightBlock {
                                  BlockHitResult hit) {
         BlockEntity be = level.getBlockEntity(pos);
         if (!level.isClientSide() && be instanceof ExtraLightsLightBlockEntity) {
-            if (be instanceof BaseDMXConsumerLightBlockEntity consumerLightBlockEntity) {
-                if (!consumerLightBlockEntity.getNetworkId().equals(UUIDUtil.NULL)
-                        && !TheatricalNetworkAccess.canPlayerConfigure(player, level, consumerLightBlockEntity.getNetworkId())) {
-                    return InteractionResult.FAIL;
-                }
-            }
-
+            // The wrench and tracker are local tools: they must work even when the fixture is
+            // patched to a network the player cannot configure. The previous ordering loaded the
+            // Theatrical network API first, which made the wrench fail on some builds.
             if (player.getItemInHand(hand).getItem()
                     == com.github.dumann089.theatricalextralights.items.Items.FIXTURE_WRENCH.get()) {
                 new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.MOUNT_WRENCH)
@@ -72,6 +68,13 @@ public abstract class ExtraLightsLightBlock extends BaseLightBlock {
                 com.github.dumann089.theatricalextralights.items.FixtureTrackerItem.addFixtureToSelection(
                         (ServerPlayer) player, player.getItemInHand(hand), (ExtraLightsLightBlockEntity) be);
                 return InteractionResult.SUCCESS;
+            }
+
+            if (be instanceof BaseDMXConsumerLightBlockEntity consumerLightBlockEntity) {
+                if (!consumerLightBlockEntity.getNetworkId().equals(UUIDUtil.NULL)
+                        && !TheatricalNetworkAccess.canPlayerConfigure(player, level, consumerLightBlockEntity.getNetworkId())) {
+                    return InteractionResult.FAIL;
+                }
             }
 
             if (be instanceof BaseDMXConsumerLightBlockEntity consumerLightBlockEntity) {
