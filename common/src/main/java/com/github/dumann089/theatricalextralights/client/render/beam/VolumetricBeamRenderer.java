@@ -46,6 +46,12 @@ public class VolumetricBeamRenderer extends LazyRenderers.LazyRenderer {
             return;
         }
 
+        float deckLimited = com.github.dumann089.theatricalextralights.util.StageDeckOcclusion
+                .clampBeamLength(data.level(), data.fixturePos(), data.origin(), data.beamDir(), data.scanLen());
+        if (deckLimited < data.scanLen()) {
+            data = data.withLength(deckLimited);
+        }
+
         if (TheatricalExtraLightsConfig.isRaymarchEngine() && ModShaders.canUseRaymarch()) {
             RaymarchBeamRenderer.submit(data);
             return;

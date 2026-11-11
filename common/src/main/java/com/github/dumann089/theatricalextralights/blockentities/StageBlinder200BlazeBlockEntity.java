@@ -1,6 +1,7 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
+import com.github.dumann089.theatricalextralights.util.AimedLightPosition;
 import dev.imabad.theatrical.api.Fixture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -46,11 +47,16 @@ public class StageBlinder200BlazeBlockEntity extends BlinderBaseBlockEntity {
 
     @Override
     public Vector3f getLightPos() {
+        // A traced impact follows pan/tilt and lands on the floor or wall in front of the head.
+        if (getDistance() < AimedLightPosition.TRACE_DISTANCE - 0.05) {
+            return super.getLightPos();
+        }
+
         BlockState state = getBlockState();
         if (state.getValue(HANGING) && state.getValue(HANG_DIRECTION).getAxis().isHorizontal()) {
             Direction facing = state.getValue(FACING);
-            // The diffuser is at z=5.52/16 in the head model, centered at y=6.5/16.
-            // Keep the light on that plane rather than several blocks ahead of the fixture.
+            // No impact (a wall-wash aimed across the room): keep the light on the diffuser plane
+            // rather than several blocks ahead of the fixture.
             return Vec3.atCenterOf(getBlockPos())
                     .add(0, 6.5 / 16.0 - 0.5, 0)
                     .add(Vec3.atLowerCornerOf(facing.getNormal()).scale(0.5 - 5.52 / 16.0 + 0.02))

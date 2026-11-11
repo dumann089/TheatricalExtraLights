@@ -1,13 +1,16 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasExtendedBeamChannels;
+import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasProfileHead;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasSafetyArm;
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.SmoothedLight;
 import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
+import com.github.dumann089.theatricalextralights.compat.SupportCompat;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.util.FollowspotDmxHelper;
 import com.github.dumann089.theatricalextralights.util.TheatricalDmxFrameBridge;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
+import dev.imabad.theatrical.blocks.HangableBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -21,6 +24,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
+import java.util.Optional;
 import java.util.UUID;
 import com.github.dumann089.theatricalextralights.util.FixtureTrackingRegistry;
 import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
@@ -75,7 +79,35 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
      */
     @Override
     public int getLightLuminance() {
+        // Gobo profile heads already draw their spot in world space with the GPU projector,
+        // including the wheel pattern, frost and framing shutters. The old Theatrical/Shimmer
+        // point light added a second, plain round pool of light on the floor; leave only the
+        // projected spot.
+        if (this instanceof HasProfileHead) {
+            return 0;
+        }
         return (int) (Math.max(0f, getDisplayIntensity(1f)) / 255f * 15f);
+    }
+
+    /**
+     * Makes CSC trusses count as a supporting structure. Theatrical's default implementation only
+     * accepts blocks implementing {@link dev.imabad.theatrical.api.Support}; without this the
+     * renderer took its "no support" fallback and the fixture floated or clipped until a wrench
+     * offset was entered manually.
+     */
+    @Override
+    public Optional<BlockState> getSupportingStructure() {
+        Optional<BlockState> vanilla = super.getSupportingStructure();
+        if (vanilla.isPresent() || level == null) {
+            return vanilla;
+        }
+        BlockState state = getBlockState();
+        if (!(state.getBlock() instanceof HangableBlock) || !state.getValue(HangableBlock.HANGING)) {
+            return Optional.empty();
+        }
+        BlockPos supportPos = getBlockPos().relative(state.getValue(HangableBlock.HANG_DIRECTION));
+        BlockState support = level.getBlockState(supportPos);
+        return SupportCompat.isSupport(support) ? Optional.of(support) : Optional.empty();
     }
 
     /**

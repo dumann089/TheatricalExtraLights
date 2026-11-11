@@ -54,6 +54,8 @@ public class TheatricalExtraLightsConfig {
     private Integer raymarchMaxBeamsPerFrame = 128;
     /** Ombres portees des blocs et entites dans le faisceau et sur la tache projetee. */
     private Boolean beamShadows = true;
+    /** Coupe un faisceau descendant au niveau du plateau SEF, meme quand la colonne exacte est un trou. */
+    private Boolean stopBeamsAtStageDecks = false;
 
     /** Laser realiste : faisceaux fins et nappes integres dans la brume, impacts sur les surfaces. */
     private Boolean laserRealistic = true;
@@ -234,6 +236,15 @@ public class TheatricalExtraLightsConfig {
 
     public static void setBeamShadows(boolean value) {
         INSTANCE.beamShadows = value;
+        save();
+    }
+
+    public static boolean isStopBeamsAtStageDecks() {
+        return INSTANCE.stopBeamsAtStageDecks == null || INSTANCE.stopBeamsAtStageDecks;
+    }
+
+    public static void setStopBeamsAtStageDecks(boolean value) {
+        INSTANCE.stopBeamsAtStageDecks = value;
         save();
     }
 

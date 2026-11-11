@@ -99,6 +99,13 @@ public record BeamRenderData(
                 widthScale, heightScale, 0.05f, null);
     }
 
+    /** Copie avec une longueur de faisceau bornee par un obstacle. */
+    public BeamRenderData withLength(float newLength) {
+        return new BeamRenderData(fixturePos, origin, beamDir, axisU, axisV, zoomNorm, newLength,
+                tanHalfAngle, color, intensity, goboTexture, nextGoboTexture, goboRotation,
+                wheelTransition, level, widthScale, heightScale, baseRadius, shutters, animation);
+    }
+
     /** Copie avec l'etat couteaux fourni. */
     public BeamRenderData withShutters(FramingShutterState.Snapshot snapshot) {
         return new BeamRenderData(fixturePos, origin, beamDir, axisU, axisV, zoomNorm, scanLen,

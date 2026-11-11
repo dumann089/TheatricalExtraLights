@@ -21,6 +21,10 @@
 
 ### Fixes
 - **Atomic Tilt (6ch / 9ch Atomic modes): the dimmer now lights the head steadily when the flash rate is 0** instead of staying dark until the strobe channel was raised (issue 47). The strobe only adds flashing on top of the dimmer level.
+- **Blinders**: manual pan/tilt now moves the pool of light to where the head is aimed (and follows the DMX pan/tilt channels where the personality has them) instead of leaving it pinned to the block.
+- **Gobo profile heads**: removed the old plain Theatrical/Shimmer light pool. The GPU-projected spot is now the only one, so gobos, frost, animation wheels and framing shutters are what you see on the floor.
+- **Hanging fixtures**: Concert Stage Craft trusses are recognised as supports, so fixtures placed under them get the same automatic mount height as on a Theatrical truss (still centred on the block) without a fixture-wrench offset.
+- **Beams on stage decks**: blocks that do not occlude ambient light (such as SEF's stage floor, collision parts and stage stairs) are now included in beam shadows, so washes and other fixtures no longer shine through the deck or leak past stair treads. An optional experimental clamp can also stop downward beams at the deck surface when the exact column is a gap between two SEF platforms (`stopBeamsAtStageDecks`, default off).
 - LED fountain uses the smoothed colour and dimmer like the other fixtures.
 - Forge: single client entry point and keybind registered before `RegisterKeyMappingsEvent`.
 - French translations for the gobo settings.

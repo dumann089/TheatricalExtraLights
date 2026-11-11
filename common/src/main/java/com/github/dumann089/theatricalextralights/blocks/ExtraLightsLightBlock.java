@@ -2,10 +2,12 @@ package com.github.dumann089.theatricalextralights.blocks;
 
 import com.github.dumann089.theatricalextralights.TheatricalExtraLightsScreens;
 import com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity;
+import com.github.dumann089.theatricalextralights.compat.SupportCompat;
 import com.github.dumann089.theatricalextralights.net.OpenExtraLightsScreenPacket;
 import com.github.dumann089.theatricalextralights.util.ConfigurationCardHelper;
 import com.github.dumann089.theatricalextralights.util.TheatricalNetworkAccess;
 import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
+import dev.imabad.theatrical.blocks.HangableBlock;
 import dev.imabad.theatrical.blocks.light.BaseLightBlock;
 import dev.imabad.theatrical.util.UUIDUtil;
 import net.minecraft.core.BlockPos;
@@ -16,6 +18,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -27,6 +30,22 @@ public abstract class ExtraLightsLightBlock extends BaseLightBlock {
 
     protected ExtraLightsLightBlock(Properties properties) {
         super(properties);
+    }
+
+    /**
+     * Theatrical only recognises its own {@link dev.imabad.theatrical.api.Support} blocks as
+     * hangers. Accept CSC trusses too, so a fixture mounted under one is placed and kept in the
+     * hanging state (and therefore gets the same mount-height transform as on a Theatrical truss).
+     */
+    @Override
+    public boolean isHanging(LevelReader levelReader, BlockPos pos) {
+        BlockState state = levelReader.getBlockState(pos);
+        if (!(state.getBlock() instanceof HangableBlock) || !state.getValue(HangableBlock.HANGING)) {
+            return false;
+        }
+        BlockPos supportPos = pos.relative(state.getValue(HangableBlock.HANG_DIRECTION));
+        return !levelReader.isEmptyBlock(supportPos)
+                && SupportCompat.isSupport(levelReader.getBlockState(supportPos));
     }
 
     @Override
