@@ -32,10 +32,10 @@ public final class WaterJetClientEffects {
     private static final double[] ORGAN_PIPE_HEIGHT_MULT = {0.6, 0.7, 0.8, 0.9, 1.0, 0.9, 0.8, 0.7, 0.6};
     private static final double[] ORGAN_PIPE_INV_HEIGHT_MULT = {1.0, 0.9, 0.8, 0.7, 0.6, 0.7, 0.8, 0.9, 1.0};
     private static final double[][] SPINNER_NOZZLES = {
-            {0.96, 2.0, 0.501},
-            {0.5, 2.0, 0.968},
-            {0.5, 2.0, 0.034},
-            {0.034, 2.0, 0.501}
+            {0.96, 1.0, 0.501},
+            {0.5, 1.0, 0.968},
+            {0.5, 1.0, 0.034},
+            {0.034, 1.0, 0.501}
     };
     private static final double[] FAN_OFFSETS_X = {
             -0.507, -0.415, -0.321, -0.227, -0.133, -0.040,
@@ -44,6 +44,9 @@ public final class WaterJetClientEffects {
     private static final float[] FAN_ANGLES = {
             -10.5F, -8.5F, -6.5F, -4.5F, -2.5F, -0.5F,
             0.5f,  2.5F,  4.5F,  6.5F,  8.5F,  10.5F
+    };
+    private static final float[] MOVING_FAN_ANGLES = {
+            -15.0F, -10.0F, -5.0F, 0.5F, 5.0F, 10.0F, 15.0F
     };
     private static final double[] FAN_HEIGHT_MULT = {
             0.75, 0.8, 0.85, 0.9, 0.95, 1.0,
@@ -72,15 +75,16 @@ public final class WaterJetClientEffects {
     ) {
     }
 
-    public static final JetPreset WATER_JET = new JetPreset(8, 1.81F, 0.05, 37.0, null, true, 0.0F, false, 0.1);
-    public static final JetPreset BIG = new JetPreset(6, 2.03F, 0.09, 0.0, JetVariant.JET1, false, 0.0F, false, 0.1);
-    public static final JetPreset THIN = new JetPreset(8, 2.03F, 0.09, 0.0, JetVariant.JET3, false, 0.0F, false, 0.1);
-    public static final JetPreset SPREAD = new JetPreset(8, 2.03F, 0.09, 0.0, JetVariant.JET2, false, 0.0F, false, 0.1);
-    public static final JetPreset FOG = new JetPreset(4, 2.03F, 0.09, 0.0, JetVariant.JETFog, false, 0.0F, false, 0.1);
-    public static final JetPreset CONE = new JetPreset(4, 2.03F, 0.09, 0.0, JetVariant.JETCone, false, 0.0F, false, 0.1);
-    public static final JetPreset CENTRAL = new JetPreset(7, 2.03F, 0.09, 0.0, JetVariant.JET4, false, 0.0F, false, 0.1);
-    public static final JetPreset BLOOM = new JetPreset(4, 2.03F, 0.09, 0.0, JetVariant.JETBloom, false, 0.0F, true, 0.1);
-    public static final JetPreset MOVING = new JetPreset(8, 1.81F, 0.09, 0.0, JetVariant.JET3, false, 0.0F, false, 0.1);
+    public static final JetPreset WATER_JET = new JetPreset(8, 0.79F, 0.05, 37.0, null, true, 0.0F, false, 0.1);
+    public static final JetPreset BIG = new JetPreset(6, 0.58F, 0.09, 0.0, JetVariant.JET1, false, 0.0F, false, 0.1);
+    public static final JetPreset THIN = new JetPreset(8, 0.79F, 0.09, 0.0, JetVariant.JET3, false, 0.0F, false, 0.1);
+    public static final JetPreset SPREAD = new JetPreset(8, 0.79F, 0.09, 0.0, JetVariant.JET2, false, 0.0F, false, 0.1);
+    public static final JetPreset FOG = new JetPreset(4, 0.79F, 0.09, 0.0, JetVariant.JETFog, false, 0.0F, false, 0.1);
+    public static final JetPreset CONE = new JetPreset(4, 0.79F, 0.09, 0.0, JetVariant.JETCone, false, 0.0F, false, 0.1);
+    public static final JetPreset CENTRAL = new JetPreset(7, 0.79F, 0.09, 0.0, JetVariant.JET4, false, 0.0F, false, 0.1);
+    public static final JetPreset BLOOM = new JetPreset(4, 0.79F, 0.09, 0.0, JetVariant.JETBloom, false, 0.0F, true, 0.1);
+    public static final JetPreset MOVING = new JetPreset(8, 0.79F, 0.09, 0.0, JetVariant.JET3, false, 0.0F, false, 0.1);
+    public static final JetPreset MOVINGFAN = new JetPreset(8, 0.79F, 0.09, 0.0, JetVariant.JETFan, false, 0.0F, false, 0.1);
 
     private WaterJetClientEffects() {
     }
@@ -95,6 +99,7 @@ public final class WaterJetClientEffects {
                 || blockEntity instanceof WaterJetCentralBlockEntity
                 || blockEntity instanceof WaterJetBloomBlockEntity
                 || blockEntity instanceof MovingJetBlockEntity
+                || blockEntity instanceof MovingFanJetBlockEntity
                 || blockEntity instanceof OrganPipesBlockEntity
                 || blockEntity instanceof OrganPipesInvBlockEntity
                 || blockEntity instanceof SpinnerBlockEntity
@@ -185,6 +190,8 @@ public final class WaterJetClientEffects {
             spawnJet(blockEntity, level, CENTRAL, partialTick);
         } else if (blockEntity instanceof WaterJetBloomBlockEntity) {
             spawnJet(blockEntity, level, BLOOM, partialTick);
+        } else if (blockEntity instanceof MovingFanJetBlockEntity movingFan) {
+            spawnMovingFanJets(movingFan, level, JetVariant.JETFan, partialTick);
         } else if (blockEntity instanceof MovingJetBlockEntity) {
             spawnJet(blockEntity, level, MOVING, partialTick);
         } else if (blockEntity instanceof OrganPipesBlockEntity organ) {
@@ -328,6 +335,15 @@ public final class WaterJetClientEffects {
         poseStack.mulPose(Axis.XP.rotationDegrees(tilt));
         poseStack.translate(-tilts[0], -tilts[1], -tilts[2]);
 
+        // Moving Fan Jet adds a fourth DMX axis. Yaw rotates the fan plane
+        // around the nozzle point; Pan and Tilt remain independently active.
+        if (blockEntity instanceof MovingFanJetBlockEntity movingFan) {
+            float yaw = movingFan.getInterpolatedYaw(partialTick);
+            poseStack.translate(0.5F, 1.81F, 0.5F);
+            poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
+            poseStack.translate(-0.5F, -1.81F, -0.5F);
+        }
+
         return poseStack;
     }
 
@@ -403,6 +419,49 @@ public final class WaterJetClientEffects {
         emit(level, options, x, y, z, vel.x, vel.y, vel.z);
     }
 
+
+    private static void spawnMovingFanJets(MovingFanJetBlockEntity blockEntity, ClientLevel level, JetVariant variant, float partialTick) {
+        HasJetHeight hasJetHeight = blockEntity;
+        HasJetThickness hasJetThickness = blockEntity;
+
+        float intensity = StrobeRenderHelper.displayIntensity(blockEntity, partialTick) / 255.0F;
+        double targetHeight = intensity * hasJetHeight.getJetHeight();
+        double smoothed = readSmoothedHeight(blockEntity);
+        smoothed += (targetHeight - smoothed) * 0.1;
+        writeSmoothedHeight(blockEntity, smoothed);
+
+        double baseSpeed = smoothed * 0.09;
+        float thickness = hasJetThickness.getJetThickness();
+        WaterJetParticleOptions options = new WaterJetParticleOptions(intensity, thickness, variant);
+
+        Matrix4f pose = getFixturePoseStack(blockEntity, partialTick).last().pose();
+        Vec3 posWorld = transformPoint(pose, 0.5, 0.81, 0.5);
+
+        double spawnX = blockEntity.getBlockPos().getX() + posWorld.x;
+        double spawnY = blockEntity.getBlockPos().getY() + posWorld.y;
+        double spawnZ = blockEntity.getBlockPos().getZ() + posWorld.z;
+
+        if (!isNearPlayer(level, spawnX, spawnY, spawnZ)) {
+            return;
+        }
+
+        for (float angleDeg : MOVING_FAN_ANGLES) {
+            double angleRad = Math.toRadians(angleDeg);
+
+            // Los siete chorros parten exactamente del mismo punto.
+            // El ángulo abre el abanico; Yaw rota todo el plano mediante la pose del fixture.
+            double localDirX = Math.sin(angleRad);
+            double localDirY = Math.cos(angleRad);
+            double localDirZ = 0.0;
+
+            Vec3 dirWorld = transformDirection(pose, localDirX, localDirY, localDirZ);
+            emit(level, options, spawnX, spawnY, spawnZ,
+                    dirWorld.x * baseSpeed,
+                    dirWorld.y * baseSpeed,
+                    dirWorld.z * baseSpeed);
+        }
+    }
+
     private static void spawnOrganPipes(BaseLightBlockEntity blockEntity, ClientLevel level, JetVariant variant, float partialTick) {
         if (!(blockEntity instanceof HasJetHeight hasJetHeight) || !(blockEntity instanceof HasJetThickness hasJetThickness)) {
             return;
@@ -426,7 +485,7 @@ public final class WaterJetClientEffects {
 
         for (int i = 0; i < ORGAN_PIPE_X.length; i++) {
             double localX = 0.5 + ORGAN_PIPE_X[i];
-            double localY = 2.0;
+            double localY = 0.87;
             double localZ = 0.5;
 
             Vec3 posWorld = transformPoint(pose, localX, localY, localZ);
@@ -484,7 +543,7 @@ public final class WaterJetClientEffects {
                 double angleRad = Math.toRadians(angleDeg);
 
                 double localX = 0.5 + Math.cos(angleRad) * radius;
-                double localY = 2.0;
+                double localY = 1.0;
                 double localZ = 0.5 + Math.sin(angleRad) * radius;
 
                 double dirX = Math.cos(angleRad) * horizontalForce;
@@ -549,7 +608,7 @@ public final class WaterJetClientEffects {
                 double angleRad = Math.toRadians(angleDeg);
 
                 double localX = 0.5 + Math.cos(angleRad) * radius;
-                double localY = 2.0;
+                double localY = 1.0;
                 double localZ = 0.5 + Math.sin(angleRad) * radius;
 
                 double dirX = Math.cos(angleRad) * horizontalForce;
@@ -599,7 +658,7 @@ public final class WaterJetClientEffects {
 
         for (int i = 0; i < FAN_OFFSETS_X.length; i++) {
             double localX = 0.5 + FAN_OFFSETS_X[i];
-            double localY = 2.0;
+            double localY = 0.87;
             double localZ = 0.5;
 
             double angleRad = Math.toRadians(FAN_ANGLES[i]);
@@ -646,7 +705,7 @@ public final class WaterJetClientEffects {
         double[] xOffsets = {-1.4375, -1.125, -0.75, -0.375, 0.0, 0.375, 0.75, 1.125, 1.4375};
 
         for (double xOffset : xOffsets) {
-            Vec3 posWorld = transformPoint(pose, 0.5 + xOffset, 2.0, 0.5);
+            Vec3 posWorld = transformPoint(pose, 0.5 + xOffset, 1.0, 0.5);
 
             double finalX = blockEntity.getBlockPos().getX() + posWorld.x;
             double finalY = blockEntity.getBlockPos().getY() + posWorld.y;
@@ -679,7 +738,7 @@ public final class WaterJetClientEffects {
         double[] xOffsets = {-0.375, 0.0, 0.375};
 
         for (double xOffset : xOffsets) {
-            Vec3 posWorld = transformPoint(pose, 0.5 + xOffset, 2.0, 0.5);
+            Vec3 posWorld = transformPoint(pose, 0.5 + xOffset, 1.0, 0.5);
 
             double finalX = blockEntity.getBlockPos().getX() + posWorld.x;
             double finalY = blockEntity.getBlockPos().getY() + posWorld.y;
@@ -769,6 +828,9 @@ public final class WaterJetClientEffects {
         if (blockEntity instanceof com.github.dumann089.theatricalextralights.blockentities.WaterJetBloomBlockEntity e) {
             return e.smoothedHeight;
         }
+        if (blockEntity instanceof MovingFanJetBlockEntity e) {
+            return e.smoothedHeight;
+        }
         if (blockEntity instanceof com.github.dumann089.theatricalextralights.blockentities.MovingJetBlockEntity e) {
             return e.smoothedHeight;
         }
@@ -803,6 +865,8 @@ public final class WaterJetClientEffects {
         } else if (blockEntity instanceof com.github.dumann089.theatricalextralights.blockentities.WaterJetCentralBlockEntity e) {
             e.smoothedHeight = value;
         } else if (blockEntity instanceof com.github.dumann089.theatricalextralights.blockentities.WaterJetBloomBlockEntity e) {
+            e.smoothedHeight = value;
+        } else if (blockEntity instanceof MovingFanJetBlockEntity e) {
             e.smoothedHeight = value;
         } else if (blockEntity instanceof com.github.dumann089.theatricalextralights.blockentities.MovingJetBlockEntity e) {
             e.smoothedHeight = value;

@@ -14,6 +14,12 @@ public class ModNetworkHandler {
         CHANNEL.register(SetJetThicknessPacket.class, SetJetThicknessPacket::encode, SetJetThicknessPacket::decode, SetJetThicknessPacket::handle);
         CHANNEL.register(SetJetConeAnglePacket.class, SetJetConeAnglePacket::encode, SetJetConeAnglePacket::decode, SetJetConeAnglePacket::handle);
         CHANNEL.register(SetFixturePositionPacket.class, SetFixturePositionPacket::encode, SetFixturePositionPacket::decode, SetFixturePositionPacket::handle);
+        CHANNEL.register(
+                SetGoboFieldAnglePacket.class,
+                SetGoboFieldAnglePacket::encode,
+                SetGoboFieldAnglePacket::decode,
+                SetGoboFieldAnglePacket::handle
+        );
         CHANNEL.register(SetPersonalityPacket.class, SetPersonalityPacket::encode, SetPersonalityPacket::decode, SetPersonalityPacket::handle);
         CHANNEL.register(SetLaserSafetyPacket.class, SetLaserSafetyPacket::encode, SetLaserSafetyPacket::decode, SetLaserSafetyPacket::handle);
         CHANNEL.register(SetFixtureArmedPacket.class, SetFixtureArmedPacket::encode, SetFixtureArmedPacket::decode, SetFixtureArmedPacket::handle);

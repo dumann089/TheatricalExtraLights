@@ -36,7 +36,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-public class WaterJetSpreadBlock extends ExtraLightsLightBlock {
+public class WaterJetSpreadBlock extends WaterloggableExtraLightsLightBlock {
 
     public WaterJetSpreadBlock() {
         super(Properties.of()

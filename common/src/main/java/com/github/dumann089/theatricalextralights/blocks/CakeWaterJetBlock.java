@@ -34,7 +34,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-public class CakeWaterJetBlock extends ExtraLightsLightBlock {
+public class CakeWaterJetBlock extends WaterloggableExtraLightsLightBlock {
 
     public CakeWaterJetBlock() {
         super(Properties.of()

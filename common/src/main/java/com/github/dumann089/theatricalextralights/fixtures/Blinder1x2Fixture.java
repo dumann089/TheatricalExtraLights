@@ -29,8 +29,8 @@ public class Blinder1x2Fixture extends Fixture {
     private static final ResourceLocation PAN_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/blinder1x2/blinder1x2_pan");
     private static final ResourceLocation STATIC_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/blinder1x2/blinder1x2_static");
 
-    private final float[] tiltRotation = new float[]{0.5F, 0.59375F, 0.5F};
-    private final float[] panRotation = new float[]{0.5F, 0.90625F, 0.5F};
+    private final float[] tiltRotation = new float[]{0.5F, 0.38F, 0.5F};
+    private final float[] panRotation = new float[]{0.5F, 0.0F, 0.5F};
     private final float[] beamStartPosition = new float[]{0.5F, 0.40625F, 0.34375F};
 
     @Override

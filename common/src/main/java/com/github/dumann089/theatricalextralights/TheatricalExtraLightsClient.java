@@ -117,6 +117,7 @@ public class TheatricalExtraLightsClient {
 
         BlockEntityRendererRegistry.register(BlockEntities.WATER_JET.get(), WaterJetRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MOVING_JET.get(), MovingJetRenderer::new);
+        BlockEntityRendererRegistry.register(BlockEntities.MOVING_FAN_JET.get(), MovingFanJetRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.WATER_JET_THIN.get(), WaterJetThinRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.SPINNER.get(), SpinnerRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.ORGANPIPES.get(), OrganPipesRenderer::new);
@@ -168,19 +169,23 @@ public class TheatricalExtraLightsClient {
         BlockEntityRendererRegistry.register(BlockEntities.PYRO_FAN.get(), ctx -> new StaticFixtureRenderer<>(ctx));
 
         EntityRendererRegistry.register(ModEntities.FIREWORK_ROCKET, FireworkRocketRenderer::new);
-
         com.github.dumann089.theatricalextralights.client.followspot.FollowspotCameraClient.init();
 
         // Forge FMLClientSetup runs after CLIENT_STARTED, so waiting on that event
         // never starts the DAC. Start now, then keep the lifecycle hooks as backup.
         LaserDacRuntime.start();
         ClientLifecycleEvent.CLIENT_STARTED.register(client -> LaserDacRuntime.start());
-        ClientLifecycleEvent.CLIENT_STOPPING.register(client -> LaserDacRuntime.stop());
+
+        ClientLifecycleEvent.CLIENT_STOPPING.register(client -> {
+            LaserDacRuntime.stop();
+        });
+
 
         ClientTickEvent.CLIENT_POST.register(client -> {
             if (client.level == null) {
                 com.github.dumann089.theatricalextralights.client.render.beam.shadow.BeamShadowOccluders.clear();
             }
+
             LaserDacRuntime.ensureStarted();
             ConfettiBurstClient.tick();
             DetachedPyroSparks.tick();

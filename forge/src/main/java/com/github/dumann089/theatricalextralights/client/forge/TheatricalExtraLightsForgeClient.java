@@ -95,17 +95,24 @@ public final class TheatricalExtraLightsForgeClient {
      * pour les moteurs raymarch (faisceaux et laser). Pendant de BEFORE_BLOCK_OUTLINE cote Fabric.
      */
     private static void onRenderLevelStage(final RenderLevelStageEvent event) {
+
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
             return;
         }
-        boolean raymarch = TheatricalExtraLightsConfig.isRaymarchEngine() && ModShaders.canUseRaymarch();
-        boolean laser = LaserRaymarchRenderer.isAvailable();
+
+        boolean raymarch = TheatricalExtraLightsConfig.isRaymarchEngine()
+                && ModShaders.canUseRaymarch();
+
+        boolean laser =
+                LaserRaymarchRenderer.isAvailable();
+
         if (!raymarch && !laser) {
             return;
         }
-        // Geometrie opaque des block entities dans la profondeur, mais pas les quads de
-        // faisceau 2D : ils troueraient les volumes qui passent derriere.
-        SceneDepthCopy.flushOpaqueAndCapture(Minecraft.getInstance().renderBuffers().bufferSource());
+
+        SceneDepthCopy.flushOpaqueAndCapture(
+                Minecraft.getInstance().renderBuffers().bufferSource()
+        );
     }
 
     private static void registerShaders(final RegisterShadersEvent event) {

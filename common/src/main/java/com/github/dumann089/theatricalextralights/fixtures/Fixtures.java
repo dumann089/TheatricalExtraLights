@@ -147,6 +147,8 @@ public class Fixtures {
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "par_led"), ParLedFixture::new);
     public static final RegistrySupplier<Fixture> MOVING_JET =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "moving_jet"), MovingJetFixture::new);
+    public static final RegistrySupplier<Fixture> MOVING_FAN_JET =
+            FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "moving_fan_jet"), MovingFanJetFixture::new);
     public static final RegistrySupplier<Fixture> WATER_JET_THIN =
             FIXTURES.register(new ResourceLocation(TheatricalExtraLights.MOD_ID, "water_jet_thin"), WaterJetThinFixture::new);
     public static final RegistrySupplier<Fixture> WATER_JET_SPREAD =

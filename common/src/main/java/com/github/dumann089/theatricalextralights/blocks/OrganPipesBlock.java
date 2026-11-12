@@ -36,7 +36,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-public class OrganPipesBlock extends ExtraLightsLightBlock {
+public class OrganPipesBlock extends WaterloggableExtraLightsLightBlock {
 
     public OrganPipesBlock() {
         super(Properties.of()

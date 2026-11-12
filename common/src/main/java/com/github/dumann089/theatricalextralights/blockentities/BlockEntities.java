@@ -98,7 +98,11 @@ public class BlockEntities {
     public static final RegistrySupplier<BlockEntityType<MovingMiniBarBlockEntity>> MOVING_MINI_BAR = BLOCK_ENTITIES.register("moving_mini_bar", () -> BlockEntityType.Builder.of(MovingMiniBarBlockEntity::new, Blocks.MOVING_MINI_BAR_BLOCK.get()).build(null));
 
     public static final RegistrySupplier<BlockEntityType<WaterJetBlockEntity>> WATER_JET = BLOCK_ENTITIES.register("water_jet", () -> BlockEntityType.Builder.of(WaterJetBlockEntity::new, Blocks.WATER_JET_BLOCK.get()).build(null));
+
     public static final RegistrySupplier<BlockEntityType<MovingJetBlockEntity>> MOVING_JET = BLOCK_ENTITIES.register("moving_jet", () -> BlockEntityType.Builder.of(MovingJetBlockEntity::new, Blocks.MOVING_JET_BLOCK.get()).build(null));
+    public static final RegistrySupplier<BlockEntityType<MovingFanJetBlockEntity>> MOVING_FAN_JET = BLOCK_ENTITIES.register("moving_fan_jet", () -> BlockEntityType.Builder.of(MovingFanJetBlockEntity::new, Blocks.MOVING_FAN_JET_BLOCK.get()).build(null));
+
+
     public static final RegistrySupplier<BlockEntityType<WaterJetThinBlockEntity>> WATER_JET_THIN = BLOCK_ENTITIES.register("water_jet_thin", () -> BlockEntityType.Builder.of(WaterJetThinBlockEntity::new, Blocks.WATER_JET_THIN_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<SpinnerBlockEntity>> SPINNER = BLOCK_ENTITIES.register("spinner", () -> BlockEntityType.Builder.of(SpinnerBlockEntity::new, Blocks.SPINNER_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<OrganPipesBlockEntity>> ORGANPIPES = BLOCK_ENTITIES.register("organpipes", () -> BlockEntityType.Builder.of(OrganPipesBlockEntity::new, Blocks.ORGANPIPES_BLOCK.get()).build(null));

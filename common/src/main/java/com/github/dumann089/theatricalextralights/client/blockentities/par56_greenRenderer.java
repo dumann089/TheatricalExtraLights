@@ -84,7 +84,6 @@ public class par56_greenRenderer extends ExtraLightsFixtureRenderer<par56_greenB
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
-
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();
@@ -127,7 +126,7 @@ public class par56_greenRenderer extends ExtraLightsFixtureRenderer<par56_greenB
     public void beforeRenderBeam(par56_greenBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockstate, boolean isHanging, int packedLight, int packedOverlay) {
         if (blockEntity.getDisplayIntensity(partialTicks) <= 0) return;
 
-        Vec3 localLensOffset = new Vec3(0.5f, 1.57f, 0.15f);
+        Vec3 localLensOffset = new Vec3(0.5f, 0.57f, 0.15f);
         float[] panPivot = blockEntity.getFixture().getPanRotationPosition();
         float[] tiltPivot = blockEntity.getFixture().getTiltRotationPosition();
 
@@ -148,8 +147,8 @@ public class par56_greenRenderer extends ExtraLightsFixtureRenderer<par56_greenB
         // 2. Le pasamos 'projectorFacing' en lugar del 'facing' original
         goboProjectors.computeIfAbsent(blockEntity,k->new GoboGPUProjector()).render(
                 blockEntity,multiBufferSource,projectorFacing,partialTicks,isFlipped,blockstate,isHanging,
-                localLensOffset,panPivot,tiltPivot,structuralTransform,35.0f,65.0f,
-                currentPan,currentTilt+180f,3.55f
+                localLensOffset,panPivot,tiltPivot,structuralTransform,0.5f,135.0f,
+                currentPan,currentTilt+180f,1.55f
         );
 
         // Renderizado Volumétrico
@@ -319,6 +318,7 @@ public class par56_greenRenderer extends ExtraLightsFixtureRenderer<par56_greenB
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(facing.getOpposite().toYRot()));
         }
+
         poseStack.translate(-0.5F, 0, -.5F);
         if (isHanging) {
             Optional<BlockState> optionalSupport = blockEntity.getSupportingStructure();

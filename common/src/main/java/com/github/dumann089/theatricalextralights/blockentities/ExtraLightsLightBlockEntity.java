@@ -37,6 +37,9 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
     private float mountYaw;
     private float mountPitch;
     private float mountRoll;
+    private static final float DEFAULT_GOBO_FIELD_ANGLE = 65.0F;
+
+    private float goboFieldAngle = DEFAULT_GOBO_FIELD_ANGLE;
 
     /**
      * Cle d'armement des effets pyro (voir {@link HasSafetyArm}) : desarmee, le DMX est lu
@@ -59,6 +62,31 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
             intensity = 0;
             prevIntensity = 0;
         }
+        if (level != null && !level.isClientSide) {
+            setChanged();
+            BlockEntitySync.sendData(this);
+        } else if (level != null) {
+            StrobeRenderHelper.markSectionDirty(getBlockPos());
+        }
+    }
+
+    public float getGoboFieldAngle() {
+        return goboFieldAngle;
+    }
+
+    public void setGoboFieldAngle(float angle) {
+        if (!Float.isFinite(angle)) {
+            return;
+        }
+
+        float clamped = Mth.clamp(angle, 1.0F, 130.0F);
+
+        if (Math.abs(goboFieldAngle - clamped) < 0.001F) {
+            return;
+        }
+
+        goboFieldAngle = clamped;
+
         if (level != null && !level.isClientSide) {
             setChanged();
             BlockEntitySync.sendData(this);
@@ -495,6 +523,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
     public CompoundTag getUpdateTag() {
         CompoundTag tag = super.getUpdateTag();
         writeMountTransform(tag);
+        tag.putFloat("GoboFieldAngle", goboFieldAngle);
         return tag;
     }
 
@@ -509,6 +538,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         tag.putInt("prevPan", prevPan);
         tag.putInt("prevTilt", prevTilt);
         tag.putInt("prevFocus", prevFocus);
+        tag.putFloat("GoboFieldAngle", goboFieldAngle);
         writeMountTransform(tag);
         if (trackedEntity != null) {
             tag.putUUID("TrackedEntity", trackedEntity);
@@ -557,6 +587,14 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         }
 
         super.read(tag);
+
+        float loadedFieldAngle = tag.contains("GoboFieldAngle")
+                ? tag.getFloat("GoboFieldAngle")
+                : DEFAULT_GOBO_FIELD_ANGLE;
+
+        goboFieldAngle = Float.isFinite(loadedFieldAngle)
+                ? Mth.clamp(loadedFieldAngle, 1.0F, 130.0F)
+                : DEFAULT_GOBO_FIELD_ANGLE;
 
         if (preserveAngles) {
             pan = savedPan;

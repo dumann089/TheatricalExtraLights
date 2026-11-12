@@ -1,0 +1,44 @@
+{
+	"credit": "Made with Blockbench",
+	"textures": {
+		"0": "theatricalextralights:block/moving_fountain",
+		"particle": "theatricalextralights:block/moving_fountain"
+	},
+	"elements": [
+		{
+			"from": [7.1, 11.85, 1],
+			"to": [8.9, 13.65, 8.5],
+			"rotation": {"angle": 0, "axis": "x", "origin": [8, 12.75, 8.25]},
+			"faces": {
+				"north": {"uv": [6, 0, 12, 6], "rotation": 180, "texture": "#0"},
+				"east": {"uv": [6, 0, 12, 6], "rotation": 90, "texture": "#0"},
+				"south": {"uv": [6, 0, 12, 6], "texture": "#0"},
+				"west": {"uv": [6, 0, 12, 6], "rotation": 270, "texture": "#0"},
+				"up": {"uv": [6, 0, 12, 6], "texture": "#0"},
+				"down": {"uv": [6, 0, 12, 6], "rotation": 180, "texture": "#0"}
+			}
+		}
+	],
+	"display": {
+		"firstperson_righthand": {
+			"scale": [0.3, 0.3, 0.3]
+		},
+		"firstperson_lefthand": {
+			"scale": [0.3, 0.3, 0.3]
+		},
+		"gui": {
+			"rotation": [28, -54, 0],
+			"translation": [-0.25, -2.25, 0],
+			"scale": [0.5, 0.5, 0.5]
+		}
+	},
+	"groups": [
+		{
+			"name": "tilt",
+			"origin": [8, 8, 8],
+			"color": 0,
+			"children": [0]
+		}
+	],
+	"format_version": "26.3"
+}

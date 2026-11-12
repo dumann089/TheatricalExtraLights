@@ -1,9 +1,6 @@
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
-import com.github.dumann089.theatricalextralights.client.Beam2DRenderTypes;
-import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
-import com.github.dumann089.theatricalextralights.client.StrobeVisualEffects;
-import com.github.dumann089.theatricalextralights.client.LensBloomCompat;
+import com.github.dumann089.theatricalextralights.client.*;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData;
 import com.github.dumann089.theatricalextralights.client.render.beam.BeamSpotState;
@@ -12,6 +9,7 @@ import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsCo
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import dev.imabad.theatrical.compat.ModCompat;
 import net.minecraft.util.Mth;
 import dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity;
 import dev.imabad.theatrical.blocks.HangableBlock;
@@ -528,34 +526,38 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
     }
 
     // ── Lens Glow ───────────────────────────────────────────────────────────
+    protected void renderLensGlow(VertexConsumer builder, PoseStack stack, int color, float size, float intensity) {
+        final boolean shimmerActive = ModCompat.SHIMMER;
+        final float GLOW_WHITEN = shimmerActive ? 0.80f : 0.0f;
+        final float intensityFrac = Mth.clamp(intensity / 255f, 0f, 1f);
 
-      protected void renderLensGlow(VertexConsumer builder, PoseStack stack, int color, float size, float intensity) {
-        final float GLOW_WHITEN      = 0.80f;
-        final float intensityFrac    = Mth.clamp(intensity / 255f, 0f, 1f);
-
-        // cor pura (sem escalar) — usada pro miolo branco
+        // Color original de la lente.
         int cr = (color >> 16) & 0xFF;
-        int cg = (color >> 8)  & 0xFF;
-        int cb =  color        & 0xFF;
+        int cg = (color >> 8) & 0xFF;
+        int cb = color & 0xFF;
 
-        // cor escalada pela intensidade — usada pro bloom
+        // Color del bloom usado por Shimmer.
         int pr = (int) (cr * intensityFrac);
         int pg = (int) (cg * intensityFrac);
         int pb = (int) (cb * intensityFrac);
 
-        // miolo: clareia a cor pura e faz o FADE pelo alpha (não pela cor)
-        int r = whiten(cr, GLOW_WHITEN);
-        int g = whiten(cg, GLOW_WHITEN);
-        int b = whiten(cb, GLOW_WHITEN);
+        // Con Shimmer, conservar el núcleo blanquecino original.
+        // Sin Shimmer, usar directamente el color real de la lente.
+        int r = LensBloomCompat.whiten(cr, GLOW_WHITEN);
+        int g = LensBloomCompat.whiten(cg, GLOW_WHITEN);
+        int b = LensBloomCompat.whiten(cb, GLOW_WHITEN);
         int a = (int) (255 * intensityFrac);
 
         Matrix4f m = stack.last().pose();
 
-        addBeamVertex(builder, m, r, g, b, a, -size,  size, 0f);
-        addBeamVertex(builder, m, r, g, b, a,  size,  size, 0f);
-        addBeamVertex(builder, m, r, g, b, a,  size, -size, 0f);
+        addBeamVertex(builder, m, r, g, b, a, -size, size, 0f);
+        addBeamVertex(builder, m, r, g, b, a, size, size, 0f);
+        addBeamVertex(builder, m, r, g, b, a, size, -size, 0f);
         addBeamVertex(builder, m, r, g, b, a, -size, -size, 0f);
 
-        LensBloomCompat.renderBloomedQuad(stack, pr, pg, pb, size);
+        // El bloom se ejecuta únicamente cuando Shimmer está activo.
+        if (shimmerActive) {
+            LensBloomCompat.renderBloomedQuad(stack, pr, pg, pb, size);
+        }
     }
 }

@@ -3,6 +3,9 @@ package com.github.dumann089.theatricalextralights.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import com.google.gson.JsonParseException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -140,20 +143,51 @@ public class TheatricalExtraLightsConfig {
 
     public static void load() {
         File parent = FILE.getParentFile();
-        if (parent != null && !parent.exists()) {
-            parent.mkdirs();
+
+        if (parent != null && !parent.exists() && !parent.mkdirs() && !parent.isDirectory()) {
+            System.err.println("[TheatricalExtraLights] No se pudo crear la carpeta de configuración.");
+            INSTANCE = new TheatricalExtraLightsConfig();
+            return;
         }
 
         if (FILE.exists()) {
             try (FileReader reader = new FileReader(FILE)) {
-                TheatricalExtraLightsConfig loaded = GSON.fromJson(reader, TheatricalExtraLightsConfig.class);
+                TheatricalExtraLightsConfig loaded =
+                        GSON.fromJson(reader, TheatricalExtraLightsConfig.class);
+
                 if (loaded != null) {
                     INSTANCE = loaded;
                 }
+            } catch (JsonParseException | IllegalStateException e) {
+                File backup = new File(FILE.getParentFile(), FILE.getName() + ".broken");
+
+                try {
+                    Files.copy(
+                            FILE.toPath(),
+                            backup.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING
+                    );
+                    System.err.println(
+                            "[TheatricalExtraLights] Configuración inválida. Copia guardada en: "
+                                    + backup.getAbsolutePath()
+                    );
+                } catch (IOException backupError) {
+                    System.err.println(
+                            "[TheatricalExtraLights] No se pudo respaldar la configuración dañada."
+                    );
+                    backupError.printStackTrace();
+                }
+
+                INSTANCE = new TheatricalExtraLightsConfig();
+                e.printStackTrace();
             } catch (IOException e) {
+                System.err.println(
+                        "[TheatricalExtraLights] No se pudo leer la configuración."
+                );
                 e.printStackTrace();
             }
         }
+
         save();
     }
 
@@ -285,7 +319,7 @@ public class TheatricalExtraLightsConfig {
     }
 
     public static void setRaymarchMaxBeamsPerFrame(int value) {
-        INSTANCE.raymarchMaxBeamsPerFrame = Math.max(1, Math.min(512, value));
+        INSTANCE.raymarchMaxBeamsPerFrame = Math.max(1, Math.min(300, value));
         save();
     }
 
@@ -313,7 +347,7 @@ public class TheatricalExtraLightsConfig {
 
     public static int getRaymarchMaxBeamsPerFrame() {
         int value = INSTANCE.raymarchMaxBeamsPerFrame != null ? INSTANCE.raymarchMaxBeamsPerFrame : 128;
-        return Math.max(1, Math.min(512, value));
+        return Math.max(1, Math.min(3000, value));
     }
     /* ---- Laser realiste ---- */
 
@@ -503,7 +537,7 @@ public class TheatricalExtraLightsConfig {
         save();
     }
     /** Doit rester egal a LaserFigure.MAX_SEGMENTS et a la borne de boucle de laser_raymarch.fsh. */
-    public static final int MAX_LASER_SEGMENTS = 512;
+    public static final int MAX_LASER_SEGMENTS = 3000;
     public static int getLaserDacPersistenceMs() {
         int value = INSTANCE.laserDacPersistenceMs != null ? INSTANCE.laserDacPersistenceMs : 90;
         return Math.max(20, Math.min(400, value));

@@ -36,7 +36,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-public class SpinnerBlock extends ExtraLightsLightBlock {
+public class SpinnerBlock extends WaterloggableExtraLightsLightBlock {
 
     public SpinnerBlock() {
         super(Properties.of()

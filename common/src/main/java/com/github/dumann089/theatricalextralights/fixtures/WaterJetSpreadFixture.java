@@ -20,13 +20,13 @@ public class WaterJetSpreadFixture extends Fixture {
                     .addSlot(SharedSlots.INTENSITY)
     );
 
-    private static final ResourceLocation TILT_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/water_pump/water_pump_tilt");
-    private static final ResourceLocation PAN_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/water_pump/water_pump_pan");
-    private static final ResourceLocation STATIC_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/water_pump/water_pump_static");
+    private static final ResourceLocation TILT_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/water_pump/2water_pump_tilt");
+    private static final ResourceLocation PAN_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/water_pump/2water_pump_pan");
+    private static final ResourceLocation STATIC_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/water_pump/static");
 
-    private final float[] tiltRotation = new float[]{0.5F, 1.858F, 0.51F};
-    private final float[] panRotation = new float[]{0.5F, 0.988F, .5F};
-    private final float[] beamStartPosition = new float[]{0.5F, 1.765f, 0.518F};
+    private final float[] tiltRotation = new float[]{0.5F, 0.796F, 0.51F};
+    private final float[] panRotation = new float[]{0.5F, 0.0F, .5F};
+    private final float[] beamStartPosition = new float[]{0.5F, 0.796f, 0.518F};
 
     @Override
     public ResourceLocation getTiltModel() {

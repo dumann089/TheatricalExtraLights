@@ -312,8 +312,15 @@ public class ModShaders {
         });
     }
 
+    /**
+     * El gobo usa un ShaderInstance propio. Con Oculus Unlocked instalado en Forge 1.20.1,
+     * ese shader puede ejecutarse aunque haya un shaderpack activo; por eso no se debe
+     * cambiar al shader beacon solo por detectar Iris/Oculus.
+     *
+     * En Fabric/Iris sin una capa equivalente, este modo no garantiza compatibilidad.
+     */
     public static RenderType getGoboRenderType(ResourceLocation texture) {
-        if (ModCompat.SHIMMER || isIrisShaderpackActive()) {
+        if (ModCompat.SHIMMER) {
             return getGoboFallbackRenderType(texture);
         }
 
@@ -328,7 +335,7 @@ public class ModShaders {
                                             false
                                     )
                             )
-                            .setTransparencyState(DECAL_TRANSPARENCY)
+                            .setTransparencyState(ADDITIVE_TRANSPARENCY)
                             .setCullState(RenderStateShard.NO_CULL)
                             .setLightmapState(RenderStateShard.NO_LIGHTMAP)
                             .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
@@ -362,7 +369,7 @@ public class ModShaders {
                                     )
                             )
                             .setTexturingState(CLAMP_TEXTURING)
-                            .setTransparencyState(DECAL_TRANSPARENCY)
+                            .setTransparencyState(ADDITIVE_TRANSPARENCY)
                             .setDepthTestState(
                                     new RenderStateShard.DepthTestStateShard(
                                             "lequal_depth",

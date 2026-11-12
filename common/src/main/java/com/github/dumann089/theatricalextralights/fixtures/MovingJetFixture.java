@@ -23,12 +23,12 @@ public class MovingJetFixture extends Fixture {
                     .addSlot(SharedSlots.TILT)
     );
 
-    private static final ResourceLocation TILT_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/moving_jet/moving_jet_tilt");
-    private static final ResourceLocation PAN_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/moving_jet/moving_jet_pan");
-    private static final ResourceLocation STATIC_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/moving_jet/moving_jet_static");
+    private static final ResourceLocation TILT_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/moving_jet/2moving_jet_tilt");
+    private static final ResourceLocation PAN_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/moving_jet/2moving_jet_pan");
+    private static final ResourceLocation STATIC_MODEL = new ResourceLocation(TheatricalExtraLights.MOD_ID, "block/moving_jet/2moving_jet_static");
 
-    private final float[] tiltRotation = new float[]{0.5F, 1.68F, .5F};
-    private final float[] panRotation = new float[]{0.5F, 1.015F, .5F};
+    private final float[] tiltRotation = new float[]{0.5F, 0.55F, .5F};
+    private final float[] panRotation = new float[]{0.5F, 0.015F, .5F};
 //    private final float[] beamStartPosition = new float[]{0.5F, 1.875F, 0.4375F};
 
 

@@ -34,7 +34,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import com.github.dumann089.theatricalextralights.net.OpenExtraLightsScreenPacket;
 
-public class par56_greenBlock extends ExtraLightsLightBlock {
+public class par56_greenBlock extends WaterloggableExtraLightsLightBlock {
 
     public par56_greenBlock() {
         super(Properties.of()

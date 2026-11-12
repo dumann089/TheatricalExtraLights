@@ -34,7 +34,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-public class FanWaterJetBlock extends ExtraLightsLightBlock {
+public class FanWaterJetBlock extends WaterloggableExtraLightsLightBlock {
 
     public FanWaterJetBlock() {
         super(Properties.of()

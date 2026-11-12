@@ -5,13 +5,15 @@ import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasGo
 import com.github.dumann089.theatricalextralights.client.render.beam.ProfileHeadRender;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
+import com.github.dumann089.theatricalextralights.util.GoboFieldAngleSupport;
 import com.github.dumann089.theatricalextralights.client.CustomGoboLoader;
 import com.github.dumann089.theatricalextralights.client.ModShaders;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 import com.github.dumann089.theatricalextralights.client.render.beam.FramingShutterRender;
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import com.github.dumann089.theatricalextralights.util.FramingShutterState;
-import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.util.GlobalGoboManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -153,9 +155,21 @@ public class GoboGPUProjector {
         if (texture == null) return;
         if (nextTexture == null) nextTexture = texture; // Fallback seguro
 
-        float zoomNorm = be.getPartialZoom(partialTicks) / 255.0f;
-        float coneHalfAngle = minAngle + zoomNorm * (maxAngle - minAngle);
-        float tanHalfAngle = (float)Math.tan(Math.toRadians(coneHalfAngle));
+        float zoomNorm = be.getPartialZoom(partialTicks) / 255.0F;
+
+        float coneHalfAngle = minAngle
+                + zoomNorm * (maxAngle - minAngle);
+
+        if (be instanceof ExtraLightsLightBlockEntity light
+                && GoboFieldAngleSupport.supports(light)) {
+
+            coneHalfAngle = light.getGoboFieldAngle() * 0.5F;
+        }
+
+        float tanHalfAngle = (float) Math.tan(
+                Math.toRadians(coneHalfAngle)
+        );
+
         float maxDistance = TheatricalExtraLightsConfig.getMaxGoboDistance();
         final float finalBaseRadius = baseRadius;
 
@@ -199,170 +213,170 @@ public class GoboGPUProjector {
         intensity *= ProfileHeadRender.prismIntensity(frames.size());
         int facetIdx = 0;
         for (Vec3[] frame : frames) {
-        final int facet = facetIdx++;
-        final Vec3 beamDir = frame[0];
-        final Vec3 axisU = frame[1];
-        final Vec3 axisV = frame[2];
+            final int facet = facetIdx++;
+            final Vec3 beamDir = frame[0];
+            final Vec3 axisU = frame[1];
+            final Vec3 axisV = frame[2];
 
-        Vec3 rayStart = origin.add(beamDir.scale(0.35f));
-        Vec3 rayEnd = origin.add(beamDir.scale(maxDistance));
-        BlockHitResult hitResult = cachedClip(be.getLevel(), facet, rayStart, rayEnd);
+            Vec3 rayStart = origin.add(beamDir.scale(0.35f));
+            Vec3 rayEnd = origin.add(beamDir.scale(maxDistance));
+            BlockHitResult hitResult = cachedClip(be.getLevel(), facet, rayStart, rayEnd);
 
-        final boolean hasOcclusion = hitResult.getType() != HitResult.Type.MISS;
-        final Vec3 finalOcclusionPos = hasOcclusion ? hitResult.getLocation() : Vec3.ZERO;
+            final boolean hasOcclusion = hitResult.getType() != HitResult.Type.MISS;
+            final Vec3 finalOcclusionPos = hasOcclusion ? hitResult.getLocation() : Vec3.ZERO;
 
-        Direction hitDirection = hasOcclusion ? hitResult.getDirection() : Direction.UP;
-        final Vec3 finalOcclusionNormal = new Vec3(hitDirection.getStepX(), hitDirection.getStepY(), hitDirection.getStepZ()).normalize();
+            Direction hitDirection = hasOcclusion ? hitResult.getDirection() : Direction.UP;
+            final Vec3 finalOcclusionNormal = new Vec3(hitDirection.getStepX(), hitDirection.getStepY(), hitDirection.getStepZ()).normalize();
 
-        // Le frost adoucit le bord comme un defocus supplementaire.
-        final float finalFocus = Math.min(1.0f, (be.getFocus() + be.getFrost()) / 255.0f);
-        final float finalIntensity = intensity;
-        final float finalTanHalfAngle = tanHalfAngle;
-        final float finalMaxDistance = maxDistance;
-        final float finalRotation = be.getGoboRotation();
-        final ResourceLocation finalTexture = texture;
-        final ResourceLocation finalNextTexture = nextTexture;
-        final float finalWheelTransition = wheelTransition;
-        final FramingShutterState.Snapshot finalShutters = FramingShutterRender.snapshot(be, partialTicks);
-        final ResourceLocation animTex = be.getAnimationTexture();
-        final com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData.Animation finalAnimation =
-                animTex == null ? null : new com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData.Animation(
-                        animTex, be.getAnimationAngleDeg(), be.getAnimationOffset(partialTicks));
+            // Le frost adoucit le bord comme un defocus supplementaire.
+            final float finalFocus = Math.min(1.0f, (be.getFocus() + be.getFrost()) / 255.0f);
+            final float finalIntensity = intensity;
+            final float finalTanHalfAngle = tanHalfAngle;
+            final float finalMaxDistance = maxDistance;
+            final float finalRotation = be.getGoboRotation();
+            final ResourceLocation finalTexture = texture;
+            final ResourceLocation finalNextTexture = nextTexture;
+            final float finalWheelTransition = wheelTransition;
+            final FramingShutterState.Snapshot finalShutters = FramingShutterRender.snapshot(be, partialTicks);
+            final ResourceLocation animTex = be.getAnimationTexture();
+            final com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData.Animation finalAnimation =
+                    animTex == null ? null : new com.github.dumann089.theatricalextralights.client.render.beam.BeamRenderData.Animation(
+                            animTex, be.getAnimationAngleDeg(), be.getAnimationOffset(partialTicks));
 
-        final BlockPos finalBlockPos = be.getBlockPos();
-        final com.github.dumann089.theatricalextralights.client.render.beam.shadow.BeamShadowOccluders.Snapshot finalShadows =
-                TheatricalExtraLightsConfig.isBeamShadowsEnabled()
-                        ? com.github.dumann089.theatricalextralights.client.render.beam.shadow.BeamShadowOccluders.get(
-                                be.getLevel(), finalBlockPos, origin, beamDir,
-                                (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance),
-                                (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance) * tanHalfAngle + finalBaseRadius)
-                        : null;
-        final int finalColor = be.getPartialColour(partialTicks) == 0 ? 0xFFFFFF : be.getPartialColour(partialTicks);
+            final BlockPos finalBlockPos = be.getBlockPos();
+            final com.github.dumann089.theatricalextralights.client.render.beam.shadow.BeamShadowOccluders.Snapshot finalShadows =
+                    TheatricalExtraLightsConfig.isBeamShadowsEnabled()
+                            ? com.github.dumann089.theatricalextralights.client.render.beam.shadow.BeamShadowOccluders.get(
+                            be.getLevel(), finalBlockPos, origin, beamDir,
+                            (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance),
+                            (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance) * tanHalfAngle + finalBaseRadius)
+                            : null;
+            final int finalColor = be.getPartialColour(partialTicks) == 0 ? 0xFFFFFF : be.getPartialColour(partialTicks);
 
-        LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
-            @Override
-            public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
-                Minecraft mc = Minecraft.getInstance();
-                ShaderInstance shader = ModShaders.goboProjectorShader;
-                if (shader == null || mc.getMainRenderTarget() == null) return;
+            LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
+                @Override
+                public void render(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Camera camera, float partialTick) {
+                    Minecraft mc = Minecraft.getInstance();
+                    ShaderInstance shader = ModShaders.goboProjectorShader;
+                    if (shader == null || mc.getMainRenderTarget() == null) return;
 
-                PoseStack viewStack = new PoseStack();
-                viewStack.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
-                viewStack.mulPose(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
-                Matrix4f viewMatrix = viewStack.last().pose();
-                Vec3 cameraPos = camera.getPosition();
+                    PoseStack viewStack = new PoseStack();
+                    viewStack.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
+                    viewStack.mulPose(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
+                    Matrix4f viewMatrix = viewStack.last().pose();
+                    Vec3 cameraPos = camera.getPosition();
 
-                tmpPos.set((float)(origin.x - cameraPos.x), (float)(origin.y - cameraPos.y), (float)(origin.z - cameraPos.z), 1.0f);
-                viewMatrix.transform(tmpPos);
-                tmpDir.set((float)beamDir.x, (float)beamDir.y, (float)beamDir.z, 0.0f);
-                viewMatrix.transform(tmpDir);
-                tmpDir.normalize();
-                tmpU.set((float)axisU.x, (float)axisU.y, (float)axisU.z, 0.0f);
-                viewMatrix.transform(tmpU);
-                tmpU.normalize();
-                tmpV.set((float)axisV.x, (float)axisV.y, (float)axisV.z, 0.0f);
-                viewMatrix.transform(tmpV);
-                tmpV.normalize();
-
-                shader.safeGetUniform("LightPos").set(tmpPos.x(), tmpPos.y(), tmpPos.z());
-                shader.safeGetUniform("LightDir").set(tmpDir.x(), tmpDir.y(), tmpDir.z());
-                shader.safeGetUniform("AxisU").set(tmpU.x(), tmpU.y(), tmpU.z());
-                shader.safeGetUniform("AxisV").set(tmpV.x(), tmpV.y(), tmpV.z());
-                shader.safeGetUniform("TanHalfAngle").set(finalTanHalfAngle);
-                shader.safeGetUniform("MaxLen").set(finalMaxDistance);
-                shader.safeGetUniform("MaxGoboDist").set(finalMaxDistance);
-                shader.safeGetUniform("GoboRotation").set(finalRotation);
-                shader.safeGetUniform("WheelTransition").set(finalWheelTransition);
-                shader.safeGetUniform("Intensity").set(finalIntensity);
-                shader.safeGetUniform("Focus").set(finalFocus);
-                shader.safeGetUniform("GoboBrightness").set(TheatricalExtraLightsConfig.getGoboBrightness());
-                shader.safeGetUniform("SurfaceTintStrength").set(TheatricalExtraLightsConfig.getGoboSurfaceTint());
-                shader.safeGetUniform("BaseRadius").set(finalBaseRadius);
-                FramingShutterRender.applyUniforms(shader, finalShutters);
-                com.github.dumann089.theatricalextralights.client.render.beam.raymarch.RaymarchBeamRenderer.applyAnimationUniforms(shader, finalAnimation);
-                com.github.dumann089.theatricalextralights.client.render.beam.raymarch.RaymarchBeamRenderer.applyShadowUniforms(shader, finalShadows);
-                shader.safeGetUniform("LightPosW").set((float) origin.x, (float) origin.y, (float) origin.z);
-                shader.safeGetUniform("LightDirW").set((float) beamDir.x, (float) beamDir.y, (float) beamDir.z);
-                shader.safeGetUniform("AxisUW").set((float) axisU.x, (float) axisU.y, (float) axisU.z);
-                shader.safeGetUniform("AxisVW").set((float) axisV.x, (float) axisV.y, (float) axisV.z);
-
-                if (hasOcclusion) {
-                    tmpPos.set((float)(finalOcclusionPos.x - cameraPos.x), (float)(finalOcclusionPos.y - cameraPos.y), (float)(finalOcclusionPos.z - cameraPos.z), 1.0f);
+                    tmpPos.set((float)(origin.x - cameraPos.x), (float)(origin.y - cameraPos.y), (float)(origin.z - cameraPos.z), 1.0f);
                     viewMatrix.transform(tmpPos);
-                    shader.safeGetUniform("OcclusionPos").set(tmpPos.x(), tmpPos.y(), tmpPos.z());
-
-                    tmpDir.set((float)finalOcclusionNormal.x, (float)finalOcclusionNormal.y, (float)finalOcclusionNormal.z, 0.0f);
+                    tmpDir.set((float)beamDir.x, (float)beamDir.y, (float)beamDir.z, 0.0f);
                     viewMatrix.transform(tmpDir);
                     tmpDir.normalize();
-                    shader.safeGetUniform("OcclusionNormal").set(tmpDir.x(), tmpDir.y(), tmpDir.z());
-                    shader.safeGetUniform("OcclusionEnabled").set(1.0f);
-                } else {
-                    shader.safeGetUniform("OcclusionPos").set(0.0f, 0.0f, 0.0f);
-                    shader.safeGetUniform("OcclusionNormal").set(0.0f, 1.0f, 0.0f);
-                    shader.safeGetUniform("OcclusionEnabled").set(0.0f);
+                    tmpU.set((float)axisU.x, (float)axisU.y, (float)axisU.z, 0.0f);
+                    viewMatrix.transform(tmpU);
+                    tmpU.normalize();
+                    tmpV.set((float)axisV.x, (float)axisV.y, (float)axisV.z, 0.0f);
+                    viewMatrix.transform(tmpV);
+                    tmpV.normalize();
+
+                    shader.safeGetUniform("LightPos").set(tmpPos.x(), tmpPos.y(), tmpPos.z());
+                    shader.safeGetUniform("LightDir").set(tmpDir.x(), tmpDir.y(), tmpDir.z());
+                    shader.safeGetUniform("AxisU").set(tmpU.x(), tmpU.y(), tmpU.z());
+                    shader.safeGetUniform("AxisV").set(tmpV.x(), tmpV.y(), tmpV.z());
+                    shader.safeGetUniform("TanHalfAngle").set(finalTanHalfAngle);
+                    shader.safeGetUniform("MaxLen").set(finalMaxDistance);
+                    shader.safeGetUniform("MaxGoboDist").set(finalMaxDistance);
+                    shader.safeGetUniform("GoboRotation").set(finalRotation);
+                    shader.safeGetUniform("WheelTransition").set(finalWheelTransition);
+                    shader.safeGetUniform("Intensity").set(finalIntensity);
+                    shader.safeGetUniform("Focus").set(finalFocus);
+                    shader.safeGetUniform("GoboBrightness").set(TheatricalExtraLightsConfig.getGoboBrightness());
+                    shader.safeGetUniform("SurfaceTintStrength").set(TheatricalExtraLightsConfig.getGoboSurfaceTint());
+                    shader.safeGetUniform("BaseRadius").set(finalBaseRadius);
+                    FramingShutterRender.applyUniforms(shader, finalShutters);
+                    com.github.dumann089.theatricalextralights.client.render.beam.raymarch.RaymarchBeamRenderer.applyAnimationUniforms(shader, finalAnimation);
+                    com.github.dumann089.theatricalextralights.client.render.beam.raymarch.RaymarchBeamRenderer.applyShadowUniforms(shader, finalShadows);
+                    shader.safeGetUniform("LightPosW").set((float) origin.x, (float) origin.y, (float) origin.z);
+                    shader.safeGetUniform("LightDirW").set((float) beamDir.x, (float) beamDir.y, (float) beamDir.z);
+                    shader.safeGetUniform("AxisUW").set((float) axisU.x, (float) axisU.y, (float) axisU.z);
+                    shader.safeGetUniform("AxisVW").set((float) axisV.x, (float) axisV.y, (float) axisV.z);
+
+                    if (hasOcclusion) {
+                        tmpPos.set((float)(finalOcclusionPos.x - cameraPos.x), (float)(finalOcclusionPos.y - cameraPos.y), (float)(finalOcclusionPos.z - cameraPos.z), 1.0f);
+                        viewMatrix.transform(tmpPos);
+                        shader.safeGetUniform("OcclusionPos").set(tmpPos.x(), tmpPos.y(), tmpPos.z());
+
+                        tmpDir.set((float)finalOcclusionNormal.x, (float)finalOcclusionNormal.y, (float)finalOcclusionNormal.z, 0.0f);
+                        viewMatrix.transform(tmpDir);
+                        tmpDir.normalize();
+                        shader.safeGetUniform("OcclusionNormal").set(tmpDir.x(), tmpDir.y(), tmpDir.z());
+                        shader.safeGetUniform("OcclusionEnabled").set(1.0f);
+                    } else {
+                        shader.safeGetUniform("OcclusionPos").set(0.0f, 0.0f, 0.0f);
+                        shader.safeGetUniform("OcclusionNormal").set(0.0f, 1.0f, 0.0f);
+                        shader.safeGetUniform("OcclusionEnabled").set(0.0f);
+                    }
+
+                    int r = (finalColor >> 16) & 0xFF;
+                    int g = (finalColor >> 8) & 0xFF;
+                    int b = finalColor & 0xFF;
+                    shader.safeGetUniform("LightColor").set(r / 255.0f, g / 255.0f, b / 255.0f);
+                    shader.safeGetUniform("ScreenSize").set((float)mc.getMainRenderTarget().width, (float)mc.getMainRenderTarget().height);
+
+                    Matrix4f inverseProjection = new Matrix4f(RenderSystem.getProjectionMatrix()).invert();
+                    shader.safeGetUniform("InvProjMat").set(inverseProjection);
+
+                    RenderType renderType = ModShaders.getGoboRenderType(finalTexture);
+                    renderType.setupRenderState();
+                    RenderSystem.disableDepthTest();
+                    RenderSystem.depthMask(false);
+                    RenderSystem.enableBlend();
+                    RenderSystem.setShader(() -> shader);
+
+                    int goboTexture = mc.getTextureManager().getTexture(finalTexture).getId();
+                    RenderSystem.setShaderTexture(0, goboTexture);
+                    shader.setSampler("Sampler0", goboTexture);
+
+                    int depthTexture = mc.getMainRenderTarget().getDepthTextureId();
+                    RenderSystem.setShaderTexture(1, depthTexture);
+                    shader.setSampler("Sampler1", depthTexture);
+
+                    int nextGoboTextureId = mc.getTextureManager().getTexture(finalNextTexture).getId();
+                    RenderSystem.setShaderTexture(2, nextGoboTextureId);
+                    shader.setSampler("Sampler2", nextGoboTextureId);
+
+                    int animTextureId = mc.getTextureManager().getTexture(finalAnimation != null ? finalAnimation.texture() : finalTexture).getId();
+                    RenderSystem.setShaderTexture(3, animTextureId);
+                    shader.setSampler("Sampler3", animTextureId);
+
+                    int shadowTextureId = finalShadows != null ? finalShadows.textureId() : goboTexture;
+                    RenderSystem.setShaderTexture(4, shadowTextureId);
+                    shader.setSampler("Sampler4", shadowTextureId);
+
+                    int sceneColorTexture = captureSceneColor(mc.getMainRenderTarget().width, mc.getMainRenderTarget().height);
+                    RenderSystem.setShaderTexture(5, sceneColorTexture);
+                    shader.setSampler("Sampler5", sceneColorTexture);
+
+                    shader.apply();
+
+                    Tesselator tess = Tesselator.getInstance();
+                    BufferBuilder bb = tess.getBuilder();
+                    bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
+                    bb.vertex(-1.0f, -1.0f, 0.0f).color(255, 255, 255, 255).uv(0.0f, 0.0f).endVertex();
+                    bb.vertex(1.0f, -1.0f, 0.0f).color(255, 255, 255, 255).uv(1.0f, 0.0f).endVertex();
+                    bb.vertex(1.0f, 1.0f, 0.0f).color(255, 255, 255, 255).uv(1.0f, 1.0f).endVertex();
+                    bb.vertex(-1.0f, 1.0f, 0.0f).color(255, 255, 255, 255).uv(0.0f, 1.0f).endVertex();
+                    BufferUploader.drawWithShader(bb.end());
+
+                    RenderSystem.enableDepthTest();
+                    RenderSystem.depthMask(true);
+                    renderType.clearRenderState();
                 }
 
-                int r = (finalColor >> 16) & 0xFF;
-                int g = (finalColor >> 8) & 0xFF;
-                int b = finalColor & 0xFF;
-                shader.safeGetUniform("LightColor").set(r / 255.0f, g / 255.0f, b / 255.0f);
-                shader.safeGetUniform("ScreenSize").set((float)mc.getMainRenderTarget().width, (float)mc.getMainRenderTarget().height);
-
-                Matrix4f inverseProjection = new Matrix4f(RenderSystem.getProjectionMatrix()).invert();
-                shader.safeGetUniform("InvProjMat").set(inverseProjection);
-
-                RenderType renderType = ModShaders.getGoboRenderType(finalTexture);
-                renderType.setupRenderState();
-                RenderSystem.disableDepthTest();
-                RenderSystem.depthMask(false);
-                RenderSystem.enableBlend();
-                RenderSystem.setShader(() -> shader);
-
-                int goboTexture = mc.getTextureManager().getTexture(finalTexture).getId();
-                RenderSystem.setShaderTexture(0, goboTexture);
-                shader.setSampler("Sampler0", goboTexture);
-
-                int depthTexture = mc.getMainRenderTarget().getDepthTextureId();
-                RenderSystem.setShaderTexture(1, depthTexture);
-                shader.setSampler("Sampler1", depthTexture);
-
-                int nextGoboTextureId = mc.getTextureManager().getTexture(finalNextTexture).getId();
-                RenderSystem.setShaderTexture(2, nextGoboTextureId);
-                shader.setSampler("Sampler2", nextGoboTextureId);
-
-                int animTextureId = mc.getTextureManager().getTexture(finalAnimation != null ? finalAnimation.texture() : finalTexture).getId();
-                RenderSystem.setShaderTexture(3, animTextureId);
-                shader.setSampler("Sampler3", animTextureId);
-
-                int shadowTextureId = finalShadows != null ? finalShadows.textureId() : goboTexture;
-                RenderSystem.setShaderTexture(4, shadowTextureId);
-                shader.setSampler("Sampler4", shadowTextureId);
-
-                int sceneColorTexture = captureSceneColor(mc.getMainRenderTarget().width, mc.getMainRenderTarget().height);
-                RenderSystem.setShaderTexture(5, sceneColorTexture);
-                shader.setSampler("Sampler5", sceneColorTexture);
-
-                shader.apply();
-
-                Tesselator tess = Tesselator.getInstance();
-                BufferBuilder bb = tess.getBuilder();
-                bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-                bb.vertex(-1.0f, -1.0f, 0.0f).color(255, 255, 255, 255).uv(0.0f, 0.0f).endVertex();
-                bb.vertex(1.0f, -1.0f, 0.0f).color(255, 255, 255, 255).uv(1.0f, 0.0f).endVertex();
-                bb.vertex(1.0f, 1.0f, 0.0f).color(255, 255, 255, 255).uv(1.0f, 1.0f).endVertex();
-                bb.vertex(-1.0f, 1.0f, 0.0f).color(255, 255, 255, 255).uv(0.0f, 1.0f).endVertex();
-                BufferUploader.drawWithShader(bb.end());
-
-                RenderSystem.enableDepthTest();
-                RenderSystem.depthMask(true);
-                renderType.clearRenderState();
-            }
-
-            @Override
-            public Vec3 getPos(float partialTick) {
-                return finalBlockPos.getCenter();
-            }
-        });
+                @Override
+                public Vec3 getPos(float partialTick) {
+                    return finalBlockPos.getCenter();
+                }
+            });
         }
     }
 
@@ -390,6 +404,17 @@ public class GoboGPUProjector {
             float[] tilts,
             float[] structuralTransform
     ) {
+        FixtureMountTransform.apply(ps, be);
+
+        String fixturePath = "";
+        if (be instanceof ExtraLightsLightBlockEntity extra
+                && extra.getFixtureId() != null) {
+            fixturePath = extra.getFixtureId().getPath();
+        }
+
+        boolean negativePanAxis = fixturePath.equals("led_fountain")
+                || fixturePath.startsWith("par56_");
+
         ps.translate(0.5f, 0f, 0.5f);
 
         if (isHanging) {
@@ -438,43 +463,10 @@ public class GoboGPUProjector {
             ps.translate(-0.5f, -0.5f, -0.5f);
         }
 
-        if (be instanceof ExtraLightsLightBlockEntity mountable
-                && mountable.hasMountTransform()) {
-
-            ps.translate(0.5f, 0.5f, 0.5f);
-
-            float yaw = mountable.getMountYaw();
-            float pitch = mountable.getMountPitch();
-            float roll = mountable.getMountRoll();
-
-            if (pitch != 0.0f) {
-                ps.mulPose(
-                        Axis.ZP.rotationDegrees(-pitch)
-                );
-            }
-
-            if (yaw != 0.0f) {
-                ps.mulPose(
-                        Axis.YP.rotationDegrees(yaw)
-                );
-            }
-
-            if (roll != 0.0f) {
-                ps.mulPose(
-                        Axis.XP.rotationDegrees(-roll)
-                );
-            }
-            ps.translate(
-                    -mountable.getMountOffsetZ(),
-                    -mountable.getMountOffsetY(),
-                    -mountable.getMountOffsetX()
-            );
-
-            ps.translate(-0.5f, -0.5f, -0.5f);
-        }
-
         ps.translate(pans[0], pans[1], pans[2]);
-        ps.mulPose(Axis.YP.rotationDegrees(panDeg));
+        ps.mulPose(
+                (negativePanAxis ? Axis.YN : Axis.YP).rotationDegrees(panDeg)
+        );
         ps.translate(-pans[0], -pans[1], -pans[2]);
 
         ps.translate(tilts[0], tilts[1], tilts[2]);
@@ -487,5 +479,27 @@ public class GoboGPUProjector {
 
         ps.mulPose(Axis.XP.rotationDegrees(tiltDeg));
         ps.translate(-tilts[0], -tilts[1], -tilts[2]);
+    }
+
+    private static boolean usesNegativePanAxis(
+            BaseLightBlockEntity be,
+            boolean isFlipped
+    ) {
+        if (isFlipped) {
+            return true;
+        }
+
+        if (be instanceof ExtraLightsLightBlockEntity extra) {
+            ResourceLocation fixtureId = extra.getFixtureId();
+
+            if (fixtureId != null) {
+                String path = fixtureId.getPath();
+
+                return path.equals("led_fountain")
+                        || path.startsWith("par56_");
+            }
+        }
+
+        return false;
     }
 }

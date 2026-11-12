@@ -34,7 +34,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-public class WaltzCurtainBlock extends ExtraLightsLightBlock {
+public class WaltzCurtainBlock extends WaterloggableExtraLightsLightBlock {
 
     public WaltzCurtainBlock() {
         super(Properties.of()

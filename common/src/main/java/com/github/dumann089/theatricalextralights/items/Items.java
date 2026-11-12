@@ -784,6 +784,10 @@ public class Items {
             "moving_jet",
             () -> new BlockItem(Blocks.MOVING_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
+    public static final RegistrySupplier<Item> MOVING_FAN_JET = ITEMS.register(
+            "moving_fan_jet",
+            () -> new BlockItem(Blocks.MOVING_FAN_JET_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
+    );
     public static final RegistrySupplier<Item> WATER_JET_THIN = ITEMS.register(
             "water_jet_thin",
             () -> new BlockItem(Blocks.WATER_JET_THIN_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))

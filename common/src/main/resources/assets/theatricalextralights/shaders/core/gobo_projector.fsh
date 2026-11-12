@@ -4,12 +4,15 @@ uniform sampler2D Sampler0;
 uniform sampler2D Sampler1;
 uniform sampler2D Sampler2;
 uniform mat4 InvProjMat;
+
 uniform vec3 LightPos;
 uniform vec3 LightDir;
 uniform vec3 AxisU;
 uniform vec3 AxisV;
+
 uniform vec3 OcclusionPos;
 uniform vec3 OcclusionNormal;
+
 uniform float TanHalfAngle;
 uniform float BaseRadius;
 uniform float MaxLen;
@@ -20,59 +23,39 @@ uniform float Intensity;
 uniform float Focus;
 uniform float GoboBrightness;
 uniform float SurfaceTintStrength;
+
 uniform vec3 LightColor;
 uniform vec2 ScreenSize;
 uniform float OcclusionEnabled;
 
-// Module de couteaux (framing shutters) : 4 lames haut / droite / bas / gauche.
 uniform float ShutterEnabled;
-uniform vec4 BladeA;         // insertion du coin A de chaque lame, 0 (sorti) .. 1 (rentre a fond)
-uniform vec4 BladeB;         // insertion du coin B de chaque lame
-uniform float FrameRotation; // rotation du module complet, radians
+uniform vec4 BladeA;
+uniform vec4 BladeB;
+uniform float FrameRotation;
 
-// ── Animation wheel ──────────────────────────────────────────────────────────
-// Texture d'effet (flammes, eau, nuages...) qui defile devant la porte, dans le repere
-// (u,v) normalise au rayon du faisceau. Une tuile couvre le diametre de la porte.
 uniform sampler2D Sampler3;
 uniform float AnimEnabled;
-uniform float AnimAngle;   // orientation, radians
-uniform float AnimOffset;  // defilement, en tuiles
+uniform float AnimAngle;
+uniform float AnimOffset;
 
-float animationMask(float u, float v, float radius) {
-    if (AnimEnabled < 0.5) return 1.0;
-    float ca = cos(AnimAngle);
-    float sa = sin(AnimAngle);
-    vec2 p = vec2(u, v) / max(radius, 0.0001);
-    vec2 r = vec2(p.x * ca - p.y * sa, p.x * sa + p.y * ca);
-    vec2 uv = fract(vec2(r.x * 0.5 + AnimOffset, r.y * 0.5));
-    float a = dot(texture(Sampler3, uv).rgb, vec3(0.299, 0.587, 0.114));
-    return clamp(a, 0.0, 1.0);
-}
-
-// Repere monde du faisceau, pour retrouver la position monde du point eclaire.
 uniform vec3 LightPosW;
 uniform vec3 LightDirW;
 uniform vec3 AxisUW;
 uniform vec3 AxisVW;
 
-// ── Ombres portees ───────────────────────────────────────────────────────────
-// Grille d'occupation des blocs (Sampler4 : N tranches empilees, N x N*N, rouge = solide) et
-// jusqu'a 8 boites d'entites. Un point est ombre si le segment point→source traverse un
-// solide.
 uniform sampler2D Sampler4;
-// Live snapshot of the scene's own colour buffer (terrain, entities, item frames - whatever is
-// actually on screen), captured right before this quad is drawn. Used to tint the gobo with the real
-// colour of whatever it lands on, regardless of what kind of thing that is.
 uniform sampler2D Sampler5;
+
 uniform float ShadowEnabled;
-uniform vec3 VoxelOrigin;   // coin min de la grille, monde
-uniform float VoxelCell;    // taille d'une cellule, blocs
-uniform float VoxelSize;    // cellules par axe
+uniform vec3 VoxelOrigin;
+uniform float VoxelCell;
+uniform float VoxelSize;
 uniform float OccCount;
-// Boite des cellules solides de la grille (monde), voir beam_raymarch.fsh.
+
 uniform float SolidAny;
 uniform vec3 SolidMin;
 uniform vec3 SolidMax;
+
 uniform vec3 OccMin0;
 uniform vec3 OccMax0;
 uniform vec3 OccMin1;
@@ -90,272 +73,805 @@ uniform vec3 OccMax6;
 uniform vec3 OccMin7;
 uniform vec3 OccMax7;
 
-float voxelSolid(vec3 wp) {
-    vec3 c = (wp - VoxelOrigin) / VoxelCell;
-    if (c.x < 0.0 || c.y < 0.0 || c.z < 0.0 || c.x >= VoxelSize || c.y >= VoxelSize || c.z >= VoxelSize) return 0.0;
-    vec3 i = floor(c);
-    vec2 uv = vec2((i.x + 0.5) / VoxelSize, (i.z * VoxelSize + i.y + 0.5) / (VoxelSize * VoxelSize));
-    return texture(Sampler4, uv).r;
-}
-
-// Reads the live scene-colour snapshot (Sampler5) at this fragment's own screen position - i.e.
-// whatever the game actually drew there this frame, be it a block, a mob, an armor stand, a dropped
-// item, anything. gl_FragCoord.xy is in window pixels, so dividing by ScreenSize gives 0..1 UV.
-vec3 sampleSceneColor() {
-    return texture(Sampler5, gl_FragCoord.xy / ScreenSize).rgb;
-}
-
-bool segmentHitsBox(vec3 a, vec3 b, vec3 bmin, vec3 bmax) {
-    vec3 d = b - a;
-    vec3 dd = vec3(
-        abs(d.x) < 1.0e-6 ? 1.0e-6 : d.x,
-        abs(d.y) < 1.0e-6 ? 1.0e-6 : d.y,
-        abs(d.z) < 1.0e-6 ? 1.0e-6 : d.z);
-    vec3 t0 = (bmin - a) / dd;
-    vec3 t1 = (bmax - a) / dd;
-    vec3 tmin = min(t0, t1);
-    vec3 tmax = max(t0, t1);
-    float tn = max(max(tmin.x, tmin.y), tmin.z);
-    float tf = min(min(tmax.x, tmax.y), tmax.z);
-    return tf >= max(tn, 0.0) && tn <= 1.0;
-}
-
-// startOffset : distance (blocs) a partir du point avant de tester les blocs, pour ne pas
-// se faire ombrer par la surface sur laquelle on est.
-float shadowFactor(vec3 wp, vec3 lightW, float startOffset) {
-    if (ShadowEnabled < 0.5) return 1.0;
-    vec3 toL = lightW - wp;
-    float len = length(toL);
-    if (len < 0.75) return 1.0;
-    if (OccCount > 0.5 && segmentHitsBox(wp, lightW, OccMin0, OccMax0)) return 0.0;
-    if (OccCount > 1.5 && segmentHitsBox(wp, lightW, OccMin1, OccMax1)) return 0.0;
-    if (OccCount > 2.5 && segmentHitsBox(wp, lightW, OccMin2, OccMax2)) return 0.0;
-    if (OccCount > 3.5 && segmentHitsBox(wp, lightW, OccMin3, OccMax3)) return 0.0;
-    if (OccCount > 4.5 && segmentHitsBox(wp, lightW, OccMin4, OccMax4)) return 0.0;
-    if (OccCount > 5.5 && segmentHitsBox(wp, lightW, OccMin5, OccMax5)) return 0.0;
-    if (OccCount > 6.5 && segmentHitsBox(wp, lightW, OccMin6, OccMax6)) return 0.0;
-    if (OccCount > 7.5 && segmentHitsBox(wp, lightW, OccMin7, OccMax7)) return 0.0;
-    if (SolidAny < 0.5) return 1.0;
-    vec3 dirL = toL / len;
-    float start = min(startOffset, len * 0.5);
-    float span = len - start - VoxelCell * 0.75;   // on s'arrete avant la cellule de la source
-    if (span <= 0.0) return 1.0;
-    int steps = int(clamp(ceil(span / (VoxelCell * 0.9)), 2.0, 32.0));
-    float ds = span / float(steps);
-
-    // Seulement la portion du trajet qui traverse la boite des cellules solides.
-    vec3 dd = vec3(
-        abs(dirL.x) < 1.0e-6 ? 1.0e-6 : dirL.x,
-        abs(dirL.y) < 1.0e-6 ? 1.0e-6 : dirL.y,
-        abs(dirL.z) < 1.0e-6 ? 1.0e-6 : dirL.z);
-    vec3 b0 = (SolidMin - 0.01 - wp) / dd;
-    vec3 b1 = (SolidMax + 0.01 - wp) / dd;
-    float sIn = max(max(min(b0.x, b1.x), min(b0.y, b1.y)), min(b0.z, b1.z));
-    float sOut = min(min(max(b0.x, b1.x), max(b0.y, b1.y)), max(b0.z, b1.z));
-    if (sOut < sIn) return 1.0;
-    int i0 = max(0, int(floor((sIn - start) / ds - 0.5)));
-    int i1 = min(steps - 1, int(ceil((sOut - start) / ds - 0.5)));
-    for (int i = 0; i < 32; i++) {
-        if (i + i0 > i1) break;
-        vec3 p = wp + dirL * (start + ds * (float(i + i0) + 0.5));
-        if (voxelSolid(p) > 0.5) return 0.0;
-    }
-    return 1.0;
-}
-
-// Convention A/B (grandMA) : le bord de la lame relie les deux coins A et B.
-float bladeMask(vec2 p, vec2 n, float insA, float insB, float soft){
-    if(insA<=0.0005&&insB<=0.0005)return 1.0;
-    vec2 t=vec2(n.y,-n.x);
-    const float R=1.15;
-    vec2 cornerA=n*(R-2.0*R*insA)-t*R;
-    vec2 cornerB=n*(R-2.0*R*insB)+t*R;
-    vec2 edge=cornerB-cornerA;
-    vec2 m=normalize(vec2(edge.y,-edge.x));
-    if(dot(m,n)<0.0)m=-m;
-    float sd=dot(p-cornerA,m);
-    return 1.0-smoothstep(-soft,soft,sd);
-}
-
-float shutterMask(float u,float v,float radius,float soft){
-    if(ShutterEnabled<0.5)return 1.0;
-    vec2 p=vec2(u,v)/max(radius,0.0001);
-    float cr=cos(-FrameRotation);
-    float sr=sin(-FrameRotation);
-    vec2 q=vec2(p.x*cr-p.y*sr,p.x*sr+p.y*cr);
-    float m=1.0;
-    m*=bladeMask(q,vec2(0.0,1.0),BladeA.x,BladeB.x,soft);
-    m*=bladeMask(q,vec2(1.0,0.0),BladeA.y,BladeB.y,soft);
-    m*=bladeMask(q,vec2(0.0,-1.0),BladeA.z,BladeB.z,soft);
-    m*=bladeMask(q,vec2(-1.0,0.0),BladeA.w,BladeB.w,soft);
-    return m;
-}
-
 in vec4 VertexColor;
 out vec4 fragColor;
 
-vec3 reconstructViewPos(vec2 uv,float depth){
-    vec4 clip=vec4(uv*2.0-1.0,depth*2.0-1.0,1.0);
-    vec4 view=InvProjMat*clip;
-    return view.xyz/max(view.w,0.000001);
+
+// -----------------------------------------------------------------------------
+// Utilidades de color
+// -----------------------------------------------------------------------------
+
+float luminance(vec3 color) {
+    return dot(color, vec3(0.299, 0.587, 0.114));
 }
 
-vec4 sampleGoboBlur(sampler2D samp, vec2 uv, float blur){
-    if(blur<=0.00001)return texture(samp,uv);
-
-    float b=blur;
-    float s=b*0.70710678;
-
-    vec4 c=texture(samp,uv)*0.20;
-
-    c+=texture(samp,uv+vec2(b,0.0))*0.10;
-    c+=texture(samp,uv-vec2(b,0.0))*0.10;
-    c+=texture(samp,uv+vec2(0.0,b))*0.10;
-    c+=texture(samp,uv-vec2(0.0,b))*0.10;
-
-    c+=texture(samp,uv+vec2(s,s))*0.075;
-    c+=texture(samp,uv+vec2(-s,s))*0.075;
-    c+=texture(samp,uv+vec2(s,-s))*0.075;
-    c+=texture(samp,uv+vec2(-s,-s))*0.075;
-
-    c+=texture(samp,uv+vec2(b*1.5,0.0))*0.025;
-    c+=texture(samp,uv-vec2(b*1.5,0.0))*0.025;
-    c+=texture(samp,uv+vec2(0.0,b*1.5))*0.025;
-    c+=texture(samp,uv-vec2(0.0,b*1.5))*0.025;
-
-    return c;
+vec3 sampleSceneColor() {
+    vec2 uv = gl_FragCoord.xy / ScreenSize;
+    return max(texture(Sampler5, uv).rgb, vec3(0.0));
 }
 
-void main(){
-    vec2 screenUV=gl_FragCoord.xy/ScreenSize;
-    float depth=texture(Sampler1,screenUV).r;
+// SurfaceTintStrength controla la influencia de la luminosidad de la superficie
+// sobre la intensidad. No modifica el tono RGB de LightColor ni del gobo.
+float calculateSurfaceTint(vec3 sceneColor) {
+    float strength = clamp(SurfaceTintStrength, 0.0, 1.0);
+    float surfaceLuminance = clamp(luminance(sceneColor), 0.0, 1.0);
 
-    if(depth>=0.99999)discard;
+    // Factor escalar limitado: una superficie oscura nunca elimina
+    // completamente la luz proyectada.
+    float response = mix(0.75, 1.25, surfaceLuminance);
 
-    vec3 surfacePos=reconstructViewPos(screenUV,depth);
-    vec3 toSurface=surfacePos-LightPos;
-    vec3 dir=normalize(LightDir);
+    return mix(1.0, response, strength);
+}
 
-    float zDist=dot(toSurface,dir);
-    float maxDist=min(MaxLen,MaxGoboDist);
 
-    if(zDist<=0.0||zDist>maxDist)discard;
+// -----------------------------------------------------------------------------
+// Muestreo del gobo con alpha premultiplicado
+// -----------------------------------------------------------------------------
+//
+// El filtrado de una textura RGBA debe interpolar RGB * alpha y alpha.
+// Interpolar RGB de forma independiente produce halos negros alrededor
+// de texeles transparentes. Aquí se realiza el filtrado en espacio
+// premultiplicado y se recupera RGB recto al terminar.
 
-    if(OcclusionEnabled>0.5){
-        vec3 surfaceRay=toSurface;
-        float surfaceDistance=length(surfaceRay);
+vec4 toPremultiplied(vec4 color) {
+    return vec4(color.rgb * color.a, color.a);
+}
 
-        if(surfaceDistance>0.0001){
-            vec3 surfaceRayDir=surfaceRay/surfaceDistance;
-            float denominator=dot(surfaceRayDir,OcclusionNormal);
+vec4 toStraightColor(vec4 color) {
+    if (color.a <= 0.00001) {
+        return vec4(0.0);
+    }
 
-            if(abs(denominator)>0.00001){
-                float hitT=dot(OcclusionPos-LightPos,OcclusionNormal)/denominator;
-                // Tolerance proportionnelle a la distance : la profondeur reconstruite depuis le
-                // depth buffer n'est precise qu'a quelques cm a 10 blocs, une marge fixe de 1 mm
-                // faisait clignoter des pixels de la surface eclairee elle-meme (z-fighting).
-                float occlusionBias=max(0.08,surfaceDistance*0.03);
-                if(hitT>0.001&&hitT<surfaceDistance-occlusionBias)discard;
+    return vec4(
+        color.rgb / color.a,
+        color.a
+    );
+}
+
+vec4 readPremultipliedTexel(
+    sampler2D samp,
+    ivec2 pixel,
+    ivec2 dimensions
+) {
+    ivec2 coord = clamp(
+        pixel,
+        ivec2(0),
+        dimensions - ivec2(1)
+    );
+
+    return toPremultiplied(
+        texelFetch(samp, coord, 0)
+    );
+}
+
+vec4 sampleGoboLinear(sampler2D samp, vec2 uv) {
+    ivec2 dimensions = textureSize(samp, 0);
+
+    vec2 pixelPosition = uv * vec2(dimensions) - 0.5;
+    ivec2 basePixel = ivec2(floor(pixelPosition));
+    vec2 f = fract(pixelPosition);
+
+    vec4 c00 = readPremultipliedTexel(
+        samp, basePixel, dimensions
+    );
+
+    vec4 c10 = readPremultipliedTexel(
+        samp, basePixel + ivec2(1, 0), dimensions
+    );
+
+    vec4 c01 = readPremultipliedTexel(
+        samp, basePixel + ivec2(0, 1), dimensions
+    );
+
+    vec4 c11 = readPremultipliedTexel(
+        samp, basePixel + ivec2(1, 1), dimensions
+    );
+
+    vec4 top = mix(c00, c10, f.x);
+    vec4 bottom = mix(c01, c11, f.x);
+    vec4 filtered = mix(top, bottom, f.y);
+
+    return toStraightColor(filtered);
+}
+
+void accumulateGoboSample(
+    inout vec4 accumulated,
+    sampler2D samp,
+    vec2 uv,
+    float weight
+) {
+    vec4 sampleColor = sampleGoboLinear(samp, uv);
+    accumulated += toPremultiplied(sampleColor) * weight;
+}
+
+vec4 sampleGoboBlur(sampler2D samp, vec2 uv, float blur) {
+    if (blur <= 0.00001) {
+        return sampleGoboLinear(samp, uv);
+    }
+
+    float b = blur;
+    float s = b * 0.70710678;
+
+    vec4 accumulated = vec4(0.0);
+
+    accumulateGoboSample(accumulated, samp, uv, 0.20);
+
+    accumulateGoboSample(
+        accumulated, samp, uv + vec2(b, 0.0), 0.10
+    );
+
+    accumulateGoboSample(
+        accumulated, samp, uv - vec2(b, 0.0), 0.10
+    );
+
+    accumulateGoboSample(
+        accumulated, samp, uv + vec2(0.0, b), 0.10
+    );
+
+    accumulateGoboSample(
+        accumulated, samp, uv - vec2(0.0, b), 0.10
+    );
+
+    accumulateGoboSample(
+        accumulated, samp, uv + vec2(s, s), 0.075
+    );
+
+    accumulateGoboSample(
+        accumulated, samp, uv + vec2(-s, s), 0.075
+    );
+
+    accumulateGoboSample(
+        accumulated, samp, uv + vec2(s, -s), 0.075
+    );
+
+    accumulateGoboSample(
+        accumulated, samp, uv + vec2(-s, -s), 0.075
+    );
+
+    accumulateGoboSample(
+        accumulated, samp, uv + vec2(b * 1.5, 0.0), 0.025
+    );
+
+    accumulateGoboSample(
+        accumulated, samp, uv - vec2(b * 1.5, 0.0), 0.025
+    );
+
+    accumulateGoboSample(
+        accumulated, samp, uv + vec2(0.0, b * 1.5), 0.025
+    );
+
+    accumulateGoboSample(
+        accumulated, samp, uv - vec2(0.0, b * 1.5), 0.025
+    );
+
+    return toStraightColor(accumulated);
+}
+
+
+// -----------------------------------------------------------------------------
+// Separación entre la máscara y el color del gobo
+// -----------------------------------------------------------------------------
+//
+// La intensidad del patrón se extrae una sola vez.
+// Después se normaliza su color para evitar multiplicar dos veces
+// los niveles de gris de la textura.
+//
+// Esto evita que los píxeles grises de los bordes se conviertan en
+// contribuciones oscuras al combinarlos con el alpha.
+
+float goboMask(vec4 sampleColor) {
+    float maxChannel = max(
+        sampleColor.r,
+        max(sampleColor.g, sampleColor.b)
+    );
+
+    return clamp(sampleColor.a * maxChannel, 0.0, 1.0);
+}
+
+vec3 goboChromaticColor(vec3 color) {
+    float maxChannel = max(
+        color.r,
+        max(color.g, color.b)
+    );
+
+    if (maxChannel <= 0.00001) {
+        return vec3(0.0);
+    }
+
+    return color / maxChannel;
+}
+
+
+// -----------------------------------------------------------------------------
+// Animación de la rueda de efectos
+// -----------------------------------------------------------------------------
+
+float animationMask(float u, float v, float radius) {
+    if (AnimEnabled < 0.5) {
+        return 1.0;
+    }
+
+    float ca = cos(AnimAngle);
+    float sa = sin(AnimAngle);
+
+    vec2 p = vec2(u, v) / max(radius, 0.0001);
+
+    vec2 rotated = vec2(
+        p.x * ca - p.y * sa,
+        p.x * sa + p.y * ca
+    );
+
+    vec2 uv = fract(vec2(
+        rotated.x * 0.5 + AnimOffset,
+        rotated.y * 0.5
+    ));
+
+    return clamp(
+        luminance(texture(Sampler3, uv).rgb),
+        0.0,
+        1.0
+    );
+}
+
+
+// -----------------------------------------------------------------------------
+// Intersección de segmentos y cajas
+// -----------------------------------------------------------------------------
+
+bool segmentHitsBox(vec3 a, vec3 b, vec3 bmin, vec3 bmax) {
+    vec3 d = b - a;
+
+    vec3 dd = vec3(
+        abs(d.x) < 1.0e-6 ? 1.0e-6 : d.x,
+        abs(d.y) < 1.0e-6 ? 1.0e-6 : d.y,
+        abs(d.z) < 1.0e-6 ? 1.0e-6 : d.z
+    );
+
+    vec3 t0 = (bmin - a) / dd;
+    vec3 t1 = (bmax - a) / dd;
+
+    vec3 tmin = min(t0, t1);
+    vec3 tmax = max(t0, t1);
+
+    float tn = max(max(tmin.x, tmin.y), tmin.z);
+    float tf = min(min(tmax.x, tmax.y), tmax.z);
+
+    return tf >= max(tn, 0.0) && tn <= 1.0;
+}
+
+
+// -----------------------------------------------------------------------------
+// Consulta de la grilla de bloques
+// -----------------------------------------------------------------------------
+
+float voxelSolid(vec3 wp) {
+    if (VoxelCell <= 0.00001 || VoxelSize <= 0.0) {
+        return 0.0;
+    }
+
+    vec3 c = (wp - VoxelOrigin) / VoxelCell;
+
+    if (
+        c.x < 0.0 ||
+        c.y < 0.0 ||
+        c.z < 0.0 ||
+        c.x >= VoxelSize ||
+        c.y >= VoxelSize ||
+        c.z >= VoxelSize
+    ) {
+        return 0.0;
+    }
+
+    vec3 i = floor(c);
+
+    vec2 uv = vec2(
+        (i.x + 0.5) / VoxelSize,
+        (i.z * VoxelSize + i.y + 0.5) /
+            (VoxelSize * VoxelSize)
+    );
+
+    return texture(Sampler4, uv).r;
+}
+
+
+// -----------------------------------------------------------------------------
+// Sombras
+// -----------------------------------------------------------------------------
+
+float shadowFactor(vec3 wp, vec3 lightW, float startOffset) {
+    if (ShadowEnabled < 0.5) {
+        return 1.0;
+    }
+
+    vec3 toL = lightW - wp;
+    float len = length(toL);
+
+    if (len < 0.75) {
+        return 1.0;
+    }
+
+    if (OccCount > 0.5 && segmentHitsBox(wp, lightW, OccMin0, OccMax0)) {
+        return 0.0;
+    }
+
+    if (OccCount > 1.5 && segmentHitsBox(wp, lightW, OccMin1, OccMax1)) {
+        return 0.0;
+    }
+
+    if (OccCount > 2.5 && segmentHitsBox(wp, lightW, OccMin2, OccMax2)) {
+        return 0.0;
+    }
+
+    if (OccCount > 3.5 && segmentHitsBox(wp, lightW, OccMin3, OccMax3)) {
+        return 0.0;
+    }
+
+    if (OccCount > 4.5 && segmentHitsBox(wp, lightW, OccMin4, OccMax4)) {
+        return 0.0;
+    }
+
+    if (OccCount > 5.5 && segmentHitsBox(wp, lightW, OccMin5, OccMax5)) {
+        return 0.0;
+    }
+
+    if (OccCount > 6.5 && segmentHitsBox(wp, lightW, OccMin6, OccMax6)) {
+        return 0.0;
+    }
+
+    if (OccCount > 7.5 && segmentHitsBox(wp, lightW, OccMin7, OccMax7)) {
+        return 0.0;
+    }
+
+    if (SolidAny < 0.5 || VoxelCell <= 0.00001) {
+        return 1.0;
+    }
+
+    vec3 dirL = toL / len;
+
+    float start = min(startOffset, len * 0.5);
+    float span = len - start - VoxelCell * 0.75;
+
+    if (span <= 0.0) {
+        return 1.0;
+    }
+
+    int steps = int(clamp(
+        ceil(span / (VoxelCell * 0.9)),
+        2.0,
+        32.0
+    ));
+
+    float ds = span / float(steps);
+
+    vec3 dd = vec3(
+        abs(dirL.x) < 1.0e-6 ? 1.0e-6 : dirL.x,
+        abs(dirL.y) < 1.0e-6 ? 1.0e-6 : dirL.y,
+        abs(dirL.z) < 1.0e-6 ? 1.0e-6 : dirL.z
+    );
+
+    vec3 b0 = (SolidMin - 0.01 - wp) / dd;
+    vec3 b1 = (SolidMax + 0.01 - wp) / dd;
+
+    float sIn = max(
+        max(min(b0.x, b1.x), min(b0.y, b1.y)),
+        min(b0.z, b1.z)
+    );
+
+    float sOut = min(
+        min(max(b0.x, b1.x), max(b0.y, b1.y)),
+        max(b0.z, b1.z)
+    );
+
+    if (sOut < sIn) {
+        return 1.0;
+    }
+
+    int i0 = max(
+        0,
+        int(floor((sIn - start) / ds - 0.5))
+    );
+
+    int i1 = min(
+        steps - 1,
+        int(ceil((sOut - start) / ds - 0.5))
+    );
+
+    for (int i = 0; i < 32; i++) {
+        if (i + i0 > i1) {
+            break;
+        }
+
+        vec3 p = wp + dirL * (
+            start + ds * (float(i + i0) + 0.5)
+        );
+
+        if (voxelSolid(p) > 0.5) {
+            return 0.0;
+        }
+    }
+
+    return 1.0;
+}
+
+
+// -----------------------------------------------------------------------------
+// Shutters
+// -----------------------------------------------------------------------------
+
+float bladeMask(
+    vec2 p,
+    vec2 n,
+    float insA,
+    float insB,
+    float soft
+) {
+    if (insA <= 0.0005 && insB <= 0.0005) {
+        return 1.0;
+    }
+
+    vec2 t = vec2(n.y, -n.x);
+
+    const float R = 1.15;
+
+    vec2 cornerA = n * (R - 2.0 * R * insA) - t * R;
+    vec2 cornerB = n * (R - 2.0 * R * insB) + t * R;
+
+    vec2 edge = cornerB - cornerA;
+    float edgeLength = length(edge);
+
+    if (edgeLength <= 0.00001) {
+        return 1.0;
+    }
+
+    vec2 m = normalize(vec2(edge.y, -edge.x));
+
+    if (dot(m, n) < 0.0) {
+        m = -m;
+    }
+
+    float sd = dot(p - cornerA, m);
+
+    return 1.0 - smoothstep(-soft, soft, sd);
+}
+
+float shutterMask(float u, float v, float radius, float soft) {
+    if (ShutterEnabled < 0.5) {
+        return 1.0;
+    }
+
+    vec2 p = vec2(u, v) / max(radius, 0.0001);
+
+    float cr = cos(-FrameRotation);
+    float sr = sin(-FrameRotation);
+
+    vec2 q = vec2(
+        p.x * cr - p.y * sr,
+        p.x * sr + p.y * cr
+    );
+
+    float m = 1.0;
+
+    m *= bladeMask(q, vec2(0.0, 1.0), BladeA.x, BladeB.x, soft);
+    m *= bladeMask(q, vec2(1.0, 0.0), BladeA.y, BladeB.y, soft);
+    m *= bladeMask(q, vec2(0.0, -1.0), BladeA.z, BladeB.z, soft);
+    m *= bladeMask(q, vec2(-1.0, 0.0), BladeA.w, BladeB.w, soft);
+
+    return m;
+}
+
+
+// -----------------------------------------------------------------------------
+// Reconstrucción de posición desde profundidad
+// -----------------------------------------------------------------------------
+
+vec3 reconstructViewPos(vec2 uv, float depth) {
+    vec4 clip = vec4(
+        uv * 2.0 - 1.0,
+        depth * 2.0 - 1.0,
+        1.0
+    );
+
+    vec4 view = InvProjMat * clip;
+
+    return view.xyz / max(view.w, 0.000001);
+}
+
+
+// -----------------------------------------------------------------------------
+// Atenuación por distancia
+// -----------------------------------------------------------------------------
+
+float calculateDistanceFade(float distance, float maxDistance) {
+    if (maxDistance <= 0.0001) {
+        return 0.0;
+    }
+
+    // La transición comienza al 30 % y llega a cero en el límite configurado.
+    float fadeStart = maxDistance * 0.30;
+
+    float rangeFade = 1.0 - smoothstep(
+        fadeStart,
+        maxDistance,
+        distance
+    );
+
+    // Caída adicional y gradual de intensidad por distancia.
+    float physicalFalloff = 1.0 / (
+        1.0 + distance * distance * 0.0015
+    );
+
+    return clamp(
+        rangeFade * physicalFalloff,
+        0.0,
+        1.0
+    );
+}
+
+
+// -----------------------------------------------------------------------------
+// Shader principal
+// -----------------------------------------------------------------------------
+
+void main() {
+    vec2 screenUV = gl_FragCoord.xy / ScreenSize;
+
+    float depth = texture(Sampler1, screenUV).r;
+
+    if (depth >= 0.99999) {
+        discard;
+    }
+
+    vec3 surfacePos = reconstructViewPos(screenUV, depth);
+    vec3 toSurface = surfacePos - LightPos;
+    vec3 dir = normalize(LightDir);
+
+    float zDist = dot(toSurface, dir);
+
+    float maxDist = min(MaxLen, MaxGoboDist);
+
+    if (maxDist <= 0.0001 || zDist <= 0.0 || zDist >= maxDist) {
+        discard;
+    }
+
+    // -------------------------------------------------------------------------
+    // Oclusión
+    // -------------------------------------------------------------------------
+
+    if (OcclusionEnabled > 0.5) {
+        float surfaceDistance = length(toSurface);
+
+        if (surfaceDistance > 0.0001) {
+            vec3 surfaceRayDir = toSurface / surfaceDistance;
+
+            float denominator = dot(
+                surfaceRayDir,
+                OcclusionNormal
+            );
+
+            if (abs(denominator) > 0.00001) {
+                float hitT = dot(
+                    OcclusionPos - LightPos,
+                    OcclusionNormal
+                ) / denominator;
+
+                float occlusionBias = max(
+                    0.08,
+                    surfaceDistance * 0.03
+                );
+
+                if (
+                    hitT > 0.001 &&
+                    hitT < surfaceDistance - occlusionBias
+                ) {
+                    discard;
+                }
             }
         }
     }
 
-    vec3 uAxis=normalize(AxisU);
-    vec3 vAxis=normalize(AxisV);
+    // -------------------------------------------------------------------------
+    // Coordenadas del haz
+    // -------------------------------------------------------------------------
 
-    float u=dot(toSurface,uAxis);
-    float v=dot(toSurface,vAxis);
+    vec3 uAxis = normalize(AxisU);
+    vec3 vAxis = normalize(AxisV);
 
-    float angle=radians(GoboRotation);
-    float ca=cos(angle);
-    float sa=sin(angle);
+    float u = dot(toSurface, uAxis);
+    float v = dot(toSurface, vAxis);
 
-    float radius=max(BaseRadius+zDist*max(TanHalfAngle,0.0001),0.0001);
-    float slotDistance=radius*2.0;
+    float angle = radians(GoboRotation);
+    float ca = cos(angle);
+    float sa = sin(angle);
 
-    // Desplazamiento de rueda a nivel "puerta focal" (Fija en la montura) antes de rotar
-    float localU_A=u+WheelTransition*slotDistance;
-    float localV_A=v;
-    float ruA=localU_A*ca-localV_A*sa;
-    float rvA=localU_A*sa+localV_A*ca;
-    vec2 goboUVA=vec2(ruA/radius*0.5+0.5,1.0-(rvA/radius*0.5+0.5));
+    float radius = max(
+        BaseRadius + zDist * max(TanHalfAngle, 0.0001),
+        0.0001
+    );
 
-    float localU_B=u-(1.0-WheelTransition)*slotDistance;
-    float localV_B=v;
-    float ruB=localU_B*ca-localV_B*sa;
-    float rvB=localU_B*sa+localV_B*ca;
-    vec2 goboUVB=vec2(ruB/radius*0.5+0.5,1.0-(rvB/radius*0.5+0.5));
+    float slotDistance = radius * 2.0;
 
-    // Máscara cónica fija física
-    float radial=length(vec2(u,v))/radius;
-    if(radial>=1.0)discard;
+    float localU_A = u + WheelTransition * slotDistance;
 
-    float focusNorm=clamp(Focus,0.0,1.0);
-    float blurAmount=focusNorm*focusNorm*0.045;
+    float ruA = localU_A * ca - v * sa;
+    float rvA = localU_A * sa + v * ca;
 
-    // Sampling Gobo A
-    float goboAlphaA=0.0;
-    vec3 goboColorA=vec3(0.0);
-    if(goboUVA.x>=0.0&&goboUVA.x<=1.0&&goboUVA.y>=0.0&&goboUVA.y<=1.0){
-        vec4 sampleA=sampleGoboBlur(Sampler0,goboUVA,blurAmount);
-        goboColorA=sampleA.rgb;
-        goboAlphaA=sampleA.a*dot(goboColorA,vec3(0.299,0.587,0.114));
+    vec2 goboUVA = vec2(
+        ruA / radius * 0.5 + 0.5,
+        1.0 - (rvA / radius * 0.5 + 0.5)
+    );
+
+    float localU_B = u - (1.0 - WheelTransition) * slotDistance;
+
+    float ruB = localU_B * ca - v * sa;
+    float rvB = localU_B * sa + v * ca;
+
+    vec2 goboUVB = vec2(
+        ruB / radius * 0.5 + 0.5,
+        1.0 - (rvB / radius * 0.5 + 0.5)
+    );
+
+    float radial = length(vec2(u, v)) / radius;
+
+    if (radial >= 1.0) {
+        discard;
     }
 
-    // Sampling Gobo B
-    float goboAlphaB=0.0;
-    vec3 goboColorB=vec3(0.0);
-    if(goboUVB.x>=0.0&&goboUVB.x<=1.0&&goboUVB.y>=0.0&&goboUVB.y<=1.0){
-        vec4 sampleB=sampleGoboBlur(Sampler2,goboUVB,blurAmount);
-        goboColorB=sampleB.rgb;
-        goboAlphaB=sampleB.a*dot(goboColorB,vec3(0.299,0.587,0.114));
+    // -------------------------------------------------------------------------
+    // Focus
+    // -------------------------------------------------------------------------
+
+    float focusNorm = clamp(Focus, 0.0, 1.0);
+    float blurAmount = focusNorm * focusNorm * 0.045;
+
+    // -------------------------------------------------------------------------
+    // Gobo A: máscara y color separados
+    // -------------------------------------------------------------------------
+
+    float goboAlphaA = 0.0;
+    vec3 goboColorA = vec3(0.0);
+
+    if (
+        goboUVA.x >= 0.0 && goboUVA.x <= 1.0 &&
+        goboUVA.y >= 0.0 && goboUVA.y <= 1.0
+    ) {
+        vec4 sampleA = sampleGoboBlur(
+            Sampler0,
+            goboUVA,
+            blurAmount
+        );
+
+        goboAlphaA = goboMask(sampleA);
+        goboColorA = goboChromaticColor(sampleA.rgb);
     }
 
-    float goboAlpha=goboAlphaA+goboAlphaB;
+    // -------------------------------------------------------------------------
+    // Gobo B: máscara y color separados
+    // -------------------------------------------------------------------------
 
-    // Couteaux : le bord est net au point (focus 0) et s'adoucit avec le defocus, comme un vrai profile.
-    float shutterSoft=0.012+focusNorm*0.06;
-    goboAlpha*=shutterMask(u,v,radius,shutterSoft);
-    goboAlpha*=animationMask(u,v,radius);
-    // Ombre portee sur la surface : blocs et entites entre le point et la source.
-    vec3 wposS=LightPosW+zDist*LightDirW+u*AxisUW+v*AxisVW;
-    goboAlpha*=shadowFactor(wposS,LightPosW,VoxelCell*1.05);
-    if(goboAlpha<=0.001)discard;
+    float goboAlphaB = 0.0;
+    vec3 goboColorB = vec3(0.0);
 
-    // Mezcla de interpolación física
-    vec3 goboColor=(goboColorA*goboAlphaA+goboColorB*goboAlphaB)/goboAlpha;
+    if (
+        goboUVB.x >= 0.0 && goboUVB.x <= 1.0 &&
+        goboUVB.y >= 0.0 && goboUVB.y <= 1.0
+    ) {
+        vec4 sampleB = sampleGoboBlur(
+            Sampler2,
+            goboUVB,
+            blurAmount
+        );
 
-    float edgeStart=mix(0.88,0.72,focusNorm);
-    float edgeFade=1.0-smoothstep(edgeStart,1.0,radial);
+        goboAlphaB = goboMask(sampleB);
+        goboColorB = goboChromaticColor(sampleB.rgb);
+    }
 
-    // "Open" parts of the gobo (goboAlpha close to 1) should come out close to the fixture's full
-    // LightColor, like a real projector lighting a wall - not a faint tint of it.
-    float finalFactor=clamp(goboAlpha*edgeFade*Intensity*GoboBrightness*VertexColor.a,0.0,1.0);
+    float goboAlpha = goboAlphaA + goboAlphaB;
 
-    if(finalFactor<=0.001)discard;
+    if (goboAlpha <= 0.001) {
+        discard;
+    }
 
-    // additive_transparency is glBlendFunc(SRC_ALPHA, ONE), i.e. dest + src.rgb * src.a: the hardware
-    // already multiplies by alpha once. fragColor.rgb must therefore be the straight (non-premultiplied)
-    // colour - premultiplying it here as well (color * finalFactor) applied finalFactor twice, which
-    // squared the opacity and made every projection look like a dim, washed-out tint instead of a
-    // bright, clearly shaped patch of light.
-    // Pure gobo colour/shape, ignoring whatever is actually there - what we always had.
-    vec3 flatLight=LightColor*goboColor;
+    vec3 goboColor = (
+        goboColorA * goboAlphaA +
+        goboColorB * goboAlphaB
+    ) / goboAlpha;
 
-    // Whatever is really on screen at this exact pixel (block, mob, player, dropped item, anything -
-    // captured straight off the rendered frame, so it works the same no matter what kind of thing it
-    // is). In true darkness this is still ~black: Minecraft has already thrown away all texture detail
-    // by the time this draws, so there is nothing left to "reveal" there - but anywhere the surface
-    // already has some real light/colour of its own (another torch nearby, a colourful mob, daylight),
-    // this keeps that instead of flattening it to one flat tone.
-    vec3 sceneColor=sampleSceneColor();
+    // -------------------------------------------------------------------------
+    // Shutters, animación y sombras
+    // -------------------------------------------------------------------------
 
-    // Taking the brighter of the two per channel means this can only ever match or beat the flat
-    // version above - a pitch-black spot still gets the full, clean gobo colour (max(~0,flat)=flat), it
-    // never ends up darker or less visible than before.
-    vec3 lit=max(sceneColor,flatLight);
+    float shutterSoft = 0.012 + focusNorm * 0.06;
 
-    vec3 finalColor=mix(flatLight,lit,SurfaceTintStrength);
+    goboAlpha *= shutterMask(
+        u,
+        v,
+        radius,
+        shutterSoft
+    );
 
-    fragColor=vec4(finalColor,finalFactor);
+    goboAlpha *= animationMask(
+        u,
+        v,
+        radius
+    );
+
+    vec3 wposS = (
+        LightPosW +
+        zDist * LightDirW +
+        u * AxisUW +
+        v * AxisVW
+    );
+
+    goboAlpha *= shadowFactor(
+        wposS,
+        LightPosW,
+        VoxelCell * 1.05
+    );
+
+    if (goboAlpha <= 0.001) {
+        discard;
+    }
+
+    // -------------------------------------------------------------------------
+    // Borde suave del haz
+    // -------------------------------------------------------------------------
+
+    float edgeStart = mix(
+        0.88,
+        0.72,
+        focusNorm
+    );
+
+    float edgeFade = 1.0 - smoothstep(
+        edgeStart,
+        1.0,
+        radial
+    );
+
+    // -------------------------------------------------------------------------
+    // Distancia: empieza a atenuar al 30 %
+    // -------------------------------------------------------------------------
+
+    float distanceFade = calculateDistanceFade(
+        zDist,
+        maxDist
+    );
+
+    if (distanceFade <= 0.001) {
+        discard;
+    }
+
+    // -------------------------------------------------------------------------
+    // SurfaceTint: afecta la intensidad, nunca el tono RGB
+    // -------------------------------------------------------------------------
+
+    float surfaceFactor = calculateSurfaceTint(
+        sampleSceneColor()
+    );
+
+    // -------------------------------------------------------------------------
+    // Resultado
+    // -------------------------------------------------------------------------
+
+    float finalFactor = clamp(
+        goboAlpha *
+        edgeFade *
+        Intensity *
+        GoboBrightness *
+        VertexColor.a *
+        distanceFade *
+        surfaceFactor,
+        0.0,
+        1.0
+    );
+
+    if (finalFactor <= 0.001) {
+        discard;
+    }
+
+    vec3 finalColor = LightColor * goboColor;
+
+    // ADITIVE_TRANSPARENCY usa SRC_ALPHA, ONE.
+    // No premultiplicar finalColor por finalFactor: el blending aplica alpha.
+    fragColor = vec4(finalColor, finalFactor);
 }

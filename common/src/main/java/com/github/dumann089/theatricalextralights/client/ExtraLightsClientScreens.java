@@ -26,6 +26,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import com.github.dumann089.theatricalextralights.client.gui.GoboFieldAngleConfigScreen;
+import com.github.dumann089.theatricalextralights.util.GoboFieldAngleSupport;
 
 @Environment(EnvType.CLIENT)
 public class ExtraLightsClientScreens {
@@ -109,7 +111,14 @@ public class ExtraLightsClientScreens {
                     false
             );
 
-            case CHANNEL_PANTILT -> new ExtraLightsConfigScreen(
+            case CHANNEL_PANTILT -> lightBE instanceof ExtraLightsLightBlockEntity extraLights
+                    && GoboFieldAngleSupport.supports(extraLights)
+                    ? new GoboFieldAngleConfigScreen(
+                    lightBE,
+                    pos,
+                    lightBE.getTranslationKey()
+            )
+                    : new ExtraLightsConfigScreen(
                     lightBE,
                     pos,
                     lightBE.getTranslationKey(),

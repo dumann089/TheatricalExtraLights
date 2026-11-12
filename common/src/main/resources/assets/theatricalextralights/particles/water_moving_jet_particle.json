@@ -1,6 +1,9 @@
 {
     "textures": [
-    "theatricalextralights:generic_3",
+        "theatricalextralights:generic_0",
+        "theatricalextralights:generic_1",
+        "theatricalextralights:generic_2",
+        "theatricalextralights:generic_3",
     "theatricalextralights:generic_4",
         "theatricalextralights:generic_5",
         "theatricalextralights:generic_6",

@@ -28,7 +28,7 @@ import org.joml.Vector4f;
 
 public class RaymarchBeamRenderer extends LazyRenderers.LazyRenderer {
 
-    public static final int MAX_BEAMS = 512;
+    public static final int MAX_BEAMS = 3000;
     private static final RaymarchBeamRenderer INSTANCE = new RaymarchBeamRenderer();
     private static final ResourceLocation OPEN_GOBO =
             new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
