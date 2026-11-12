@@ -13,6 +13,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -236,8 +237,14 @@ public final class BeamShadowOccluders {
                     if (mp.distSqr(fixture) <= 2.0) continue; // la lyre elle-meme
                     BlockState state = cursor.state(mp);
                     if (state == null || state.isAir()) continue;
-                    boolean isSolid = state.isSolidRender(level, mp)
-                            || (!state.getCollisionShape(level, mp).isEmpty() && state.getLightBlock(level, mp) > 0);
+                    // Any collision shape is opaque to a light beam, even when it does not
+                    // occlude ambient light. SEF/SCT stage decks and stairs are noOcclusion
+                    // with a light-block value of 0, so isSolidRender() ignored them and beams
+                    // leaked through the deck or past the stair treads. The grid is coarse
+                    // anyway; treating a stair/fence/slab cell as occupied is much better than
+                    // letting the beam continue behind it.
+                    VoxelShape collision = state.getCollisionShape(level, mp);
+                    boolean isSolid = !collision.isEmpty() || state.isSolidRender(level, mp);
                     if (isSolid) {
                         int bit = (iz * GRID + iy) * GRID + ix;
                         solid[bit >>> 6] |= 1L << (bit & 63);

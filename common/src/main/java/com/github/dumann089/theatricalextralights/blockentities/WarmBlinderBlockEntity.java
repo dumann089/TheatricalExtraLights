@@ -1,12 +1,14 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.interfaces.HasPersonality;
+import com.github.dumann089.theatricalextralights.util.AimedLightPosition;
 import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import org.joml.Vector3f;
 
 import java.util.Arrays;
 
@@ -65,6 +67,16 @@ public abstract class WarmBlinderBlockEntity extends ExtraLightsLightBlockEntity
     @Override
     public int getFocus() {
         return 255;
+    }
+
+    @Override
+    public Vector3f getLightPos() {
+        return AimedLightPosition.forFixture(this);
+    }
+
+    @Override
+    public float getMaxLightDistance() {
+        return AimedLightPosition.TRACE_DISTANCE;
     }
 
     @Override
