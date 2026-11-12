@@ -1,5 +1,34 @@
 # Changelog
 
+## Unreleased (mc 1.20.1)
+
+### New fixtures
+- **Showtec Stage Blinder 200 Blaze** (4ch dimmer / RGB).
+- **Dense RGB Bar**, **Dense Vertical RGB Bar** and **Dense Moving RGB Bar**: one LED per pixel, with their own head models. The RGB, vertical and moving bars also get pixel modes (28ch and 36ch) and a 1x2 blinder joins the blinder family.
+- **Atomic Strobe** rebuilt around an Atomic-style engine (intensity, flash duration, rate, effects) with 4, 8, 10, 40 and 400 channel modes, and new **Atomic Tilt** modes (6ch and 9ch Atomic, with a focus channel).
+- **LED Panel 2** pixel modes (4x4 and 8x8), with grandMA2 profiles for the 4ch and pixel modes, plus grandMA2 profiles for the Atomic strobe modes.
+
+### Lasers
+- Realistic laser engine (analytic haze scattering, dust motes, striations, aperture glare, 512-segment figures, detail slider) and the Ether Dream DAC projector built on it.
+
+### Rendering
+- **Flames**: realistic particle flames with an additive glow on the flame thrower and flame projector, an optional raymarched volumetric flame with heat distortion, a *Flames* tab in the settings and a Jet / Burst style button on each machine.
+- **Flow2Jet CO2**: volumetric plume matched to stage photos, seamless loop sample, smooth dissipation, `co2JetReach` slider.
+- **Blinders**: hot lamps, bloom, glare and a wide, white dynamic light on every blinder.
+- **LED bars**: haze sheets that fuse neighbouring bars, per-pixel colour ramp, `rgbBarBeamIntensity` and `rgbBarBeamLength` options (volumetric bar beams follow the length).
+- **Strobes**: additive glow, hot core and haze halo on flashes; coloured strobe halos keep their colour.
+- Performance pass on glows, beam shadows (shared occupancy grids, stale-rebuild budget) and raymarch proxies (oriented hull instead of the world-aligned box).
+
+### Fixes
+- **Atomic Tilt (6ch / 9ch Atomic modes): the dimmer now lights the head steadily when the flash rate is 0** instead of staying dark until the strobe channel was raised (issue 47). The strobe only adds flashing on top of the dimmer level.
+- **Blinders**: manual pan/tilt now moves the pool of light to where the head is aimed (and follows the DMX pan/tilt channels where the personality has them) instead of leaving it pinned to the block.
+- **Gobo profile heads**: removed the old plain Theatrical/Shimmer light pool. The GPU-projected spot is now the only one, so gobos, frost, animation wheels and framing shutters are what you see on the floor.
+- **Hanging fixtures**: Concert Stage Craft trusses are recognised as supports, so fixtures placed under them get the same automatic mount height as on a Theatrical truss (still centred on the block) without a fixture-wrench offset.
+- **Beams on stage decks**: blocks that do not occlude ambient light (such as SEF's stage floor, collision parts and stage stairs) are now included in beam shadows, so washes and other fixtures no longer shine through the deck or leak past stair treads.
+- LED fountain uses the smoothed colour and dimmer like the other fixtures.
+- Forge: single client entry point and keybind registered before `RegisterKeyMappingsEvent`.
+- French translations for the gobo settings.
+
 ## 1.4.12 (mc 1.20.1)
 
 ### Ether Dream laser projector

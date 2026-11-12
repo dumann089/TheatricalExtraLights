@@ -1,0 +1,12 @@
+{
+  "credit": "Theatrical Extra Lights",
+  "textures": {
+    "body": "theatricalextralights:block/stage_blinder_200_blaze/body",
+    "metal": "theatricalextralights:block/stage_blinder_200_blaze/metal",
+    "vents": "theatricalextralights:block/stage_blinder_200_blaze/vents",
+    "silver": "theatricalextralights:block/stage_blinder_200_blaze/silver",
+    "face": "theatricalextralights:block/stage_blinder_200_blaze/face",
+    "particle": "theatricalextralights:block/stage_blinder_200_blaze/body"
+  },
+  "elements": []
+}

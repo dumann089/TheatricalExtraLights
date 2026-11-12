@@ -8,7 +8,7 @@ export default defineConfig({
   lang: 'en-US',
   lastUpdated: true,
   cleanUrls: true,
-  sitemap: { hostname: 'https://extra-light.nailec.fr' },
+  sitemap: { hostname: 'https://theatrical.nailec.fr' },
   head: [['link', { rel: 'icon', href: '/favicon.png' }]],
   themeConfig: {
     logo: '/logo.png',

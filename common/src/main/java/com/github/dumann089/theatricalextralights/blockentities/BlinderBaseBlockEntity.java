@@ -5,6 +5,7 @@ import com.github.dumann089.theatricalextralights.util.DmxFrameStrobeSync;
 import com.github.dumann089.theatricalextralights.util.DmxShutterStrobeHelper;
 import com.github.dumann089.theatricalextralights.util.DmxStrobeFixture;
 import com.github.dumann089.theatricalextralights.client.StrobeRenderHelper;
+import com.github.dumann089.theatricalextralights.util.AimedLightPosition;
 import dev.imabad.theatrical.api.dmx.DMXPersonality;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -12,7 +13,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 import com.github.dumann089.theatricalextralights.util.BlockEntitySync;
 
@@ -59,13 +59,14 @@ public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity
         return emitsLight() && intensity > 0;
     }
 
+    /**
+     * Blinders are flood lights, but they are still aimed: the manual pan/tilt faders (and the
+     * DMX pan/tilt channels on personalities that expose them) move the head, so the pool of
+     * light must move with it instead of staying pinned to the block.
+     */
     @Override
     public Vector3f getLightPos() {
-        BlockPos emission = getEmissionBlock();
-        if (emission != null) {
-            return Vec3.atCenterOf(emission).toVector3f();
-        }
-        return Vec3.atCenterOf(getBlockPos()).toVector3f();
+        return AimedLightPosition.forFixture(this);
     }
 
     @Override
@@ -102,13 +103,6 @@ public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity
         return 255;
     }
 
-    /**
-     * Distance a laquelle la lumiere dynamique se pose devant l'appareil. Par defaut le raytrace
-     * de Theatrical va jusqu'a l'obstacle, souvent le fond de la salle, et le plateau sous le
-     * blinder reste noir ; un blinder arrose tout ce qui l'entoure, sa lumiere reste pres de lui
-     * et c'est son rayon (28 a 55 blocs selon le modele) qui porte sur la scene.
-     */
-    private static final float EMISSION_DISTANCE = 8.0f;
     /** Un blinder aveugle : rayon des fixtures fois ce facteur (42 blocs pour le 1x1, 82 pour le 4x2). */
     private static final float LIGHT_SPREAD_BOOST = 1.5f;
     /**
@@ -119,7 +113,7 @@ public abstract class BlinderBaseBlockEntity extends ExtraLightsLightBlockEntity
 
     @Override
     public float getMaxLightDistance() {
-        return EMISSION_DISTANCE;
+        return AimedLightPosition.TRACE_DISTANCE;
     }
 
     @Override

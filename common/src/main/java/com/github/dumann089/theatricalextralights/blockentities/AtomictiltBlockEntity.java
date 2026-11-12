@@ -111,7 +111,15 @@ public class AtomictiltBlockEntity extends ExtraLightsLightBlockEntity
         return level != null ? level.getGameTime() : 0L;
     }
 
+    /** Cadence a 0 : pas de strobe, le dimmer regle alors une lumiere continue. */
+    private boolean atomicSteady() {
+        return AtomicStrobeEngine.rateHz(flashRate) <= 0f;
+    }
+
     private float atomicLevel(float partialTick, double window, double offsetSeconds) {
+        if (atomicSteady()) {
+            return Math.min(Math.max(intensity, 0), 255) / 255f;
+        }
         double seconds = (getGameTimeForStrobe() + partialTick) / 20.0 + offsetSeconds;
         return AtomicStrobeEngine.levelOverWindow(intensity, flashDuration, flashRate, flashEffect,
                 seconds, window, getBlockPos().asLong(), 0, 1);

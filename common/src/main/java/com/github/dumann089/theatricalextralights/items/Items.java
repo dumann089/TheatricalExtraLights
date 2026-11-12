@@ -123,6 +123,10 @@ public class Items {
             "blinder1x1",
             () -> new BlockItem(Blocks.BLINDER1X1_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
     );
+    public static final RegistrySupplier<Item> STAGE_BLINDER_200_BLAZE = ITEMS.register(
+            "stage_blinder_200_blaze",
+            () -> new BlockItem(Blocks.STAGE_BLINDER_200_BLAZE_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
     public static final RegistrySupplier<Item> BLINDER1X2 = ITEMS.register(
             "blinder1x2",
             () -> new BlockItem(Blocks.BLINDER1X2_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
