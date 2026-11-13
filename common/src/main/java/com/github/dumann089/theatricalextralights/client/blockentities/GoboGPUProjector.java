@@ -65,6 +65,16 @@ public class GoboGPUProjector {
     private static int sceneColorTextureId = -1;
     private static int sceneColorWidth = -1;
     private static int sceneColorHeight = -1;
+    private static Level sceneColorCaptureLevel;
+    private static long sceneColorCaptureGameTime = Long.MIN_VALUE;
+    private static int sceneColorCapturePartialBits = Integer.MIN_VALUE;
+    private static int sceneColorCaptureWidth = -1;
+    private static int sceneColorCaptureHeight = -1;
+    private static long sceneColorCameraX = Long.MIN_VALUE;
+    private static long sceneColorCameraY = Long.MIN_VALUE;
+    private static long sceneColorCameraZ = Long.MIN_VALUE;
+    private static int sceneColorCameraPitch = Integer.MIN_VALUE;
+    private static int sceneColorCameraYaw = Integer.MIN_VALUE;
 
     private static int ensureSceneColorTexture(int width, int height) {
         if (sceneColorTextureId == -1) {
@@ -80,6 +90,7 @@ public class GoboGPUProjector {
             TextureUtil.prepareImage(sceneColorTextureId, width, height);
             sceneColorWidth = width;
             sceneColorHeight = height;
+
         }
         return sceneColorTextureId;
     }
@@ -97,6 +108,60 @@ public class GoboGPUProjector {
         GlStateManager._bindTexture(id);
         GlStateManager._glCopyTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
         return id;
+    }
+
+    private static int captureSceneColorOncePerFrame(
+            int width,
+            int height,
+            float partialTick,
+            Camera camera
+    ) {
+        Minecraft mc = Minecraft.getInstance();
+        Level level = mc.level;
+
+        long gameTime = level != null
+                ? level.getGameTime()
+                : Long.MIN_VALUE;
+
+        Vec3 cameraPos = camera.getPosition();
+
+        long cameraX = Double.doubleToLongBits(cameraPos.x);
+        long cameraY = Double.doubleToLongBits(cameraPos.y);
+        long cameraZ = Double.doubleToLongBits(cameraPos.z);
+
+        int partialBits = Float.floatToIntBits(partialTick);
+        int pitchBits = Float.floatToIntBits(camera.getXRot());
+        int yawBits = Float.floatToIntBits(camera.getYRot());
+
+        boolean newFrame =
+                sceneColorTextureId == -1
+                        || sceneColorCaptureLevel != level
+                        || sceneColorCaptureGameTime != gameTime
+                        || sceneColorCapturePartialBits != partialBits
+                        || sceneColorCaptureWidth != width
+                        || sceneColorCaptureHeight != height
+                        || sceneColorCameraX != cameraX
+                        || sceneColorCameraY != cameraY
+                        || sceneColorCameraZ != cameraZ
+                        || sceneColorCameraPitch != pitchBits
+                        || sceneColorCameraYaw != yawBits;
+
+        if (newFrame) {
+            captureSceneColor(width, height);
+
+            sceneColorCaptureLevel = level;
+            sceneColorCaptureGameTime = gameTime;
+            sceneColorCapturePartialBits = partialBits;
+            sceneColorCaptureWidth = width;
+            sceneColorCaptureHeight = height;
+            sceneColorCameraX = cameraX;
+            sceneColorCameraY = cameraY;
+            sceneColorCameraZ = cameraZ;
+            sceneColorCameraPitch = pitchBits;
+            sceneColorCameraYaw = yawBits;
+        }
+
+        return sceneColorTextureId;
     }
     /**
      * Resultado do raycast de oclusao por faceta. O mundo cliente so muda entre ticks, e para um
@@ -352,7 +417,12 @@ public class GoboGPUProjector {
                     RenderSystem.setShaderTexture(4, shadowTextureId);
                     shader.setSampler("Sampler4", shadowTextureId);
 
-                    int sceneColorTexture = captureSceneColor(mc.getMainRenderTarget().width, mc.getMainRenderTarget().height);
+                    int sceneColorTexture = captureSceneColorOncePerFrame(
+                            mc.getMainRenderTarget().width,
+                            mc.getMainRenderTarget().height,
+                            partialTick,
+                            camera
+                    );
                     RenderSystem.setShaderTexture(5, sceneColorTexture);
                     shader.setSampler("Sampler5", sceneColorTexture);
 

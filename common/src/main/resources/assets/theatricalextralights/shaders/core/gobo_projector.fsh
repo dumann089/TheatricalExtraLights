@@ -78,40 +78,21 @@ out vec4 fragColor;
 
 
 // -----------------------------------------------------------------------------
-// Utilidades de color
+// Utilidades de color y escena
 // -----------------------------------------------------------------------------
 
 float luminance(vec3 color) {
     return dot(color, vec3(0.299, 0.587, 0.114));
 }
 
-vec3 sampleSceneColor() {
-    vec2 uv = gl_FragCoord.xy / ScreenSize;
+vec3 sampleSceneColor(vec2 uv) {
     return max(texture(Sampler5, uv).rgb, vec3(0.0));
-}
-
-// SurfaceTintStrength controla la influencia de la luminosidad de la superficie
-// sobre la intensidad. No modifica el tono RGB de LightColor ni del gobo.
-float calculateSurfaceTint(vec3 sceneColor) {
-    float strength = clamp(SurfaceTintStrength, 0.0, 1.0);
-    float surfaceLuminance = clamp(luminance(sceneColor), 0.0, 1.0);
-
-    // Factor escalar limitado: una superficie oscura nunca elimina
-    // completamente la luz proyectada.
-    float response = mix(0.75, 1.25, surfaceLuminance);
-
-    return mix(1.0, response, strength);
 }
 
 
 // -----------------------------------------------------------------------------
 // Muestreo del gobo con alpha premultiplicado
 // -----------------------------------------------------------------------------
-//
-// El filtrado de una textura RGBA debe interpolar RGB * alpha y alpha.
-// Interpolar RGB de forma independiente produce halos negros alrededor
-// de texeles transparentes. Aquí se realiza el filtrado en espacio
-// premultiplicado y se recupera RGB recto al terminar.
 
 vec4 toPremultiplied(vec4 color) {
     return vec4(color.rgb * color.a, color.a);
@@ -195,54 +176,18 @@ vec4 sampleGoboBlur(sampler2D samp, vec2 uv, float blur) {
     vec4 accumulated = vec4(0.0);
 
     accumulateGoboSample(accumulated, samp, uv, 0.20);
-
-    accumulateGoboSample(
-        accumulated, samp, uv + vec2(b, 0.0), 0.10
-    );
-
-    accumulateGoboSample(
-        accumulated, samp, uv - vec2(b, 0.0), 0.10
-    );
-
-    accumulateGoboSample(
-        accumulated, samp, uv + vec2(0.0, b), 0.10
-    );
-
-    accumulateGoboSample(
-        accumulated, samp, uv - vec2(0.0, b), 0.10
-    );
-
-    accumulateGoboSample(
-        accumulated, samp, uv + vec2(s, s), 0.075
-    );
-
-    accumulateGoboSample(
-        accumulated, samp, uv + vec2(-s, s), 0.075
-    );
-
-    accumulateGoboSample(
-        accumulated, samp, uv + vec2(s, -s), 0.075
-    );
-
-    accumulateGoboSample(
-        accumulated, samp, uv + vec2(-s, -s), 0.075
-    );
-
-    accumulateGoboSample(
-        accumulated, samp, uv + vec2(b * 1.5, 0.0), 0.025
-    );
-
-    accumulateGoboSample(
-        accumulated, samp, uv - vec2(b * 1.5, 0.0), 0.025
-    );
-
-    accumulateGoboSample(
-        accumulated, samp, uv + vec2(0.0, b * 1.5), 0.025
-    );
-
-    accumulateGoboSample(
-        accumulated, samp, uv - vec2(0.0, b * 1.5), 0.025
-    );
+    accumulateGoboSample(accumulated, samp, uv + vec2(b, 0.0), 0.10);
+    accumulateGoboSample(accumulated, samp, uv - vec2(b, 0.0), 0.10);
+    accumulateGoboSample(accumulated, samp, uv + vec2(0.0, b), 0.10);
+    accumulateGoboSample(accumulated, samp, uv - vec2(0.0, b), 0.10);
+    accumulateGoboSample(accumulated, samp, uv + vec2(s, s), 0.075);
+    accumulateGoboSample(accumulated, samp, uv + vec2(-s, s), 0.075);
+    accumulateGoboSample(accumulated, samp, uv + vec2(s, -s), 0.075);
+    accumulateGoboSample(accumulated, samp, uv + vec2(-s, -s), 0.075);
+    accumulateGoboSample(accumulated, samp, uv + vec2(b * 1.5, 0.0), 0.025);
+    accumulateGoboSample(accumulated, samp, uv - vec2(b * 1.5, 0.0), 0.025);
+    accumulateGoboSample(accumulated, samp, uv + vec2(0.0, b * 1.5), 0.025);
+    accumulateGoboSample(accumulated, samp, uv - vec2(0.0, b * 1.5), 0.025);
 
     return toStraightColor(accumulated);
 }
@@ -251,13 +196,6 @@ vec4 sampleGoboBlur(sampler2D samp, vec2 uv, float blur) {
 // -----------------------------------------------------------------------------
 // Separación entre la máscara y el color del gobo
 // -----------------------------------------------------------------------------
-//
-// La intensidad del patrón se extrae una sola vez.
-// Después se normaliza su color para evitar multiplicar dos veces
-// los niveles de gris de la textura.
-//
-// Esto evita que los píxeles grises de los bordes se conviertan en
-// contribuciones oscuras al combinarlos con el alpha.
 
 float goboMask(vec4 sampleColor) {
     float maxChannel = max(
@@ -393,31 +331,24 @@ float shadowFactor(vec3 wp, vec3 lightW, float startOffset) {
     if (OccCount > 0.5 && segmentHitsBox(wp, lightW, OccMin0, OccMax0)) {
         return 0.0;
     }
-
     if (OccCount > 1.5 && segmentHitsBox(wp, lightW, OccMin1, OccMax1)) {
         return 0.0;
     }
-
     if (OccCount > 2.5 && segmentHitsBox(wp, lightW, OccMin2, OccMax2)) {
         return 0.0;
     }
-
     if (OccCount > 3.5 && segmentHitsBox(wp, lightW, OccMin3, OccMax3)) {
         return 0.0;
     }
-
     if (OccCount > 4.5 && segmentHitsBox(wp, lightW, OccMin4, OccMax4)) {
         return 0.0;
     }
-
     if (OccCount > 5.5 && segmentHitsBox(wp, lightW, OccMin5, OccMax5)) {
         return 0.0;
     }
-
     if (OccCount > 6.5 && segmentHitsBox(wp, lightW, OccMin6, OccMax6)) {
         return 0.0;
     }
-
     if (OccCount > 7.5 && segmentHitsBox(wp, lightW, OccMin7, OccMax7)) {
         return 0.0;
     }
@@ -510,7 +441,6 @@ float bladeMask(
     }
 
     vec2 t = vec2(n.y, -n.x);
-
     const float R = 1.15;
 
     vec2 cornerA = n * (R - 2.0 * R * insA) - t * R;
@@ -561,7 +491,7 @@ float shutterMask(float u, float v, float radius, float soft) {
 
 
 // -----------------------------------------------------------------------------
-// Reconstrucción de posición desde profundidad
+// Reconstrucción de posición y normal de superficie (3-Tap sin bordes)
 // -----------------------------------------------------------------------------
 
 vec3 reconstructViewPos(vec2 uv, float depth) {
@@ -576,6 +506,45 @@ vec3 reconstructViewPos(vec2 uv, float depth) {
     return view.xyz / max(view.w, 0.000001);
 }
 
+vec3 reconstructViewNormal(vec2 uv, vec3 centerPos, float centerDepth) {
+    vec2 texel = 1.0 / ScreenSize;
+
+    float dL = texture(Sampler1, uv - vec2(texel.x, 0.0)).r;
+    float dR = texture(Sampler1, uv + vec2(texel.x, 0.0)).r;
+    float dD = texture(Sampler1, uv - vec2(0.0, texel.y)).r;
+    float dU = texture(Sampler1, uv + vec2(0.0, texel.y)).r;
+
+    vec3 posL = reconstructViewPos(uv - vec2(texel.x, 0.0), dL);
+    vec3 posR = reconstructViewPos(uv + vec2(texel.x, 0.0), dR);
+    vec3 posD = reconstructViewPos(uv - vec2(0.0, texel.y), dD);
+    vec3 posU = reconstructViewPos(uv + vec2(0.0, texel.y), dU);
+
+    vec3 diffR = posR - centerPos;
+    vec3 diffL = centerPos - posL;
+    vec3 diffU = posU - centerPos;
+    vec3 diffD = centerPos - posD;
+
+    // Selección estable por distancia real en 3D (evita saltos al rotar la cámara)
+    vec3 dPdx = (dot(diffR, diffR) < dot(diffL, diffL)) ? diffR : diffL;
+    vec3 dPdy = (dot(diffU, diffU) < dot(diffD, diffD)) ? diffU : diffD;
+
+    vec3 n = cross(dPdx, dPdy);
+    float len = length(n);
+    if (len <= 1e-6) {
+        return vec3(0.0, 0.0, 1.0);
+    }
+
+    n /= len;
+
+    // Garantiza que la normal siempre mire hacia la cámara (en View Space, +Z apunta al jugador)
+    // Si la superficie es visible en pantalla, su normal geométrica nunca puede dar la espalda a la cámara
+    if (dot(n, -centerPos) < 0.0) {
+        n = -n;
+    }
+
+    return n;
+}
+
 
 // -----------------------------------------------------------------------------
 // Atenuación por distancia
@@ -586,7 +555,6 @@ float calculateDistanceFade(float distance, float maxDistance) {
         return 0.0;
     }
 
-    // La transición comienza al 30 % y llega a cero en el límite configurado.
     float fadeStart = maxDistance * 0.30;
 
     float rangeFade = 1.0 - smoothstep(
@@ -595,7 +563,6 @@ float calculateDistanceFade(float distance, float maxDistance) {
         distance
     );
 
-    // Caída adicional y gradual de intensidad por distancia.
     float physicalFalloff = 1.0 / (
         1.0 + distance * distance * 0.0015
     );
@@ -668,6 +635,25 @@ void main() {
             }
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Orientación de superficie y ángulo de incidencia (Ley de Lambert)
+    // -------------------------------------------------------------------------
+
+    vec3 surfaceNormal = reconstructViewNormal(screenUV, surfacePos, depth);
+    vec3 dirToLight = normalize(-toSurface);
+
+    // Las particulas suelen ser billboards sin una normal fisica fiable en el
+    // depth buffer. Al mirar la camara de frente o en angulo medio, Lambert puede
+    // reducir la iluminacion al centro y dejar visible principalmente el contorno.
+    // Se conserva una variacion angular muy suave, pero con iluminacion minima alta
+    // para que toda la particula reciba el proyector desde cualquier angulo de camara.
+    float ndotl = abs(dot(surfaceNormal, dirToLight));
+    float angleAttenuation = mix(
+        0.90,
+        1.0,
+        smoothstep(0.0, 0.25, ndotl)
+    );
 
     // -------------------------------------------------------------------------
     // Coordenadas del haz
@@ -813,7 +799,7 @@ void main() {
     }
 
     // -------------------------------------------------------------------------
-    // Borde suave del haz
+    // Borde suave del haz y perfil óptico central (Hotspot)
     // -------------------------------------------------------------------------
 
     float edgeStart = mix(
@@ -827,6 +813,11 @@ void main() {
         1.0,
         radial
     );
+
+    // Núcleo más concentrado, como el hotspot de un proyector real.
+    float radialCore = 1.0 - radial * radial;
+    float opticalHotspot = exp(-radial * radial * 12.0);
+    float beamProfile = mix(0.78, 1.12, radialCore) + opticalHotspot * 0.13;
 
     // -------------------------------------------------------------------------
     // Distancia: empieza a atenuar al 30 %
@@ -842,15 +833,25 @@ void main() {
     }
 
     // -------------------------------------------------------------------------
-    // SurfaceTint: afecta la intensidad, nunca el tono RGB
+    // Albedo de la superficie: conserva mejor el color y el contraste material.
     // -------------------------------------------------------------------------
 
-    float surfaceFactor = calculateSurfaceTint(
-        sampleSceneColor()
-    );
+    vec3 sceneColor = clamp(sampleSceneColor(screenUV), vec3(0.0), vec3(1.0));
+
+    float baseLum = luminance(sceneColor);
+    float tintStrength = clamp(SurfaceTintStrength, 0.0, 1.0);
+
+    // Con tintStrength = 1 se respeta el color original de la superficie.
+    // Con valores bajos se mezcla gradualmente con una respuesta neutra.
+    float tintMix = mix(0.65, 1.0, tintStrength);
+    vec3 effectiveAlbedo = mix(vec3(baseLum), sceneColor, tintMix);
+
+    // Un suelo pequeño evita que el muestreo apague por completo materiales negros,
+    // sin convertirlos en una superficie gris como ocurría con el mínimo de 0.06.
+    effectiveAlbedo = max(effectiveAlbedo, vec3(0.012));
 
     // -------------------------------------------------------------------------
-    // Resultado
+    // Resultado final (ADDITIVE_TRANSPARENCY: SRC_ALPHA, ONE)
     // -------------------------------------------------------------------------
 
     float finalFactor = clamp(
@@ -860,7 +861,7 @@ void main() {
         GoboBrightness *
         VertexColor.a *
         distanceFade *
-        surfaceFactor,
+        angleAttenuation,
         0.0,
         1.0
     );
@@ -869,9 +870,9 @@ void main() {
         discard;
     }
 
-    vec3 finalColor = LightColor * goboColor;
+    vec3 lightSpectrum = max(LightColor, vec3(0.0)) * max(goboColor, vec3(0.0));
+    vec3 diffuseResponse = effectiveAlbedo * lightSpectrum;
+    vec3 finalColor = diffuseResponse * beamProfile * 1.85;
 
-    // ADITIVE_TRANSPARENCY usa SRC_ALPHA, ONE.
-    // No premultiplicar finalColor por finalFactor: el blending aplica alpha.
     fragColor = vec4(finalColor, finalFactor);
 }

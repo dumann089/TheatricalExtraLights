@@ -84,7 +84,6 @@ public class Profile3GoboRenderer extends ExtraLightsFixtureRenderer<Profile3Gob
 
     @Override
     public void renderModel(Profile3GoboBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging, int packedLight, int packedOverlay) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         if(cachedStaticModel == null){
             cachedStaticModel = TheatricalExpectPlatform.getBakedModel(blockEntity.getFixture().getStaticModel());
         }
@@ -437,6 +436,7 @@ public class Profile3GoboRenderer extends ExtraLightsFixtureRenderer<Profile3Gob
 
     @Override
     public void preparePoseStack(Profile3GoboBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);

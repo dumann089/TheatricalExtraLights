@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased (mc 1.20.1)
+## Version 1.5.0 (Unreleased) — mc 1.20.1
+
+### Improvements & fixes
+- **Gobo Shader** improved: corrected lighting and projection behavior. Gobos now produce a proper spotlight effect instead of looking like a flat painting or stain.
+- **Oculus Unlocked compatibility** added (Forge only), improving compatibility with the gobo rendering system.
+- **Waterlogged fixtures:** **PAR56** and **LEDFountain** modified to support waterlogged states.
+- **Fixture Wrench:** corrected fixture rotation handling and orientation.
+
 
 ### New fixtures
 - **Showtec Stage Blinder 200 Blaze** (4ch dimmer / RGB).
