@@ -18,12 +18,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Environment(EnvType.CLIENT)
 public final class Flow2JetDissipation {
-    /** Vitesse du front de coupure, blocs/tick. */
-    private static final float FRONT_SPEED = 0.55f;
+    /** Vitesse du front de coupure, blocs/tick ; 13 ticks pour nettoyer le panache (0.65 s). */
+    private static final float FRONT_SPEED = 1.0f;
     private static final float FRONT_SOFTNESS = 1.2f;
     private static final float PLUME_RADIUS = 2.2f;
     private static final float MAX_PLUME_ALONG = 12f;
-    private static final float LINGER_TICKS = 12f;
+    private static final float LINGER_TICKS = 1f;
 
     private static final Map<BlockPos, JetPlume> STOPPED = new ConcurrentHashMap<>();
 
