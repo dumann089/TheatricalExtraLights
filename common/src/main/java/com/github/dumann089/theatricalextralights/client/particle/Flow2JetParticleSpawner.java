@@ -30,7 +30,7 @@ public final class Flow2JetParticleSpawner {
     /** Freinage du gaz par tick, le meme que celui des bouffees. */
     public static final float DRAG = 0.905f;
     /** Vitesse du front de coupure quand la vanne se ferme, blocs/tick. */
-    public static final float CUT_SPEED = 2.5f;
+    public static final float CUT_SPEED = 0.55f;
     private static final int BURST_TICKS = 3;
     private static final float BURST_GAIN = 1.25f;
 
