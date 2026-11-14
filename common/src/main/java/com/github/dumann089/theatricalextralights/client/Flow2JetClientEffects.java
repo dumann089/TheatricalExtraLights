@@ -44,8 +44,12 @@ public final class Flow2JetClientEffects {
      * la vanne se rouvre : un nouveau declenchement ne relance pas tout l'effet, il ajoute un jet.
      */
     private static final Map<BlockPos, List<PlumeState>> RELEASED = new ConcurrentHashMap<>();
-    /** Vanne fermee : le nuage lache se dilue et disparait en trois secondes et demie. */
-    private static final float DISSIPATE_TICKS = 70f;
+    /**
+     * Vanne fermee : le nuage lache disparait en quelques ticks. Un vrai jet a une queue, mais
+     * 3.5 s etaient trop longs pour les morceaux rapides : le hit suivant arrivait dans le reste
+     * du panache. 4 ticks = 0.2 s, juste assez pour eviter une disparition en une frame.
+     */
+    private static final float DISSIPATE_TICKS = 4f;
     /** Depart du front de coupure sous la buse : la bande (3.4 blocs, brouillee de 1.8) est hors du gaz. */
     private static final float CUT_START = -3.5f;
 
@@ -73,7 +77,9 @@ public final class Flow2JetClientEffects {
     }
 
     public static void tick(Flow2JetBlockEntity blockEntity) {
-        boolean active = blockEntity.getDisplayIntensity(1f) > 0;
+        // La vanne suit le DMX brut, pas l'intensite lissee : des que le canal tombe a 0, le jet
+        // doit se couper, sans trainer le fade de couleur/luminosite des autres fixtures.
+        boolean active = blockEntity.getIntensity() > 0;
         Minecraft minecraft = Minecraft.getInstance();
         BlockPos pos = blockEntity.getBlockPos();
         Vec3 center = pos.getCenter();
