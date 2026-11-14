@@ -45,10 +45,10 @@ public final class Flow2JetClientEffects {
      */
     private static final Map<BlockPos, List<PlumeState>> RELEASED = new ConcurrentHashMap<>();
     /**
-     * Vanne fermee : le nuage deja sorti reste dans l'air et se dilue lentement. Ce qui doit
-     * s'arreter tout de suite, c'est le gaz qui sort de la buse, pas le nuage deja lache.
+     * Vanne fermee : le nuage deja sorti reste dans l'air et se dilue en 0.7 s maximum. Ce qui
+     * doit s'arreter tout de suite, c'est le gaz qui sort de la buse, pas le nuage deja lache.
      */
-    private static final float DISSIPATE_TICKS = 70f;
+    private static final float DISSIPATE_TICKS = 14f;
     /** Depart du front de coupure sous la buse : la bande (3.4 blocs, brouillee de 1.8) est hors du gaz. */
     private static final float CUT_START = -3.5f;
     /**

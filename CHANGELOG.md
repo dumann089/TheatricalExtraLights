@@ -32,7 +32,7 @@
 - **Gobo profile heads**: removed the old plain Theatrical/Shimmer light pool. The GPU-projected spot is now the only one, so gobos, frost, animation wheels and framing shutters are what you see on the floor.
 - **Hanging fixtures**: Concert Stage Craft trusses are recognised as supports, so fixtures placed under them get the same automatic mount height as on a Theatrical truss (still centred on the block) without a fixture-wrench offset.
 - **Beams on stage decks**: blocks that do not occlude ambient light (such as SEF's stage floor, collision parts and stage stairs) are now included in beam shadows, so washes and other fixtures no longer shine through the deck or leak past stair treads.
-- **Flow2Jet:** the valve now follows the raw DMX channel and the plume front stops growing the moment DMX closes, so fast songs no longer get gas still coming out during the next hit. The cloud already in the air still detaches from the nozzle and dissipates normally instead of vanishing.
+- **Flow2Jet:** the valve now follows the raw DMX channel and the plume front stops growing the moment DMX closes, so fast songs no longer get gas still coming out during the next hit. The cloud already in the air detaches from the nozzle and fades out in 0.7 s max instead of vanishing or lingering for seconds.
 - LED fountain uses the smoothed colour and dimmer like the other fixtures.
 - Forge: single client entry point and keybind registered before `RegisterKeyMappingsEvent`.
 - French translations for the gobo settings.
