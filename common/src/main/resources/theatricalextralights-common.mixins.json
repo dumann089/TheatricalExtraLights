@@ -14,7 +14,13 @@
     "client.sfx.SoundBufferMixin",
     "compat.BaseLightBlockEntityMixin",
     "compat.LazyRenderersMixin",
-    "compat.TheatricalClientMixin"
+    "compat.TheatricalClientMixin",
+    "client.gobo.ShaderInstanceGoboMixin",
+    "client.gobo.LevelRendererGoboMixin",
+    "client.gobo.sodium.SodiumShaderLoaderMixin",
+    "client.gobo.sodium.SodiumGlProgramMixin",
+    "client.gobo.embeddium.EmbeddiumShaderLoaderMixin",
+    "client.gobo.embeddium.EmbeddiumGlProgramMixin"
   ],
   "mixins": [
     "compat.BlockEntityTheatricalDmxExtendedMixin"

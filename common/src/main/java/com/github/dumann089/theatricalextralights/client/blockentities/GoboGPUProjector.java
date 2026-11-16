@@ -6,6 +6,8 @@ import com.github.dumann089.theatricalextralights.client.render.beam.ProfileHead
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.dumann089.theatricalextralights.client.gobo.GoboDirectLightManager;
+
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
 import com.github.dumann089.theatricalextralights.util.GoboFieldAngleSupport;
 import com.github.dumann089.theatricalextralights.client.CustomGoboLoader;
@@ -317,6 +319,31 @@ public class GoboGPUProjector {
                             (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance) * tanHalfAngle + finalBaseRadius)
                             : null;
             final int finalColor = be.getPartialColour(partialTicks) == 0 ? 0xFFFFFF : be.getPartialColour(partialTicks);
+
+            if (GoboDirectLightManager.isEnabled()) {
+                GoboDirectLightManager.submit(
+                        origin,
+                        beamDir,
+                        axisU,
+                        axisV,
+                        finalBaseRadius,
+                        finalTanHalfAngle,
+                        finalMaxDistance,
+                        finalRotation,
+                        finalColor,
+                        finalIntensity,
+                        finalTexture,
+                        finalNextTexture,
+                        finalWheelTransition,
+                        finalFocus,
+                        finalShutters,
+                        finalAnimation,
+                        hasOcclusion,
+                        finalOcclusionPos,
+                        finalOcclusionNormal
+                );
+                continue;
+            }
 
             LazyRenderers.addLazyRender(new LazyRenderers.LazyRenderer() {
                 @Override

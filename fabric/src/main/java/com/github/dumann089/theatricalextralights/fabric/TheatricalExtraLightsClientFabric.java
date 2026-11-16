@@ -6,6 +6,7 @@ import com.github.dumann089.theatricalextralights.client.ConfettiCannonItemRende
 import com.github.dumann089.theatricalextralights.client.LensRenderTypes;
 import com.github.dumann089.theatricalextralights.client.LensBloomCompat;
 import com.github.dumann089.theatricalextralights.client.ModShaders;
+import com.github.dumann089.theatricalextralights.client.blockentities.GoboGPUProjector;
 import com.github.dumann089.theatricalextralights.client.firework.DetachedPyroSparks;
 import com.github.dumann089.theatricalextralights.client.firework.FireworkRocketLateRender;
 import com.github.dumann089.theatricalextralights.client.model.ConfettiCannonModel;

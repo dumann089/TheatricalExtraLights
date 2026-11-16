@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 1.5.1 (Unreleased) — mc 1.20.1
+
+### Gobo lighting
+- Reworked the direct-lighting projector system to support up to **2,048 simultaneous projectors**, removing the fixed 16-projector-per-tile limit.
+- Added dynamically sized per-tile projector lists and spatial screen-tile culling, ensuring each fragment processes only projectors affecting its area. Reusable buffers and dynamic GPU index textures help reduce overhead with large numbers of lights.
+- **Particle lighting is not yet supported:** Gobo projections currently illuminate terrain, but particles are not affected by the new direct-lighting system.
+
+### Renderer compatibility
+- Added direct-lighting compatibility with **Sodium** (Fabric) and **Embeddium** (Forge).
+- **Compatibility notice:** This integration may still cause rendering issues, visual glitches, or conflicts with other rendering mods and shader pipelines. Compatibility should be thoroughly tested across different mod combinations, as unexpected errors may occur.
+
 ## Version 1.5.0 (Unreleased) — mc 1.20.1
 
 ### Improvements & fixes
