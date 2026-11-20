@@ -44,10 +44,19 @@ public final class Flow2JetClientEffects {
      * la vanne se rouvre : un nouveau declenchement ne relance pas tout l'effet, il ajoute un jet.
      */
     private static final Map<BlockPos, List<PlumeState>> RELEASED = new ConcurrentHashMap<>();
-    /** Vanne fermee : le nuage lache se dilue et disparait en trois secondes et demie. */
-    private static final float DISSIPATE_TICKS = 70f;
+    /**
+     * Vanne fermee : le nuage deja sorti reste dans l'air et se dilue en 0.7 s maximum. Ce qui
+     * doit s'arreter tout de suite, c'est le gaz qui sort de la buse, pas le nuage deja lache.
+     */
+    private static final float DISSIPATE_TICKS = 14f;
     /** Depart du front de coupure sous la buse : la bande (3.4 blocs, brouillee de 1.8) est hors du gaz. */
     private static final float CUT_START = -3.5f;
+    /**
+     * Le front de coupure ne balaie que la buse : au-dela, on ne fait que detacher le panache
+     * deja sorti. Si on le laissait remonter tout le jet, il effacerait le nuage au lieu de le
+     * laisser flotter.
+     */
+    private static final float CUT_FRONT_MAX = 0.5f;
 
     private Flow2JetClientEffects() {
     }
@@ -73,7 +82,9 @@ public final class Flow2JetClientEffects {
     }
 
     public static void tick(Flow2JetBlockEntity blockEntity) {
-        boolean active = blockEntity.getDisplayIntensity(1f) > 0;
+        // La vanne suit le DMX brut, pas l'intensite lissee : des que le canal tombe a 0, le jet
+        // doit se couper, sans trainer le fade de couleur/luminosite des autres fixtures.
+        boolean active = blockEntity.getIntensity() > 0;
         Minecraft minecraft = Minecraft.getInstance();
         BlockPos pos = blockEntity.getBlockPos();
         Vec3 center = pos.getCenter();
@@ -201,16 +212,22 @@ public final class Flow2JetClientEffects {
         float pressure = Mth.lerp(partialTick, plume.prevPressure, plume.pressure);
         float flow = Mth.lerp(partialTick, plume.prevFlow, plume.flow);
         float baseFlow = pressure > 1.0e-4f ? Mth.clamp(flow / pressure, 0f, 1f) : 0f;
-        float length = Flow2JetParticleSpawner.plumeLength(pressure, age);
+        // Des que la vanne ferme, le front du panache ne grandit plus : le gaz deja sorti reste
+        // sur place et se dissipe, mais rien de neuf ne continue a sortir de la buse.
+        float lengthAge = plume.closeTick >= 0
+                ? (float) Math.max(0.0, plume.closeTick - plume.openTick)
+                : age;
+        float length = Flow2JetParticleSpawner.plumeLength(pressure, lengthAge);
         float cutFront = -1f;
         float dissipate = 0f;
         // Horloge du gaz : le temps ecoule, qui ralentit une fois la vanne fermee (le gaz lache freine).
         float flowClock = age;
         if (plume.closeTick >= 0) {
             float sinceClose = (float) Math.max(0.0, now - plume.closeTick);
-            // La bande de coupure demarre sous la buse, entierement hors du panache, et remonte :
-            // l'instant de la fermeture ne change rien a l'image.
-            cutFront = CUT_START + Flow2JetParticleSpawner.CUT_SPEED * sinceClose;
+            // La bande de coupure demarre sous la buse, entierement hors du panache, et remonte
+            // juste assez pour detacher le nuage de la buse. On ne la laisse pas balayer tout le
+            // panache, sinon elle efface le nuage au lieu de le laisser flotter.
+            cutFront = Math.min(CUT_START + Flow2JetParticleSpawner.CUT_SPEED * sinceClose, CUT_FRONT_MAX);
             dissipate = Math.min(1f, sinceClose / DISSIPATE_TICKS);
             float openDuration = (float) Math.max(0.0, plume.closeTick - plume.openTick);
             flowClock = openDuration + sinceClose * (1f - 0.8f * dissipate);
