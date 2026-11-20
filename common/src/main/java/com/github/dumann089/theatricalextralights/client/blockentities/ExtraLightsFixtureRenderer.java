@@ -195,8 +195,6 @@ public abstract class ExtraLightsFixtureRenderer<T extends BaseLightBlockEntity>
                 .computeIfAbsent(beamIndex, k -> new VolumetricBeamRenderer())
                 .render(renderData, new PoseStack());
     }
-
-
     // ── Strobes ─────────────────────────────────────────────────────────────
 
     /**

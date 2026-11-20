@@ -85,7 +85,6 @@ public class BlockEntities {
     public static final RegistrySupplier<BlockEntityType<a2x2par64_whiteBlockEntity>> A2X2PAR64_WHITE = BLOCK_ENTITIES.register("a2x2par64_white", () -> BlockEntityType.Builder.of(a2x2par64_whiteBlockEntity::new, Blocks.A2X2PAR64_WHITE_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<DWTPanelBlockEntity>> DWT_PANEL = BLOCK_ENTITIES.register("dwt_panel", () -> BlockEntityType.Builder.of(DWTPanelBlockEntity::new, Blocks.DWT_PANEL_BLOCK.get()).build(null));
 
-
     public static final RegistrySupplier<BlockEntityType<FollowspotBlockEntity>> FOLLOWSPOT = BLOCK_ENTITIES.register("followspot", () -> BlockEntityType.Builder.of(FollowspotBlockEntity::new, Blocks.FOLLOWSPOT_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<bigscrollerBlockEntity>> BIGSCROLLER = BLOCK_ENTITIES.register("bigscroller", () -> BlockEntityType.Builder.of(bigscrollerBlockEntity::new, Blocks.BIGSCROLLER_BLOCK.get()).build(null));
     public static final RegistrySupplier<BlockEntityType<horizontalscrollerBlockEntity>> HORIZONTALSCROLLER = BLOCK_ENTITIES.register("horizontalscroller", () -> BlockEntityType.Builder.of(horizontalscrollerBlockEntity::new, Blocks.HORIZONTALSCROLLER_BLOCK.get()).build(null));
@@ -247,6 +246,7 @@ public class BlockEntities {
     public static final RegistrySupplier<BlockEntityType<LedFacadeBlockEntity>> LED_FACADE =
             BLOCK_ENTITIES.register("led_facade",
                     () -> BlockEntityType.Builder.of(LedFacadeBlockEntity::new, Blocks.LED_FACADE.get()).build(null));
+
     public static void init(){
         BLOCK_ENTITIES.register();
     }

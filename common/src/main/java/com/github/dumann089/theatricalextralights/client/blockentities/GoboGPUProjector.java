@@ -34,6 +34,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ClipContext;
@@ -181,22 +182,126 @@ public class GoboGPUProjector {
 
     private final List<ClipSlot> clipSlots = new ArrayList<>();
 
+    private static final String THEATRICAL_NAMESPACE = "theatrical";
+    private static final String EXTRA_LIGHTS_NAMESPACE = "theatricalextralights";
+
     private BlockHitResult cachedClip(Level level, int facet, Vec3 start, Vec3 end) {
         while (clipSlots.size() <= facet) {
             clipSlots.add(new ClipSlot());
         }
+
         ClipSlot c = clipSlots.get(facet);
         long tick = level.getGameTime();
-        if (c.hit != null && c.tick == tick && c.level == level && c.start.equals(start) && c.end.equals(end)) {
+
+        if (c.hit != null
+                && c.tick == tick
+                && c.level == level
+                && c.start.equals(start)
+                && c.end.equals(end)) {
             return c.hit;
         }
-        BlockHitResult r = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
+
+        BlockHitResult result = clipIgnoringFixtureBlocks(level, start, end);
+
         c.tick = tick;
         c.level = level;
         c.start = start;
         c.end = end;
-        c.hit = r;
-        return r;
+        c.hit = result;
+        return result;
+    }
+
+    /**
+     * Raycasts against normal world collision shapes while treating blocks registered by
+     * Theatrical and Theatrical Extra Lights as pass-through geometry for gobo projection only.
+     * This does not change block collision, player movement, or world shadows.
+     */
+    private static BlockHitResult clipIgnoringFixtureBlocks(Level level, Vec3 start, Vec3 end) {
+        Vec3 segment = end.subtract(start);
+        double segmentLength = segment.length();
+
+        if (segmentLength <= 1.0E-6) {
+            return BlockHitResult.miss(end, Direction.UP, BlockPos.containing(end));
+        }
+
+        Vec3 rayDirection = segment.scale(1.0 / segmentLength);
+        Vec3 clipStart = start;
+        double currentProgress = 0.0;
+        int maxIterations = (int) Math.min(
+                65536L,
+                Math.max(32L, (long) Math.ceil(segmentLength * 4.0) + 16L)
+        );
+
+        for (int iteration = 0; iteration < maxIterations; iteration++) {
+            BlockHitResult hit = level.clip(new ClipContext(
+                    clipStart,
+                    end,
+                    ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE,
+                    null
+            ));
+
+            if (hit.getType() == HitResult.Type.MISS) {
+                return hit;
+            }
+
+            BlockPos hitPos = hit.getBlockPos();
+            BlockState hitState = level.getBlockState(hitPos);
+
+            if (!isPassThroughFixtureBlock(hitState)) {
+                return hit;
+            }
+
+            double hitProgress = hit.getLocation().subtract(start).dot(rayDirection);
+            double anchorProgress = Math.max(currentProgress, hitProgress);
+            Vec3 anchor = start.add(rayDirection.scale(anchorProgress));
+            double distanceToCellExit = distanceToBlockExit(hitPos, anchor, rayDirection);
+            double nextProgress = anchorProgress + distanceToCellExit;
+
+            if (nextProgress >= segmentLength) {
+                return BlockHitResult.miss(end, Direction.UP, BlockPos.containing(end));
+            }
+
+            currentProgress = nextProgress;
+            clipStart = start.add(rayDirection.scale(currentProgress));
+        }
+
+        // Fail open rather than letting a run of fixture blocks terminate the projection.
+        return BlockHitResult.miss(end, Direction.UP, BlockPos.containing(end));
+    }
+
+    private static double distanceToBlockExit(BlockPos blockPos, Vec3 point, Vec3 direction) {
+        double distanceX = axisExitDistance(point.x, direction.x, blockPos.getX());
+        double distanceY = axisExitDistance(point.y, direction.y, blockPos.getY());
+        double distanceZ = axisExitDistance(point.z, direction.z, blockPos.getZ());
+        double distance = Math.min(distanceX, Math.min(distanceY, distanceZ));
+
+        if (!Double.isFinite(distance) || distance < 0.0) {
+            return 1.0E-3;
+        }
+
+        return distance + 1.0E-4;
+    }
+
+    private static double axisExitDistance(double coordinate, double direction, int blockCoordinate) {
+        if (direction > 1.0E-8) {
+            return (blockCoordinate + 1.0 - coordinate) / direction;
+        }
+        if (direction < -1.0E-8) {
+            return (blockCoordinate - coordinate) / direction;
+        }
+        return Double.POSITIVE_INFINITY;
+    }
+
+    private static boolean isPassThroughFixtureBlock(BlockState state) {
+        ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        if (blockId == null) {
+            return false;
+        }
+
+        String namespace = blockId.getNamespace();
+        return THEATRICAL_NAMESPACE.equals(namespace)
+                || EXTRA_LIGHTS_NAMESPACE.equals(namespace);
     }
 
     public <T extends BlockEntity & HasGobo> void render(T be, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging, Vec3 localLensOffset, float[] panPivot, float[] tiltPivot, float[] structuralTransform, float minAngle, float maxAngle, float smoothPan, float smoothTilt, float baseRadius) {
@@ -239,6 +344,7 @@ public class GoboGPUProjector {
 
         float maxDistance = TheatricalExtraLightsConfig.getMaxGoboDistance();
         final float finalBaseRadius = baseRadius;
+        final boolean useLegacyGoboProjectorShader = usesLegacyGoboProjectorShader(be);
 
         PoseStack fixtureStack = new PoseStack();
         applyFixtureOrientation(
@@ -320,7 +426,7 @@ public class GoboGPUProjector {
                             : null;
             final int finalColor = be.getPartialColour(partialTicks) == 0 ? 0xFFFFFF : be.getPartialColour(partialTicks);
 
-            if (GoboDirectLightManager.isEnabled()) {
+            if (GoboDirectLightManager.isEnabled() && !useLegacyGoboProjectorShader) {
                 GoboDirectLightManager.submit(
                         origin,
                         beamDir,
@@ -486,6 +592,20 @@ public class GoboGPUProjector {
         ResourceLocation texture = be.getGoboLibrary().getTexture(slot);
         if (texture != null) return texture;
         return new ResourceLocation("theatricalextralights", "textures/gobos/generic_1/open.png");
+    }
+
+    private static boolean usesLegacyGoboProjectorShader(HasGobo be) {
+        if (!(be instanceof ExtraLightsLightBlockEntity extra)) {
+            return false;
+        }
+
+        ResourceLocation fixtureId = extra.getFixtureId();
+        if (fixtureId == null) {
+            return false;
+        }
+
+        String path = fixtureId.getPath();
+        return path.equals("led_fountain") || path.startsWith("par56_");
     }
 
     private static void applyFixtureOrientation(

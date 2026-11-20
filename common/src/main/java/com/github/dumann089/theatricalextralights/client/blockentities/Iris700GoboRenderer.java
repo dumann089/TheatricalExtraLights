@@ -86,7 +86,6 @@ public class Iris700GoboRenderer extends ExtraLightsFixtureRenderer<Iris700GoboB
 
     @Override
     public void renderModel(Iris700GoboBlockEntity blockEntity, PoseStack poseStack, VertexConsumer vertexConsumer, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging, int packedLight, int packedOverlay) {
-        FixtureMountTransform.apply(poseStack, blockEntity);
         if(cachedStaticModel == null){
             cachedStaticModel = TheatricalExpectPlatform.getBakedModel(blockEntity.getFixture().getStaticModel());
         }
@@ -438,6 +437,7 @@ public class Iris700GoboRenderer extends ExtraLightsFixtureRenderer<Iris700GoboB
 
     @Override
     public void preparePoseStack(Iris700GoboBlockEntity blockEntity, PoseStack poseStack, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging) {
+        FixtureMountTransform.apply(poseStack, blockEntity);
         poseStack.translate(0.5F, 0, .5F);
         if(isHanging){
             Direction hangDirection = blockState.getValue(HangableBlock.HANG_DIRECTION);

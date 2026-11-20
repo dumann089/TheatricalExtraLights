@@ -1,5 +1,16 @@
 # Changelog
 
+
+
+## Version 1.5.2 (Unreleased) — mc 1.20.1
+
+### Gobo lighting
+- **Par56 and LEDFountain** now use the legacy gobo projection system, preserving gobo projections on particles.
+- Updated the new gobo projection system to no longer collide with blocks from **Extra Lights** or **Theatrical**, allowing projections to pass through them.
+
+### Laser rendering
+- **LaserMirror** now uses the new laser rendering system for improved visual quality and more realistic laser effects.
+
 ## Version 1.5.1 (Unreleased) — mc 1.20.1
 
 ### Gobo lighting
