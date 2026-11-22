@@ -252,6 +252,25 @@ public class horizontalscrollerBlockEntity extends ExtraLightsLightBlockEntity
         return "block.theatricalextralights.horizontalscroller";
     }
 
+
+    @Override
+    protected boolean hasExtraDmxChannelsBeyondBatch() {
+        return true;
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = super.getUpdateTag();
+
+        tag.putInt("ActivePersonality", activePersonalityIndex);
+        tag.putInt("ScrollerPosition", scrollerPosition);
+        tag.putIntArray("GelColors", gelColors);
+        tag.putFloat("GelWidth", gelWidth);
+        tag.putFloat("ScrollerSpeed", scrollerSpeed);
+
+        return tag;
+    }
+
     @Override
     public void write(CompoundTag tag) {
         super.write(tag);

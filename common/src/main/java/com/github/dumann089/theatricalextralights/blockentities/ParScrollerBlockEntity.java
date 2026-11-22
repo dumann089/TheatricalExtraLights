@@ -135,6 +135,11 @@ public class ParScrollerBlockEntity extends ManualParGoboBlockEntity {
     }
 
     @Override
+    protected boolean hasExtraDmxChannelsBeyondBatch() {
+        return true;
+    }
+
+    @Override
     public void read(CompoundTag tag) {
         super.read(tag);
         if (tag.contains("ColorWheelPosition")) {

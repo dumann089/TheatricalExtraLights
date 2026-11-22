@@ -283,6 +283,22 @@ public class bigscrollerBlockEntity extends ExtraLightsLightBlockEntity implemen
         return "block.theatricalextralights.bigscroller";
     }
 
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = super.getUpdateTag();
+
+        tag.putInt("GelConfigVersion", GEL_CONFIG_VERSION);
+        tag.putInt("ActivePersonality", activePersonalityIndex);
+        tag.putInt("ScrollerPosition", scrollerPosition);
+        tag.putIntArray("SectionIntensities", sectionIntensities);
+        tag.putIntArray("GelColors", gelColors);
+        tag.putFloat("GelHeight", gelHeight);
+        tag.putFloat("ScrollerSpeed", scrollerSpeed);
+
+        return tag;
+    }
+
     @Override
     public void write(CompoundTag tag) {
         super.write(tag);
