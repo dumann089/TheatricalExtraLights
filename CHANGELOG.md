@@ -1,6 +1,15 @@
 # Changelog
 
+## Version 1.5.3 (Unreleased) — mc 1.20.1
 
+### Gobo lighting
+- **BigScroller, HorizontalScroller, VerticalScroller, PARScroller and PAR1000** now use the gobo projection system instead of Shimmer for their projected textures.
+- **PARScroller** now uses a dedicated color wheel based on `GoboWheelAnimator`, with slower transitions to simulate a physical gel scroller.
+- Added a dedicated `PARSCROLLER_COLORWHEEL` library with eight color slots, allowing custom color gobo textures.
+- **PARScroller DMX Channel 2** now controls the color wheel position, with linear slot transitions.
+- **PARScroller** and **PAR1000** now use a single fixed gobo slot instead of multi-slot gobo wheels.
+- **PAR1000** and its color variants retain independent gobo projection and Field Angle controls.
+- Updated the gobo projection to preserve the RGB colors of color wheel textures during transitions.
 
 ## Version 1.5.2 (Unreleased) — mc 1.20.1
 

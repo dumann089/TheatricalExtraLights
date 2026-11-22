@@ -305,6 +305,10 @@ public class GoboGPUProjector {
     }
 
     public <T extends BlockEntity & HasGobo> void render(T be, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging, Vec3 localLensOffset, float[] panPivot, float[] tiltPivot, float[] structuralTransform, float minAngle, float maxAngle, float smoothPan, float smoothTilt, float baseRadius) {
+        render(be, multiBufferSource, facing, partialTicks, isFlipped, blockState, isHanging, localLensOffset, panPivot, tiltPivot, structuralTransform, minAngle, maxAngle, smoothPan, smoothTilt, baseRadius, -1);
+    }
+
+    public <T extends BlockEntity & HasGobo> void render(T be, MultiBufferSource multiBufferSource, Direction facing, float partialTicks, boolean isFlipped, BlockState blockState, boolean isHanging, Vec3 localLensOffset, float[] panPivot, float[] tiltPivot, float[] structuralTransform, float minAngle, float maxAngle, float smoothPan, float smoothTilt, float baseRadius, int colorOverride) {
         if (be.getLevel() == null) return;
         float intensity = be.getPartialIntensity(partialTicks) / 255.0f;
         if (intensity <= 0.0f) return;
@@ -312,14 +316,26 @@ public class GoboGPUProjector {
         int targetSlot = be.getGobo();
         if (targetSlot < 0) return;
 
-        // Actualización e integración del Animator
-        GoboWheelAnimator animator = be.getGoboAnimator();
-        animator.updateTarget(be.getGoboLibrary(), targetSlot);
-        float virtualSlot = animator.snapshotVirtualSlot();
-
-        int outgoingSlot = animator.getOutgoingSlot(be.getGoboLibrary(), virtualSlot);
-        int incomingSlot = animator.getIncomingSlot(be.getGoboLibrary(), virtualSlot);
-        float wheelTransition = animator.getShaderProgress(be.getGoboLibrary(), virtualSlot);
+        int outgoingSlot;
+        int incomingSlot;
+        float wheelTransition;
+        if (be.getGoboLibrary().getSlotCount() == 1) {
+            outgoingSlot = 0;
+            incomingSlot = 0;
+            wheelTransition = 0.0F;
+        } else {
+            GoboWheelAnimator animator = be.getGoboAnimator();
+            animator.updateTarget(
+                    be.getGoboLibrary(),
+                    targetSlot,
+                    be.getGoboWheelStepDurationMs(),
+                    !be.isGoboWheelLinear()
+            );
+            float virtualSlot = animator.snapshotVirtualSlot();
+            outgoingSlot = animator.getOutgoingSlot(be.getGoboLibrary(), virtualSlot);
+            incomingSlot = animator.getIncomingSlot(be.getGoboLibrary(), virtualSlot);
+            wheelTransition = animator.getShaderProgress(be.getGoboLibrary(), virtualSlot);
+        }
 
         ResourceLocation texture = resolveGoboTexture(be, outgoingSlot);
         ResourceLocation nextTexture = resolveGoboTexture(be, incomingSlot);
@@ -334,13 +350,12 @@ public class GoboGPUProjector {
 
         if (be instanceof ExtraLightsLightBlockEntity light
                 && GoboFieldAngleSupport.supports(light)) {
-
-            coneHalfAngle = light.getGoboFieldAngle() * 0.5F;
+            float fieldAngle = light.getGoboFieldAngle();
+            coneHalfAngle = fieldAngle * 0.5F;
         }
 
-        float tanHalfAngle = (float) Math.tan(
-                Math.toRadians(coneHalfAngle)
-        );
+        coneHalfAngle = net.minecraft.util.Mth.clamp(coneHalfAngle, 0.5F, 89.0F);
+        float tanHalfAngle = (float) Math.tan(Math.toRadians(coneHalfAngle));
 
         float maxDistance = TheatricalExtraLightsConfig.getMaxGoboDistance();
         final float finalBaseRadius = baseRadius;
@@ -424,7 +439,8 @@ public class GoboGPUProjector {
                             (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance),
                             (float) (hasOcclusion ? finalOcclusionPos.distanceTo(origin) : maxDistance) * tanHalfAngle + finalBaseRadius)
                             : null;
-            final int finalColor = be.getPartialColour(partialTicks) == 0 ? 0xFFFFFF : be.getPartialColour(partialTicks);
+            final int fixtureColor = be.getPartialColour(partialTicks) == 0 ? 0xFFFFFF : be.getPartialColour(partialTicks);
+            final int finalColor = colorOverride >= 0 ? colorOverride & 0xFFFFFF : fixtureColor;
 
             if (GoboDirectLightManager.isEnabled() && !useLegacyGoboProjectorShader) {
                 GoboDirectLightManager.submit(
@@ -631,6 +647,9 @@ public class GoboGPUProjector {
 
         boolean negativePanAxis = fixturePath.equals("led_fountain")
                 || fixturePath.startsWith("par56_");
+        String normalizedFixturePath = fixturePath.replace("_", "").replace("-", "");
+        boolean parFixtureOrientation = normalizedFixturePath.equals("parscroller")
+                || normalizedFixturePath.startsWith("par1000");
 
         ps.translate(0.5f, 0f, 0.5f);
 
@@ -646,12 +665,19 @@ public class GoboGPUProjector {
 
             if (hangDir.getAxis() != Direction.Axis.Y) {
                 if (hangDir.getAxis() == Direction.Axis.Z) {
-                    ps.mulPose(Axis.ZP.rotationDegrees(90));
-                    ps.mulPose(
-                            hangDir == Direction.SOUTH
-                                    ? Axis.XP.rotationDegrees(-90)
-                                    : Axis.XP.rotationDegrees(90)
-                    );
+                    if (parFixtureOrientation) {
+                        ps.mulPose(hangDir == Direction.SOUTH
+                                ? Axis.XP.rotationDegrees(-90)
+                                : Axis.XP.rotationDegrees(90));
+                        ps.mulPose(Axis.YP.rotationDegrees(180));
+                    } else {
+                        ps.mulPose(Axis.ZP.rotationDegrees(90));
+                        ps.mulPose(
+                                hangDir == Direction.SOUTH
+                                        ? Axis.XP.rotationDegrees(-90)
+                                        : Axis.XP.rotationDegrees(90)
+                        );
+                    }
                 } else {
                     ps.mulPose(Axis.ZN.rotationDegrees(
                             hangDir == Direction.EAST ? -90 : 90

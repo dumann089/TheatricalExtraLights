@@ -1,4 +1,3 @@
-// blockentities/interfaces/HasGobo.java
 package com.github.dumann089.theatricalextralights.blockentities.interfaces;
 
 import com.github.dumann089.theatricalextralights.client.gobo.GoboLibrary;
@@ -6,7 +5,7 @@ import com.github.dumann089.theatricalextralights.client.gobo.GoboWheelAnimator;
 
 public interface HasGobo extends HasExtendedBeamChannels {
 
-    /** Slot del gobo (0 = abierto/blanco). */
+    /** Slot del gobo (0 = primer elemento de la rueda). */
     @Override
     int getGobo();
 
@@ -21,6 +20,16 @@ public interface HasGobo extends HasExtendedBeamChannels {
     float getGoboRotation();
 
     GoboWheelAnimator getGoboAnimator();
+
+    /** Duración de transición por posición de rueda, en milisegundos. */
+    default long getGoboWheelStepDurationMs() {
+        return 150L;
+    }
+
+    /** true para ruedas lineales tipo scroller; false para ruedas circulares. */
+    default boolean isGoboWheelLinear() {
+        return false;
+    }
 
     /** Zoom DMX 0-255 → apertura del cono. */
     int getZoom();

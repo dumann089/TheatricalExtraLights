@@ -14,13 +14,14 @@ public final class GoboFieldAngleSupport {
         }
 
         ResourceLocation fixtureId = blockEntity.getFixtureId();
-
         if (fixtureId == null) {
             return false;
         }
 
-        String path = fixtureId.getPath();
-
-        return path.equals("led_fountain") || path.startsWith("par56_");
+        String path = fixtureId.getPath().replace("_", "").replace("-", "");
+        return path.equals("ledfountain")
+                || path.startsWith("par56")
+                || path.equals("parscroller")
+                || path.startsWith("par1000");
     }
 }

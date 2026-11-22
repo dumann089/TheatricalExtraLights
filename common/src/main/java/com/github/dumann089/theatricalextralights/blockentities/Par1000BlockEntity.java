@@ -1,24 +1,27 @@
 package com.github.dumann089.theatricalextralights.blockentities;
 
 import com.github.dumann089.theatricalextralights.blocks.Par1000Block;
-import com.github.dumann089.theatricalextralights.blocks.Par1000BlueBlock;
 import com.github.dumann089.theatricalextralights.fixtures.Fixtures;
 import dev.imabad.theatrical.api.Fixture;
-import dev.imabad.theatrical.blockentities.light.BaseDMXConsumerLightBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
 
-public class Par1000BlockEntity extends ExtraLightsLightBlockEntity {
+public class Par1000BlockEntity extends ManualParGoboBlockEntity {
 
     public Par1000BlockEntity(BlockPos pos, BlockState state) {
-        super(BlockEntities.PAR1000.get(), pos, state);
+        this(BlockEntities.PAR1000.get(), pos, state);
+    }
+
+    protected Par1000BlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
         setChannelCount(1);
     }
+
     @Override
     public Fixture getFixture() {
         return Fixtures.PAR1000.get();
@@ -31,23 +34,40 @@ public class Par1000BlockEntity extends ExtraLightsLightBlockEntity {
 
     @Override
     public void consume(byte[] dmxValues) {
-        int start = this.getChannelStart() > 0 ? this.getChannelStart() - 1 : 0;
-        byte[] ourValues = Arrays.copyOfRange(dmxValues, start,
-                start+ this.getChannelCount());
-        if(ourValues.length < 1){
+        int start = getChannelStart() > 0 ? getChannelStart() - 1 : 0;
+        byte[] ourValues = Arrays.copyOfRange(
+                dmxValues,
+                start,
+                Math.min(start + getChannelCount(), dmxValues.length)
+        );
+        if (ourValues.length < 1) {
             return;
         }
-                boolean prevAdvanced = beginDmxUpdate();
-        int _pi = intensity, _pr = red, _pg = green, _pb = blue, _pf = focus, _pp = pan, _pt = tilt;
-        intensity = convertByteToInt(ourValues[0]);
 
-        float scale = intensity / 255f;
+        boolean prevAdvanced = beginDmxUpdate();
+        int oldIntensity = intensity;
+        int oldRed = red;
+        int oldGreen = green;
+        int oldBlue = blue;
+        int oldFocus = focus;
+        int oldPan = pan;
+        int oldTilt = tilt;
 
-        red = (int)(255 * scale);
-        green = (int)(219 * scale);
-        blue = (int)(122 * scale);
+        intensity = Byte.toUnsignedInt(ourValues[0]);
+        float scale = intensity / 255.0F;
+        red = (int) (255.0F * scale);
+        green = (int) (219.0F * scale);
+        blue = (int) (122.0F * scale);
 
-        finishDmxUpdate(intensity != _pi || red != _pr || green != _pg || blue != _pb || focus != _pf || pan != _pp || tilt != _pt, prevAdvanced);
+        boolean changed = intensity != oldIntensity
+                || red != oldRed
+                || green != oldGreen
+                || blue != oldBlue
+                || focus != oldFocus
+                || pan != oldPan
+                || tilt != oldTilt;
+
+        finishDmxUpdate(changed, prevAdvanced);
     }
 
     @Override
@@ -62,7 +82,8 @@ public class Par1000BlockEntity extends ExtraLightsLightBlockEntity {
 
     @Override
     public boolean isUpsideDown() {
-        return getBlockState().getValue(Par1000Block.HANGING) && getBlockState().getValue(Par1000Block.HANG_DIRECTION) == Direction.UP;
+        return getBlockState().getValue(Par1000Block.HANGING)
+                && getBlockState().getValue(Par1000Block.HANG_DIRECTION) == Direction.UP;
     }
 
     @Override
@@ -73,10 +94,6 @@ public class Par1000BlockEntity extends ExtraLightsLightBlockEntity {
     @Override
     public int getActivePersonality() {
         return 0;
-    }
-
-    public int convertByteToInt(byte val) {
-        return Byte.toUnsignedInt(val);
     }
 
     @Override

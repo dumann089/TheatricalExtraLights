@@ -5,7 +5,6 @@ import com.github.dumann089.theatricalextralights.blockentities.BlockEntities;
 import com.github.dumann089.theatricalextralights.blockentities.ParScrollerBlockEntity;
 import dev.imabad.theatrical.TheatricalClient;
 import dev.imabad.theatrical.blocks.Blocks;
-import com.github.dumann089.theatricalextralights.blocks.ExtraLightsLightBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -46,6 +45,7 @@ public class ParScrollerBlock extends ExtraLightsLightBlock {
                 .sound(SoundType.METAL)
                 .pushReaction(PushReaction.DESTROY));
     }
+
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
@@ -61,13 +61,13 @@ public class ParScrollerBlock extends ExtraLightsLightBlock {
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext blockPlaceContext) {
         return super.getStateForPlacement(blockPlaceContext).setValue(HANGING,
-                blockPlaceContext.getClickedFace() == Direction.DOWN ||
-                        isHanging(blockPlaceContext.getLevel(), blockPlaceContext.getClickedPos()));
+                blockPlaceContext.getClickedFace() == Direction.DOWN
+                        || isHanging(blockPlaceContext.getLevel(), blockPlaceContext.getClickedPos()));
     }
 
     @Override
     public boolean canSurvive(BlockState blockState, LevelReader levelReader, BlockPos blockPos) {
-        if(blockState.getValue(HANGING)){
+        if (blockState.getValue(HANGING)) {
             return isHanging(levelReader, blockPos);
         }
         return !levelReader.getBlockState(blockPos.below()).isAir();
@@ -75,23 +75,14 @@ public class ParScrollerBlock extends ExtraLightsLightBlock {
 
     @Override
     public Direction getLightFacing(Direction hangDirection, Player placingPlayer) {
-        if(hangDirection == Direction.UP){
+        if (hangDirection == Direction.UP) {
             return placingPlayer.getDirection();
         }
         Direction playerFacing = placingPlayer.getDirection();
-        if(playerFacing.getAxis() == Direction.Axis.X){
-            if(playerFacing == Direction.WEST){
-                return Direction.SOUTH;
-            } else {
-                return Direction.NORTH;
-            }
-        } else {
-            if(playerFacing == Direction.SOUTH){
-                return Direction.WEST;
-            } else {
-                return Direction.EAST;
-            }
+        if (playerFacing.getAxis() == Direction.Axis.X) {
+            return playerFacing == Direction.WEST ? Direction.SOUTH : Direction.NORTH;
         }
+        return playerFacing == Direction.SOUTH ? Direction.WEST : Direction.EAST;
     }
 
     @Nullable
@@ -102,26 +93,28 @@ public class ParScrollerBlock extends ExtraLightsLightBlock {
 
     @Override
     public VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        if(context instanceof EntityCollisionContext entityCollisionContext && entityCollisionContext.getEntity() == null){
+        if (context instanceof EntityCollisionContext entityCollisionContext
+                && entityCollisionContext.getEntity() == null) {
             return Shapes.empty();
         }
         return super.getVisualShape(state, level, pos, context);
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if(super.use(state, level, pos, player, hand, hit) == InteractionResult.PASS) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
+                                 InteractionHand hand, BlockHitResult hit) {
+        if (super.use(state, level, pos, player, hand, hit) == InteractionResult.PASS) {
             if (!level.isClientSide) {
-                if (player.isCrouching()) {
+                if (player.isCrouching() && !player.getItemInHand(hand).isEmpty()) {
                     if (TheatricalClient.DEBUG_BLOCKS.contains(pos)) {
                         TheatricalClient.DEBUG_BLOCKS.remove(pos);
                     } else {
                         TheatricalClient.DEBUG_BLOCKS.add(pos);
                     }
-                    return InteractionResult.SUCCESS;
+                } else {
+                    new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.CHANNEL_PANTILT)
+                            .sendTo((ServerPlayer) player);
                 }
-                new OpenExtraLightsScreenPacket(pos, TheatricalExtraLightsScreens.CHANNEL_PANTILT)
-                        .sendTo((ServerPlayer) player);
             }
         }
         return InteractionResult.SUCCESS;
@@ -129,7 +122,7 @@ public class ParScrollerBlock extends ExtraLightsLightBlock {
 
     @Override
     public void destroy(LevelAccessor level, BlockPos pos, BlockState state) {
-        if(level.isClientSide()) {
+        if (level.isClientSide()) {
             TheatricalClient.DEBUG_BLOCKS.remove(pos);
         }
         super.destroy(level, pos, state);

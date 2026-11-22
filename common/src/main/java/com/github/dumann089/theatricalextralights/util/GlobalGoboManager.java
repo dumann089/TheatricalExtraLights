@@ -19,6 +19,17 @@ public class GlobalGoboManager {
 
     public static String getCustomGobo(GoboLibrary library, int slot) {
         if (library == null) return null;
+        String mapped = getMappedGobo(library, slot);
+        if (mapped != null) return mapped;
+        if (slot == 0) {
+            if (library == GoboLibrary.PAR1000) {
+                return getMappedGobo(GoboLibrary.MINISPOT, 1);
+            }
+        }
+        return null;
+    }
+
+    private static String getMappedGobo(GoboLibrary library, int slot) {
         Map<String, String> libMap = MAPPINGS.get(library.name());
         return libMap != null ? libMap.get(String.valueOf(slot)) : null;
     }

@@ -1,4 +1,3 @@
-
 package com.github.dumann089.theatricalextralights.client.gui;
 
 import com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity;
@@ -25,23 +24,17 @@ public final class GoboFieldAngleConfigScreen extends ExtraLightsConfigScreen {
             return y;
         }
 
-        addRenderableWidget(
-                new TelUi.FlatButton(
-                        contentLeft,
-                        y,
-                        contentWidth,
-                        WIDGET_HEIGHT,
-                        Component.literal("Gobo Field Angle"),
-                        TelUi.ButtonStyle.NORMAL,
-                        button -> Minecraft.getInstance().setScreen(
-                                new GoboFieldAngleScreen(
-                                        light,
-                                        pos,
-                                        this
-                                )
-                        )
+        addRenderableWidget(new TelUi.FlatButton(
+                contentLeft,
+                y,
+                contentWidth,
+                WIDGET_HEIGHT,
+                Component.literal("Field Angle / Custom Gobo"),
+                TelUi.ButtonStyle.NORMAL,
+                button -> Minecraft.getInstance().setScreen(
+                        new GoboFieldAngleScreen(light, pos, this)
                 )
-        );
+        ));
 
         return y + WIDGET_HEIGHT + SECTION_GAP;
     }
