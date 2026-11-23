@@ -1,4 +1,3 @@
-
 package com.github.dumann089.theatricalextralights.client.gobo;
 
 import com.mojang.logging.LogUtils;
@@ -8,20 +7,15 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class GoboSodiumShaderPatcher {
-
     private static final Logger LOGGER = LogUtils.getLogger();
-
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
 
     private static final String VERTEX_COLOR_MARKER = "out vec4 v_Color;";
     private static final String VERTEX_POSITION_MARKER =
             "vec3 position = _vert_position + translation;";
-
     private static final String FRAGMENT_TEXCOORD_MARKER = "in vec2 v_TexCoord;";
-
     private static final String FRAGMENT_OUTPUT_MARKER =
             "fragColor = _linearFog(diffuseColor, v_FragDistance, u_FogColor, u_FogStart, u_FogEnd);";
-
     private static final String FRAGMENT_SAMPLE_MARKER =
             "vec4 diffuseColor = texture(u_BlockTex, v_TexCoord, v_MaterialMipBias);";
 
@@ -41,371 +35,334 @@ public final class GoboSodiumShaderPatcher {
             uniform float GoboBrightness;
 
             vec4 goboDecodeLayer(vec4 sampleColor) {
-                float peak = max(
-                        sampleColor.r,
-                        max(sampleColor.g, sampleColor.b)
-                );
-
+                float peak = max(sampleColor.r, max(sampleColor.g, sampleColor.b));
                 if (peak <= 0.0001) {
                     return vec4(0.0);
                 }
-
-                return vec4(
-                        sampleColor.rgb / peak,
-                        sampleColor.a * peak
-                );
+                return vec4(sampleColor.rgb / peak, sampleColor.a * peak);
             }
 
-            vec2 goboRotateUv(vec2 uv, float angle) {
-                vec2 p = uv - vec2(0.5);
-
-                float c = cos(angle);
-                float s = sin(angle);
-
-                return vec2(
-                        c * p.x - s * p.y,
-                        s * p.x + c * p.y
-                ) + vec2(0.5);
+            float goboBladeMask(vec2 p, vec2 n, float insA, float insB, float soft) {
+                if (insA <= 0.0005 && insB <= 0.0005) {
+                    return 1.0;
+                }
+                vec2 tangent = vec2(n.y, -n.x);
+                const float R = 1.15;
+                vec2 cornerA = n * (R - 2.0 * R * insA) - tangent * R;
+                vec2 cornerB = n * (R - 2.0 * R * insB) + tangent * R;
+                vec2 edge = cornerB - cornerA;
+                if (dot(edge, edge) <= 0.0000001) {
+                    return 1.0;
+                }
+                vec2 normal = normalize(vec2(edge.y, -edge.x));
+                if (dot(normal, n) < 0.0) {
+                    normal = -normal;
+                }
+                return 1.0 - smoothstep(-soft, soft, dot(p - cornerA, normal));
             }
 
-            vec3 goboDirectLighting(vec3 viewPosition, vec3 albedo) {
-                if (GoboProjectorCount <= 0
-                        || GoboTileSize <= 0
-                        || GoboTilesX <= 0
-                        || GoboTilesY <= 0) {
+            float goboShutterMask(
+                    float u, float v, float inverseRadius,
+                    vec4 bladeA, vec4 bladeB,
+                    float frameRotation, float soft
+            ) {
+                vec2 p = vec2(u, v) * inverseRadius;
+                float cr = cos(-frameRotation);
+                float sr = sin(-frameRotation);
+                vec2 q = vec2(p.x * cr - p.y * sr, p.x * sr + p.y * cr);
+                float mask = 1.0;
+                mask *= goboBladeMask(q, vec2(0.0, 1.0), bladeA.x, bladeB.x, soft);
+                mask *= goboBladeMask(q, vec2(1.0, 0.0), bladeA.y, bladeB.y, soft);
+                mask *= goboBladeMask(q, vec2(0.0, -1.0), bladeA.z, bladeB.z, soft);
+                mask *= goboBladeMask(q, vec2(-1.0, 0.0), bladeA.w, bladeB.w, soft);
+                return mask;
+            }
+
+            float goboAnimationMask(
+                    float u, float v, float inverseRadius, float layer,
+                    float angle, float offset, float lod
+            ) {
+                if (layer < 0.5) {
+                    return 1.0;
+                }
+                float ca = cos(angle);
+                float sa = sin(angle);
+                vec2 p = vec2(u, v) * inverseRadius;
+                vec2 rotated = vec2(p.x * ca - p.y * sa, p.x * sa + p.y * ca);
+                vec2 uv = fract(vec2(rotated.x * 0.5 + offset, rotated.y * 0.5));
+                vec3 animationColor = textureLod(
+                        GoboAtlas, vec3(uv, layer), lod
+                ).rgb;
+                return clamp(dot(animationColor, vec3(0.299, 0.587, 0.114)), 0.0, 1.0);
+            }
+
+            vec3 goboProjectorLighting(
+                    int projectorIndex,
+                    vec3 viewPosition,
+                    vec3 geometricNormal,
+                    vec3 albedo,
+                    float vertexAlpha
+            ) {
+                vec4 p0 = texelFetch(GoboData, ivec2(0, projectorIndex), 0);
+                vec4 p1 = texelFetch(GoboData, ivec2(1, projectorIndex), 0);
+                vec4 p2 = texelFetch(GoboData, ivec2(2, projectorIndex), 0);
+                vec4 p3 = texelFetch(GoboData, ivec2(3, projectorIndex), 0);
+
+                float intensity = p3.w;
+                float maxDistance = p2.w;
+                if (intensity <= 0.001 || maxDistance <= 0.001) {
                     return vec3(0.0);
                 }
 
-                vec3 geometricNormal = cross(
-                        dFdx(viewPosition),
-                        dFdy(viewPosition)
+                vec3 fromLight = viewPosition - p0.xyz;
+                float forwardDistance = dot(fromLight, p1.xyz);
+                if (forwardDistance <= 0.001 || forwardDistance >= maxDistance) {
+                    return vec3(0.0);
+                }
+
+                float radius = max(p0.w + forwardDistance * p1.w, 0.0001);
+                float inverseRadius = 1.0 / radius;
+                float u = dot(fromLight, p2.xyz);
+                float v = dot(fromLight, p3.xyz);
+                float radialSquared = (u * u + v * v) * inverseRadius * inverseRadius;
+                if (radialSquared >= 1.0) {
+                    return vec3(0.0);
+                }
+
+                vec4 p4 = texelFetch(GoboData, ivec2(4, projectorIndex), 0);
+                vec4 p5 = texelFetch(GoboData, ivec2(5, projectorIndex), 0);
+                if (p5.x < 0.5) {
+                    return vec3(0.0);
+                }
+
+                vec4 featureData = texelFetch(GoboData, ivec2(12, projectorIndex), 0);
+                int featureFlags = int(featureData.x + 0.5);
+                bool hasOcclusion = (featureFlags & 1) != 0;
+                bool hasWheel = (featureFlags & 2) != 0;
+                bool hasShutters = (featureFlags & 4) != 0;
+                bool hasAnimation = (featureFlags & 8) != 0;
+                float blurLod = clamp(featureData.y, 0.0, 4.0);
+
+                float distanceSquared = dot(fromLight, fromLight);
+                if (distanceSquared <= 0.00000001) {
+                    return vec3(0.0);
+                }
+                float inverseDistance = inversesqrt(distanceSquared);
+                vec3 toLight = -fromLight * inverseDistance;
+                float ndotl = abs(dot(geometricNormal, toLight));
+                if (ndotl <= 0.001) {
+                    return vec3(0.0);
+                }
+
+                if (hasOcclusion) {
+                    vec3 occlusionPosition = texelFetch(
+                            GoboData, ivec2(10, projectorIndex), 0
+                    ).xyz;
+                    vec3 occlusionNormal = texelFetch(
+                            GoboData, ivec2(11, projectorIndex), 0
+                    ).xyz;
+                    float surfaceDistance = 1.0 / inverseDistance;
+                    float denominator = dot(fromLight * inverseDistance, occlusionNormal);
+                    if (abs(denominator) > 0.00001) {
+                        float hitDistance = dot(
+                                occlusionPosition - p0.xyz,
+                                occlusionNormal
+                        ) / denominator;
+                        float bias = max(0.08, surfaceDistance * 0.03);
+                        if (hitDistance > 0.001 && hitDistance < surfaceDistance - bias) {
+                            return vec3(0.0);
+                        }
+                    }
+                }
+
+                float wheelTransition = 0.0;
+                float animationAngle = 0.0;
+                float animationOffset = 0.0;
+                if (hasWheel || hasAnimation) {
+                    vec4 p6 = texelFetch(GoboData, ivec2(6, projectorIndex), 0);
+                    if (hasWheel) {
+                        wheelTransition = clamp(p6.x, 0.0, 1.0);
+                    }
+                    if (hasAnimation) {
+                        animationAngle = p6.y;
+                        animationOffset = p6.z;
+                    }
+                }
+
+                float focus = clamp(p5.w, 0.0, 1.0);
+                float slotDistance = radius * 2.0;
+                float angle = p4.w;
+                float ca = cos(angle);
+                float sa = sin(angle);
+                float localA = u + wheelTransition * slotDistance;
+                float rotatedAX = localA * ca - v * sa;
+                float rotatedAY = localA * sa + v * ca;
+                vec2 uvA = vec2(
+                        rotatedAX * inverseRadius * 0.5 + 0.5,
+                        1.0 - (rotatedAY * inverseRadius * 0.5 + 0.5)
                 );
 
-                float normalLengthSquared = dot(
-                        geometricNormal,
-                        geometricNormal
-                );
+                vec4 goboA = vec4(0.0);
+                vec4 goboB = vec4(0.0);
+                if (uvA.x >= 0.0 && uvA.x <= 1.0 && uvA.y >= 0.0 && uvA.y <= 1.0) {
+                    goboA = goboDecodeLayer(
+                            textureLod(GoboAtlas, vec3(uvA, p5.x), blurLod)
+                    );
+                }
 
+                if (hasWheel && wheelTransition > 0.0001 && p5.y >= 0.5) {
+                    float localB = u - (1.0 - wheelTransition) * slotDistance;
+                    float rotatedBX = localB * ca - v * sa;
+                    float rotatedBY = localB * sa + v * ca;
+                    vec2 uvB = vec2(
+                            rotatedBX * inverseRadius * 0.5 + 0.5,
+                            1.0 - (rotatedBY * inverseRadius * 0.5 + 0.5)
+                    );
+                    if (uvB.x >= 0.0 && uvB.x <= 1.0 && uvB.y >= 0.0 && uvB.y <= 1.0) {
+                        goboB = goboDecodeLayer(
+                                textureLod(GoboAtlas, vec3(uvB, p5.y), blurLod)
+                        );
+                    }
+                }
+
+                float goboAlpha = goboA.a + goboB.a;
+                if (goboAlpha <= 0.001) {
+                    return vec3(0.0);
+                }
+                vec3 goboColor = (
+                        goboA.rgb * goboA.a + goboB.rgb * goboB.a
+                ) / max(goboAlpha, 0.0001);
+
+                if (hasShutters) {
+                    vec4 p7 = texelFetch(GoboData, ivec2(7, projectorIndex), 0);
+                    vec4 p8 = texelFetch(GoboData, ivec2(8, projectorIndex), 0);
+                    goboAlpha *= goboShutterMask(
+                            u, v, inverseRadius, p7, p8, featureData.z,
+                            0.012 + focus * 0.06
+                    );
+                    if (goboAlpha <= 0.001) {
+                        return vec3(0.0);
+                    }
+                }
+
+                if (hasAnimation) {
+                    goboAlpha *= goboAnimationMask(
+                            u, v, inverseRadius, p5.z,
+                            animationAngle, animationOffset, blurLod
+                    );
+                    if (goboAlpha <= 0.001) {
+                        return vec3(0.0);
+                    }
+                }
+
+                float radial = sqrt(max(radialSquared, 0.0));
+                float angleAttenuation = mix(0.90, 1.0, smoothstep(0.0, 0.25, ndotl));
+                float edgeStart = mix(0.88, 0.72, focus);
+                float edgeFade = 1.0 - smoothstep(edgeStart, 1.0, radial);
+                float radialCore = max(1.0 - radialSquared, 0.0);
+                float radialCore2 = radialCore * radialCore;
+                float opticalHotspot = radialCore2 * radialCore2;
+                float beamProfile = mix(0.78, 1.12, radialCore) + opticalHotspot * 0.13;
+                float distanceFade = 1.0 - smoothstep(
+                        maxDistance * 0.30, maxDistance, forwardDistance
+                );
+                float physicalFalloff = 1.0 / (
+                        1.0 + forwardDistance * forwardDistance * 0.0015
+                );
+                float illumination = clamp(
+                        goboAlpha * edgeFade * distanceFade * physicalFalloff
+                        * angleAttenuation * beamProfile * intensity
+                        * GoboBrightness * vertexAlpha,
+                        0.0,
+                        1.0
+                );
+                vec3 effectiveAlbedo = max(albedo, vec3(0.012));
+                vec3 lightSpectrum = max(p4.rgb, vec3(0.0)) * max(goboColor, vec3(0.0));
+                return effectiveAlbedo * lightSpectrum * illumination * 1.85;
+            }
+
+            vec3 goboDirectLighting(vec3 viewPosition, vec3 albedo, float vertexAlpha) {
+                if (GoboProjectorCount <= 0 || GoboTileSize <= 0
+                        || GoboTilesX <= 0 || GoboTilesY <= 0 || GoboMaxPerTile <= 0) {
+                    return vec3(0.0);
+                }
+
+                ivec2 pixel = clamp(
+                        ivec2(gl_FragCoord.xy),
+                        ivec2(0),
+                        ivec2(max(int(GoboScreenSize.x) - 1, 0),
+                                max(int(GoboScreenSize.y) - 1, 0))
+                );
+                ivec2 tile = pixel / GoboTileSize;
+                tile = clamp(tile, ivec2(0), ivec2(GoboTilesX - 1, GoboTilesY - 1));
+                int tileIndex = tile.y * GoboTilesX + tile.x;
+
+                vec4 firstIndices = texelFetch(GoboTileIndices, ivec2(0, tileIndex), 0);
+                if (firstIndices.x < 0.0) {
+                    return vec3(0.0);
+                }
+
+                vec3 geometricNormal = cross(dFdx(viewPosition), dFdy(viewPosition));
+                float normalLengthSquared = dot(geometricNormal, geometricNormal);
                 if (normalLengthSquared <= 1.0e-20) {
                     return vec3(0.0);
                 }
-
                 geometricNormal *= inversesqrt(normalLengthSquared);
-
                 if (dot(geometricNormal, -viewPosition) < 0.0) {
                     geometricNormal = -geometricNormal;
                 }
 
-                ivec2 pixel = ivec2(gl_FragCoord.xy);
-
-                pixel = clamp(
-                        pixel,
-                        ivec2(0),
-                        ivec2(
-                                max(int(GoboScreenSize.x) - 1, 0),
-                                max(int(GoboScreenSize.y) - 1, 0)
-                        )
-                );
-
-                ivec2 tile = pixel / GoboTileSize;
-
-                tile = clamp(
-                        tile,
-                        ivec2(0),
-                        ivec2(GoboTilesX - 1, GoboTilesY - 1)
-                );
-
-                int tileIndex = tile.y * GoboTilesX + tile.x;
-
+                int groupCount = (GoboMaxPerTile + 3) / 4;
                 vec3 accumulatedLight = vec3(0.0);
 
-                for (int slot = 0; slot < GoboMaxPerTile; slot++) {
-                    float storedIndex = texelFetch(
-                            GoboTileIndices,
-                            ivec2(slot, tileIndex),
-                            0
-                    ).r;
+                for (int group = 0; group < groupCount; group++) {
+                    vec4 packedIndices = group == 0
+                            ? firstIndices
+                            : texelFetch(GoboTileIndices, ivec2(group, tileIndex), 0);
 
-                    if (storedIndex < 0.0) {
-                        break;
-                    }
-
-                    int projectorIndex = int(floor(storedIndex + 0.5));
-
-                    if (projectorIndex >= GoboProjectorCount) {
-                        continue;
-                    }
-
-                    // Load geometric data first.
-                    vec4 p0 = texelFetch(GoboData, ivec2(0, projectorIndex), 0);
-                    vec4 p1 = texelFetch(GoboData, ivec2(1, projectorIndex), 0);
-                    vec4 p2 = texelFetch(GoboData, ivec2(2, projectorIndex), 0);
-                    vec4 p3 = texelFetch(GoboData, ivec2(3, projectorIndex), 0);
-
-                    vec3 lightPosition = p0.xyz;
-
-                    // The manager already normalizes projector directions.
-                    vec3 lightDirection = p1.xyz;
-
-                    float maxDistance = p2.w;
-                    float intensity = p3.w;
-
-                    if (maxDistance <= 0.001 || intensity <= 0.001) {
-                        continue;
-                    }
-
-                    vec3 fromLight = viewPosition - lightPosition;
-
-                    float forwardDistance = dot(
-                            fromLight,
-                            lightDirection
-                    );
-
-                    if (forwardDistance <= 0.001
-                            || forwardDistance >= maxDistance) {
-                        continue;
-                    }
-
-                    float radius = max(
-                            p0.w + forwardDistance * p1.w,
-                            0.0001
-                    );
-
-                    float u = dot(fromLight, p2.xyz);
-                    float v = dot(fromLight, p3.xyz);
-
-                    // Reject outside the beam before expensive operations.
-                    float radialSquared = (u * u + v * v) / (radius * radius);
-
-                    if (radialSquared >= 1.0) {
-                        continue;
-                    }
-
-                    float radial = sqrt(max(radialSquared, 0.0));
-
-                    float distanceSquared = dot(fromLight, fromLight);
-
-                    if (distanceSquared <= 0.00000001) {
-                        continue;
-                    }
-
-                    float inverseDistance = inversesqrt(distanceSquared);
-                    float surfaceDistance = 1.0 / inverseDistance;
-
-                    vec3 surfaceRayDirection = fromLight * inverseDistance;
-                    vec3 toLight = -surfaceRayDirection;
-
-                    // Occlusion is evaluated before sampling the gobo textures.
-                    vec4 p9 = texelFetch(GoboData, ivec2(9, projectorIndex), 0);
-
-                    if (p9.y > 0.5) {
-                        vec3 p10 = texelFetch(
-                                GoboData,
-                                ivec2(10, projectorIndex),
-                                0
-                        ).xyz;
-
-                        vec3 p11 = texelFetch(
-                                GoboData,
-                                ivec2(11, projectorIndex),
-                                0
-                        ).xyz;
-
-                        float denominator = dot(
-                                surfaceRayDirection,
-                                p11
-                        );
-
-                        if (abs(denominator) > 0.00001) {
-                            float hitDistance = dot(
-                                    p10 - lightPosition,
-                                    p11
-                            ) / denominator;
-
-                            float occlusionBias = max(
-                                    0.08,
-                                    surfaceDistance * 0.03
-                            );
-
-                            if (hitDistance > 0.001
-                                    && hitDistance < surfaceDistance - occlusionBias) {
-                                continue;
-                            }
-                        }
-                    }
-
-                    // Reject surfaces facing away before atlas sampling.
-                    float ndotl = dot(
-                            geometricNormal,
-                            toLight
-                    );
-
-                    if (ndotl <= 0.001) {
-                        continue;
-                    }
-
-                    float angleAttenuation = smoothstep(
-                            0.02,
-                            0.25,
-                            ndotl
-                    );
-
-                    // Load optical data only after geometric rejection.
-                    vec4 p4 = texelFetch(GoboData, ivec2(4, projectorIndex), 0);
-                    vec4 p5 = texelFetch(GoboData, ivec2(5, projectorIndex), 0);
-                    vec4 p6 = texelFetch(GoboData, ivec2(6, projectorIndex), 0);
-
-                    float wheelProgress = clamp(p6.x, 0.0, 1.0);
-                    float slotDistance = radius * 2.0;
-
-                    float angle = p4.w;
-                    float ca = cos(angle);
-                    float sa = sin(angle);
-
-                    float localUA = u + wheelProgress * slotDistance;
-
-                    float ruA = localUA * ca - v * sa;
-                    float rvA = localUA * sa + v * ca;
-
-                    vec2 uvA = vec2(
-                            ruA / radius * 0.5 + 0.5,
-                            1.0 - (rvA / radius * 0.5 + 0.5)
-                    );
-
-                    float localUB = u - (1.0 - wheelProgress) * slotDistance;
-
-                    float ruB = localUB * ca - v * sa;
-                    float rvB = localUB * sa + v * ca;
-
-                    vec2 uvB = vec2(
-                            ruB / radius * 0.5 + 0.5,
-                            1.0 - (rvB / radius * 0.5 + 0.5)
-                    );
-
-                    float focusLod = clamp(p5.w * 4.0, 0.0, 5.0);
-
-                    int outgoingLayer = int(floor(p5.x + 0.5));
-                    int incomingLayer = int(floor(p5.y + 0.5));
-
-                    vec4 goboA = vec4(0.0);
-                    vec4 goboB = vec4(0.0);
-
-                    if (uvA.x >= 0.0 && uvA.x <= 1.0
-                            && uvA.y >= 0.0 && uvA.y <= 1.0) {
-                        goboA = goboDecodeLayer(
-                                textureLod(
-                                        GoboAtlas,
-                                        vec3(uvA, float(outgoingLayer)),
-                                        focusLod
-                                )
+                    float storedIndex = packedIndices.x;
+                    if (storedIndex < 0.0) break;
+                    int projectorIndex = int(storedIndex + 0.5);
+                    if (projectorIndex < GoboProjectorCount) {
+                        accumulatedLight += goboProjectorLighting(
+                                projectorIndex, viewPosition, geometricNormal,
+                                albedo, vertexAlpha
                         );
                     }
 
-                    if (uvB.x >= 0.0 && uvB.x <= 1.0
-                            && uvB.y >= 0.0 && uvB.y <= 1.0) {
-                        goboB = goboDecodeLayer(
-                                textureLod(
-                                        GoboAtlas,
-                                        vec3(uvB, float(incomingLayer)),
-                                        focusLod
-                                )
+                    storedIndex = packedIndices.y;
+                    if (storedIndex < 0.0) break;
+                    projectorIndex = int(storedIndex + 0.5);
+                    if (projectorIndex < GoboProjectorCount) {
+                        accumulatedLight += goboProjectorLighting(
+                                projectorIndex, viewPosition, geometricNormal,
+                                albedo, vertexAlpha
                         );
                     }
 
-                    float goboAlpha = goboA.a + goboB.a;
-
-                    if (goboAlpha <= 0.001) {
-                        continue;
+                    storedIndex = packedIndices.z;
+                    if (storedIndex < 0.0) break;
+                    projectorIndex = int(storedIndex + 0.5);
+                    if (projectorIndex < GoboProjectorCount) {
+                        accumulatedLight += goboProjectorLighting(
+                                projectorIndex, viewPosition, geometricNormal,
+                                albedo, vertexAlpha
+                        );
                     }
 
-                    vec3 goboColor = (
-                            goboA.rgb * goboA.a
-                            + goboB.rgb * goboB.a
-                    ) / max(goboAlpha, 0.0001);
-
-                    if (p6.w > 0.5 && p5.z > 0.5) {
-                        vec2 animationPosition = vec2(u, v) / radius;
-
-                        float animationAngle = p6.y;
-                        float animationCos = cos(animationAngle);
-                        float animationSin = sin(animationAngle);
-
-                        vec2 rotatedAnimation = vec2(
-                                animationPosition.x * animationCos
-                                        - animationPosition.y * animationSin,
-                                animationPosition.x * animationSin
-                                        + animationPosition.y * animationCos
+                    storedIndex = packedIndices.w;
+                    if (storedIndex < 0.0) break;
+                    projectorIndex = int(storedIndex + 0.5);
+                    if (projectorIndex < GoboProjectorCount) {
+                        accumulatedLight += goboProjectorLighting(
+                                projectorIndex, viewPosition, geometricNormal,
+                                albedo, vertexAlpha
                         );
-
-                        vec2 animationUv = fract(vec2(
-                                rotatedAnimation.x * 0.5 + p6.z,
-                                rotatedAnimation.y * 0.5
-                        ));
-
-                        vec4 animationSample = textureLod(
-                                GoboAtlas,
-                                vec3(animationUv, p5.z),
-                                focusLod
-                        );
-
-                        float animationMask = dot(
-                                animationSample.rgb,
-                                vec3(0.299, 0.587, 0.114)
-                        );
-
-                        goboAlpha *= clamp(animationMask, 0.0, 1.0);
                     }
-
-                    if (goboAlpha <= 0.001) {
-                        continue;
-                    }
-
-                    float edgeFade = 1.0 - smoothstep(
-                            0.88,
-                            1.0,
-                            radial
-                    );
-
-                    float distanceFade = 1.0 - smoothstep(
-                            maxDistance * 0.30,
-                            maxDistance,
-                            forwardDistance
-                    );
-
-                    float physicalFalloff = 1.0 / (
-                            1.0
-                            + forwardDistance * forwardDistance * 0.0015
-                    );
-
-                    float radialCore = 1.0 - radialSquared;
-                    float opticalHotspot = exp(-radialSquared * 12.0);
-
-                    float beamProfile =
-                            mix(0.78, 1.12, radialCore)
-                            + opticalHotspot * 0.13;
-
-                    vec3 lightSpectrum = p4.rgb * goboColor;
-
-                    float illumination =
-                            goboAlpha
-                            * edgeFade
-                            * distanceFade
-                            * physicalFalloff
-                            * angleAttenuation
-                            * beamProfile
-                            * intensity
-                            * GoboBrightness;
-
-                    accumulatedLight +=
-                            albedo
-                            * lightSpectrum
-                            * illumination
-                            * 1.85;
                 }
 
                 return accumulatedLight;
             }
-
             """;
 
     private GoboSodiumShaderPatcher() {
@@ -417,14 +374,12 @@ public final class GoboSodiumShaderPatcher {
         }
 
         int separator = identifier.indexOf(':');
-
         if (separator <= 0 || separator >= identifier.length() - 1) {
             return source;
         }
 
         String namespace = identifier.substring(0, separator);
         String path = identifier.substring(separator + 1);
-
         if (!namespace.equals("sodium") && !namespace.equals("embeddium")) {
             return source;
         }
@@ -443,10 +398,7 @@ public final class GoboSodiumShaderPatcher {
 
         if (!source.contains(VERTEX_COLOR_MARKER)
                 || !source.contains(VERTEX_POSITION_MARKER)) {
-            warnOnce(
-                    identifier,
-                    "Could not find the expected Sodium vertex shader markers"
-            );
+            warnOnce(identifier, "Could not find the expected Sodium vertex shader markers");
             return source;
         }
 
@@ -454,30 +406,21 @@ public final class GoboSodiumShaderPatcher {
                 VERTEX_COLOR_MARKER,
                 VERTEX_COLOR_MARKER + """
 
-
-                        out vec3 goboViewPosition;
-                        out vec4 goboVertexColor;
-                        """
+                    out vec3 goboViewPosition;
+                    out vec4 goboVertexColor;
+                    """
         );
 
         patched = patched.replace(
                 VERTEX_POSITION_MARKER,
                 VERTEX_POSITION_MARKER + """
 
-
-                            goboViewPosition = (
-                                    u_ModelViewMatrix * vec4(position, 1.0)
-                            ).xyz;
-
-                            goboVertexColor = _vert_color;
-                        """
+                        goboViewPosition = (u_ModelViewMatrix * vec4(position, 1.0)).xyz;
+                        goboVertexColor = _vert_color;
+                    """
         );
 
-        LOGGER.info(
-                "[TheatricalExtraLights/Gobo] Patched terrain vertex shader: {}",
-                identifier
-        );
-
+        LOGGER.info("[TheatricalExtraLights/Gobo] Patched terrain vertex shader: {}", identifier);
         return patched;
     }
 
@@ -490,10 +433,7 @@ public final class GoboSodiumShaderPatcher {
                 || !source.contains(FRAGMENT_SAMPLE_MARKER)
                 || !source.contains(FRAGMENT_OUTPUT_MARKER)
                 || !source.contains("void main() {")) {
-            warnOnce(
-                    identifier,
-                    "Could not find the expected terrain fragment shader markers"
-            );
+            warnOnce(identifier, "Could not find the expected terrain fragment shader markers");
             return source;
         }
 
@@ -505,48 +445,35 @@ public final class GoboSodiumShaderPatcher {
                 in vec4 goboVertexColor;
                 """
         );
-
-        source = source.replace(
-                "void main() {",
-                GLSL_DECLARATIONS + "\nvoid main() {"
-        );
-
+        source = source.replace("void main() {", GLSL_DECLARATIONS + "\nvoid main() {");
         source = source.replace(
                 FRAGMENT_SAMPLE_MARKER,
                 FRAGMENT_SAMPLE_MARKER + """
 
-
-                    vec3 goboBaseAlbedo =
-                            diffuseColor.rgb * goboVertexColor.rgb;
+                    vec3 goboBaseAlbedo = diffuseColor.rgb * goboVertexColor.rgb;
                     """
         );
-
         source = source.replace(
                 FRAGMENT_OUTPUT_MARKER,
                 """
-                    diffuseColor.rgb += goboDirectLighting(
-                            goboViewPosition,
-                            goboBaseAlbedo
-                    );
+                    if (GoboProjectorCount > 0) {
+                        diffuseColor.rgb += goboDirectLighting(
+                                goboViewPosition,
+                                goboBaseAlbedo,
+                                goboVertexColor.a
+                        );
+                    }
 
                     """ + FRAGMENT_OUTPUT_MARKER
         );
 
-        LOGGER.info(
-                "[TheatricalExtraLights/Gobo] Patched terrain fragment shader: {}",
-                identifier
-        );
-
+        LOGGER.info("[TheatricalExtraLights/Gobo] Patched terrain fragment shader: {}", identifier);
         return source;
     }
 
     private static void warnOnce(String identifier, String message) {
         if (WARNED.add(identifier)) {
-            LOGGER.warn(
-                    "[TheatricalExtraLights/Gobo] {}: {}",
-                    message,
-                    identifier
-            );
+            LOGGER.warn("[TheatricalExtraLights/Gobo] {}: {}", message, identifier);
         }
     }
 }

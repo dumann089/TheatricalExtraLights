@@ -1,18 +1,23 @@
+
 package com.github.dumann089.theatricalextralights.client.blockentities;
 
 import com.github.dumann089.theatricalextralights.blockentities.horizontalscrollerBlockEntity;
 import com.github.dumann089.theatricalextralights.client.LensBloomCompat;
 import com.github.dumann089.theatricalextralights.util.FixtureMountTransform;
+import com.lowdragmc.shimmer.client.light.ColorPointLight;
+import com.lowdragmc.shimmer.client.light.LightManager;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import dev.imabad.theatrical.TheatricalExpectPlatform;
+import dev.imabad.theatrical.blockentities.light.BaseLightBlockEntity;
 import dev.imabad.theatrical.blocks.HangableBlock;
 import dev.imabad.theatrical.client.LazyRenderers;
 import dev.imabad.theatrical.client.TheatricalRenderTypes;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
@@ -21,13 +26,18 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
@@ -52,6 +62,10 @@ public class horizontalscrollerRenderer
     private static final int GEL_ALPHA = 100;
     private static final float GEL_DARKNESS = 0.1F;
 
+    private static final double RAY_START_OFFSET = 0.15D;
+    private static final double RAY_DISTANCE = 64.0D;
+    private static final double HIT_OFFSET = 0.035D;
+
     private static final float[][] BEAM_POSITIONS = {
             {0.578F, 0.718F, 0.562F},
             {0.203F, 0.718F, 0.562F},
@@ -61,14 +75,6 @@ public class horizontalscrollerRenderer
             {0.578F, 0.281F, 0.562F},
             {0.203F, 0.2815F, 0.562F},
             {-0.171F, 0.281F, 0.562F},
-            {-0.546F, 0.281F, 0.562F}
-    };
-
-    // Cuatro gobos: dos en cada lado de la tira (superior e inferior).
-    private static final float[][] GOBO_PROJECTOR_POSITIONS = {
-            {0.578F, 0.718F, 0.562F},
-            {-0.546F, 0.718F, 0.562F},
-            {0.578F, 0.281F, 0.562F},
             {-0.546F, 0.281F, 0.562F}
     };
 
@@ -102,7 +108,7 @@ public class horizontalscrollerRenderer
     private static final RenderType GEL_TAPE_RENDER_TYPE =
             GelTapeRenderTypes.create();
 
-    private record ScrollerMotionKey(ClientLevel level, BlockPos pos) {}
+    private record ShimmerKey(ClientLevel level, BlockPos pos) {}
 
     private static final class ScrollerMotion {
         private final horizontalscrollerBlockEntity owner;
@@ -120,8 +126,31 @@ public class horizontalscrollerRenderer
         }
     }
 
-    private static final Map<ScrollerMotionKey, ScrollerMotion> MOTIONS =
+    private static final class ShimmerLights {
+        private final horizontalscrollerBlockEntity owner;
+        private final ColorPointLight[] lights = new ColorPointLight[8];
+
+        private ShimmerLights(horizontalscrollerBlockEntity owner) {
+            this.owner = owner;
+        }
+
+        private void remove() {
+            for (int i = 0; i < lights.length; i++) {
+                if (lights[i] != null) {
+                    lights[i].remove();
+                    lights[i] = null;
+                }
+            }
+        }
+    }
+
+    private static final Map<ShimmerKey, ScrollerMotion> MOTIONS =
             new HashMap<>();
+
+    private static final Map<ShimmerKey, ShimmerLights> SHIMMER_LIGHTS =
+            new HashMap<>();
+
+    private static long lastCleanupNanos;
 
     public horizontalscrollerRenderer(BlockEntityRendererProvider.Context context) {
         super(context);
@@ -152,7 +181,7 @@ public class horizontalscrollerRenderer
             return targetOffset;
         }
 
-        ScrollerMotionKey key = new ScrollerMotionKey(
+        ShimmerKey key = new ShimmerKey(
                 level,
                 blockEntity.getBlockPos().immutable()
         );
@@ -189,7 +218,7 @@ public class horizontalscrollerRenderer
     }
 
     /*
-     * La misma fórmula se usa para el gel visible y cada proyector.
+     * La misma fórmula se usa para el gel visible, cada beam y Shimmer.
      */
     private static int getGelIndexAtX(
             float x,
@@ -211,6 +240,15 @@ public class horizontalscrollerRenderer
                 0,
                 Math.min(255, Math.round(channel * GEL_DARKNESS))
         );
+    }
+
+    private static int makeLightColor(int[] rgb, int intensity) {
+        int level = Math.max(0, Math.min(255, intensity));
+        int r = rgb[0] * level / 255;
+        int g = rgb[1] * level / 255;
+        int b = rgb[2] * level / 255;
+
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
     }
 
     @Override
@@ -356,7 +394,7 @@ public class horizontalscrollerRenderer
                         : 0.0F;
 
                 if (scrollerMode) {
-                    updateGelGoboProjectors(
+                    updateShimmerLights(
                             blockEntity,
                             facing,
                             partialTick,
@@ -609,7 +647,7 @@ public class horizontalscrollerRenderer
         consumer.vertex(matrix, x0, y0, z).color(r, g, b, alpha).endVertex();
     }
 
-    private void updateGelGoboProjectors(
+    private void updateShimmerLights(
             horizontalscrollerBlockEntity blockEntity,
             Direction facing,
             float partialTick,
@@ -619,25 +657,47 @@ public class horizontalscrollerRenderer
             float tapeOffset,
             float intensity
     ) {
-        if (!(blockEntity.getLevel() instanceof ClientLevel)) {
+        if (!(blockEntity.getLevel() instanceof ClientLevel level)) {
             return;
         }
 
+        BlockPos pos = blockEntity.getBlockPos().immutable();
+        ShimmerKey key = new ShimmerKey(level, pos);
+
+        cleanupLights();
+
+        ShimmerLights set = SHIMMER_LIGHTS.get(key);
+
+        if (set == null || set.owner != blockEntity) {
+            if (set != null) {
+                set.remove();
+            }
+
+            set = new ShimmerLights(blockEntity);
+            SHIMMER_LIGHTS.put(key, set);
+        }
+
+        if (intensity <= 0) {
+            disableLights(set);
+            return;
+        }
+
+        Vec3 direction = BaseLightBlockEntity.rayTraceDir(blockEntity).normalize();
+
+        if (direction.lengthSqr() < 1.0E-8D) {
+            disableLights(set);
+            return;
+        }
+
+        float radius = (float) blockEntity.getFixture().getLightRadius();
         int lightIntensity = Math.max(0, Math.min(255, (int) intensity));
-        if (lightIntensity <= 0) {
-            return;
-        }
 
-        for (float[] beam : GOBO_PROJECTOR_POSITIONS) {
-            int gelIndex = getGelIndexAtX(
-                    beam[0],
-                    tapeOffset,
-                    blockEntity.getGelWidth()
-            );
-
-            int[] gel = getGelColor(blockEntity, gelIndex);
+        for (int i = 0; i < BEAM_POSITIONS.length; i++) {
+            ColorPointLight light = set.lights[i];
+            float[] beam = BEAM_POSITIONS[i];
 
             PoseStack sourceStack = new PoseStack();
+
             preparePoseStack(
                     blockEntity,
                     sourceStack,
@@ -648,15 +708,72 @@ public class horizontalscrollerRenderer
                     isHanging
             );
 
-            GelScrollerGoboProjector.submit(
-                    blockEntity,
-                    sourceStack,
-                    beam[0],
-                    beam[1],
-                    beam[2],
-                    gel,
-                    lightIntensity
+            // Origen transformado del beam en coordenadas del mundo.
+            Vector3f local = sourceStack.last().pose().transformPosition(
+                    beam[0], beam[1], beam[2], new Vector3f());
+
+            Vec3 source = new Vec3(
+                    pos.getX() + local.x,
+                    pos.getY() + local.y,
+                    pos.getZ() + local.z
+            ).add(direction.scale(RAY_START_OFFSET));
+
+            Vec3 end = source.add(direction.scale(RAY_DISTANCE));
+
+            BlockHitResult hit = level.clip(new ClipContext(
+                    source,
+                    end,
+                    ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE,
+                    null
+            ));
+
+            if (hit.getType() != HitResult.Type.BLOCK || hit.isInside()) {
+                if (light != null && !light.isRemoved()) {
+                    light.setEnable(false);
+                }
+                continue;
+            }
+
+            Vec3 impact = hit.getLocation().add(
+                    hit.getDirection().getStepX() * HIT_OFFSET,
+                    hit.getDirection().getStepY() * HIT_OFFSET,
+                    hit.getDirection().getStepZ() * HIT_OFFSET
             );
+
+            // Exactamente el mismo gel que utiliza el beam en esta coordenada X.
+            int gelIndex = getGelIndexAtX(
+                    beam[0], tapeOffset, blockEntity.getGelWidth());
+
+            int[] gel = getGelColor(blockEntity, gelIndex);
+            int color = makeLightColor(gel, lightIntensity);
+
+            Vector3f hitPosition = new Vector3f(
+                    (float) impact.x,
+                    (float) impact.y,
+                    (float) impact.z
+            );
+
+            if (light == null || light.isRemoved()) {
+                light = LightManager.INSTANCE.addLight(
+                        hitPosition, color, radius, false);
+                set.lights[i] = light;
+            }
+
+            if (light != null) {
+                light.setColor(color);
+                light.setPos(hitPosition.x, hitPosition.y, hitPosition.z);
+                light.radius = radius;
+                light.setEnable(true);
+            }
+        }
+    }
+
+    private static void disableLights(ShimmerLights set) {
+        for (ColorPointLight light : set.lights) {
+            if (light != null && !light.isRemoved()) {
+                light.setEnable(false);
+            }
         }
     }
 
@@ -665,10 +782,14 @@ public class horizontalscrollerRenderer
             return;
         }
 
-        MOTIONS.remove(new ScrollerMotionKey(
-                clientLevel,
-                pos.immutable()
-        ));
+        ShimmerKey key = new ShimmerKey(clientLevel, pos.immutable());
+
+        ShimmerLights lights = SHIMMER_LIGHTS.remove(key);
+        if (lights != null) {
+            lights.remove();
+        }
+
+        MOTIONS.remove(key);
     }
 
     private static void removeShimmerLights(
@@ -676,8 +797,58 @@ public class horizontalscrollerRenderer
     ) {
         if (blockEntity.getLevel() != null) {
             removeShimmerLights(
-                    blockEntity.getLevel(),
-                    blockEntity.getBlockPos());
+                    blockEntity.getLevel(), blockEntity.getBlockPos());
+        }
+    }
+
+    private static void cleanupLights() {
+        if (lastCleanupNanos == 0L) {
+            lastCleanupNanos = -1L;
+            dev.architectury.event.events.client.ClientTickEvent.CLIENT_POST.register(
+                    client -> cleanupLights()
+            );
+        }
+
+        Minecraft minecraft = Minecraft.getInstance();
+
+        Iterator<Map.Entry<ShimmerKey, ShimmerLights>> lightIterator =
+                SHIMMER_LIGHTS.entrySet().iterator();
+
+        while (lightIterator.hasNext()) {
+            Map.Entry<ShimmerKey, ShimmerLights> entry = lightIterator.next();
+            ShimmerKey key = entry.getKey();
+
+            boolean remove = minecraft.level != key.level();
+
+            if (!remove) {
+                if (!key.level().hasChunkAt(key.pos())) {
+                    remove = true;
+                } else if (key.level().getBlockEntity(key.pos())
+                        != entry.getValue().owner) {
+                    remove = true;
+                }
+            }
+
+            if (remove) {
+                entry.getValue().remove();
+                MOTIONS.remove(key);
+                lightIterator.remove();
+            }
+        }
+
+        Iterator<Map.Entry<ShimmerKey, ScrollerMotion>> motionIterator =
+                MOTIONS.entrySet().iterator();
+
+        while (motionIterator.hasNext()) {
+            Map.Entry<ShimmerKey, ScrollerMotion> entry = motionIterator.next();
+            ShimmerKey key = entry.getKey();
+
+            if (minecraft.level != key.level()
+                    || !key.level().hasChunkAt(key.pos())
+                    || key.level().getBlockEntity(key.pos())
+                    != entry.getValue().owner) {
+                motionIterator.remove();
+            }
         }
     }
 

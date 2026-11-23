@@ -1,5 +1,15 @@
 # Changelog
 
+
+## Version 1.5.4 (Unreleased) — mc 1.20.1
+
+### Gobo lighting
+- Optimized the Gobo Direct Projector system with improved tile culling, GPU data alignment and texture uploads.
+- Improved projector data handling to support multiple overlapping gobos without artificial per-tile limits.
+- Restored **Shimmer-based lighting** for **BigScroller, HorizontalScroller and VerticalScroller**. These fixtures no longer use the Gobo projection system.
+- **PARScroller** continues to use the Gobo projection system.
+
+
 ## Version 1.5.3 (Unreleased) — mc 1.20.1
 
 ### Gobo lighting
