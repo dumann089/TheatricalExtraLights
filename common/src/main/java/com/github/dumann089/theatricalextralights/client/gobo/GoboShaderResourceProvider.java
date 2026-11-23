@@ -1,3 +1,4 @@
+
 package com.github.dumann089.theatricalextralights.client.gobo;
 
 import com.google.gson.Gson;
@@ -28,8 +29,6 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
     private static final Gson GSON = new GsonBuilder()
             .disableHtmlEscaping()
             .create();
-
-    private static final int MAX_TILE_PROJECTORS = GoboDirectLightManager.MAX_PER_TILE;
 
     private static final Set<String> SUPPORTED_RENDER_TYPES = Set.of(
             "rendertype_entity_cutout",
@@ -443,7 +442,7 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
 
                 vec2 edge = cornerB - cornerA;
 
-                if (length(edge) <= 0.00001) {
+                if (dot(edge, edge) <= 0.0000001) {
                     return 1.0;
                 }
 
@@ -538,10 +537,12 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
             vec3 goboProjectorContribution(
                     int projectorIndex,
                     vec3 viewPosition,
-                    vec3 viewNormal,
+                    vec3 surfaceNormal,
+                    bool surfaceNormalValid,
                     vec3 albedo,
                     float vertexAlpha
             ) {
+                // Read only the geometric data first.
                 vec4 positionRadius = texelFetch(
                         GoboData,
                         ivec2(0, projectorIndex),
@@ -566,6 +567,109 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                         0
                 );
 
+                float intensity = axisVData.w;
+                float maxDistance = axisUData.w;
+
+                if (intensity <= 0.0001 || maxDistance <= 0.0001) {
+                    return vec3(0.0);
+                }
+
+                vec3 fromLight = viewPosition - positionRadius.xyz;
+
+                // Projector direction is already normalized by the manager.
+                float forwardDistance = dot(
+                        fromLight,
+                        directionAngle.xyz
+                );
+
+                if (forwardDistance <= 0.001
+                        || forwardDistance >= maxDistance) {
+                    return vec3(0.0);
+                }
+
+                float radius = max(
+                        positionRadius.w + forwardDistance * directionAngle.w,
+                        0.0001
+                );
+
+                float u = dot(fromLight, axisUData.xyz);
+                float v = dot(fromLight, axisVData.xyz);
+
+                // Avoid sqrt for fragments outside the beam.
+                float radialSquared = (u * u + v * v) / (radius * radius);
+
+                if (radialSquared >= 1.0) {
+                    return vec3(0.0);
+                }
+
+                float radial = sqrt(max(radialSquared, 0.0));
+
+                // Calculate distance once and reuse it for occlusion and lighting.
+                float distanceSquared = dot(fromLight, fromLight);
+                float inverseDistance = inversesqrt(
+                        max(distanceSquared, 0.00000001)
+                );
+
+                vec3 toLight = -fromLight * inverseDistance;
+
+                // Occlusion is checked before sampling the gobo atlas.
+                vec4 frameOcclusion = texelFetch(
+                        GoboData,
+                        ivec2(9, projectorIndex),
+                        0
+                );
+
+                if (frameOcclusion.y > 0.5 && distanceSquared > 0.00000001) {
+                    vec3 occlusionPosition = texelFetch(
+                            GoboData,
+                            ivec2(10, projectorIndex),
+                            0
+                    ).xyz;
+
+                    vec3 occlusionNormal = texelFetch(
+                            GoboData,
+                            ivec2(11, projectorIndex),
+                            0
+                    ).xyz;
+
+                    float surfaceDistance = 1.0 / inverseDistance;
+
+                    // Equivalent to the original ray-plane intersection.
+                    vec3 surfaceRayDirection = -toLight;
+
+                    float denominator = dot(
+                            surfaceRayDirection,
+                            occlusionNormal
+                    );
+
+                    if (abs(denominator) > 0.00001) {
+                        float hitDistance = dot(
+                                occlusionPosition - positionRadius.xyz,
+                                occlusionNormal
+                        ) / denominator;
+
+                        float bias = max(
+                                0.08,
+                                surfaceDistance * 0.03
+                        );
+
+                        if (hitDistance > 0.001
+                                && hitDistance < surfaceDistance - bias) {
+                            return vec3(0.0);
+                        }
+                    }
+                }
+
+                // Avoid atlas sampling on surfaces facing away from the projector.
+                if (surfaceNormalValid) {
+                    float ndotl = abs(dot(surfaceNormal, toLight));
+
+                    if (ndotl <= 0.001) {
+                        return vec3(0.0);
+                    }
+                }
+
+                // Optical data is loaded only after geometric rejection.
                 vec4 colorRotation = texelFetch(
                         GoboData,
                         ivec2(4, projectorIndex),
@@ -584,60 +688,7 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                         0
                 );
 
-                vec4 bladeA = texelFetch(
-                        GoboData,
-                        ivec2(7, projectorIndex),
-                        0
-                );
-
-                vec4 bladeB = texelFetch(
-                        GoboData,
-                        ivec2(8, projectorIndex),
-                        0
-                );
-
-                vec4 frameOcclusion = texelFetch(
-                        GoboData,
-                        ivec2(9, projectorIndex),
-                        0
-                );
-
-                float intensity = axisVData.w;
-                float maxDistance = axisUData.w;
-
-                if (intensity <= 0.0001
-                        || maxDistance <= 0.0001
-                        || layersFocus.x < 0.5) {
-                    return vec3(0.0);
-                }
-
-                vec3 lightPosition = positionRadius.xyz;
-                vec3 lightDirection = normalize(directionAngle.xyz);
-
-                vec3 fromLight = viewPosition - lightPosition;
-
-                float forwardDistance = dot(
-                        fromLight,
-                        lightDirection
-                );
-
-                if (forwardDistance <= 0.001
-                        || forwardDistance >= maxDistance) {
-                    return vec3(0.0);
-                }
-
-                float radius = max(
-                        positionRadius.w
-                        + forwardDistance * max(directionAngle.w, 0.0001),
-                        0.0001
-                );
-
-                float u = dot(fromLight, axisUData.xyz);
-                float v = dot(fromLight, axisVData.xyz);
-
-                float radial = length(vec2(u, v)) / radius;
-
-                if (radial >= 1.0) {
+                if (layersFocus.x < 0.5) {
                     return vec3(0.0);
                 }
 
@@ -649,6 +700,7 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                 float sa = sin(angle);
 
                 float focus = clamp(layersFocus.w, 0.0, 1.0);
+
                 float blurLod = clamp(
                         log2(1.0 + focus * focus * 11.52),
                         0.0,
@@ -684,12 +736,19 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                             blurLod
                     );
 
-                    alphaA = goboMask(sampleA);
-                    chromaticA = goboChromaticColor(sampleA.rgb);
+                    float peakA = max(
+                            sampleA.r,
+                            max(sampleA.g, sampleA.b)
+                    );
+
+                    alphaA = clamp(sampleA.a * peakA, 0.0, 1.0);
+
+                    if (peakA > 0.00001) {
+                        chromaticA = sampleA.rgb / peakA;
+                    }
                 }
 
-                if (wheelTransition > 0.0001
-                        && layersFocus.y >= 0.5) {
+                if (wheelTransition > 0.0001 && layersFocus.y >= 0.5) {
                     vec2 localB = vec2(
                             u - (1.0 - wheelTransition) * slotDistance,
                             v
@@ -713,8 +772,16 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                                 blurLod
                         );
 
-                        alphaB = goboMask(sampleB);
-                        chromaticB = goboChromaticColor(sampleB.rgb);
+                        float peakB = max(
+                                sampleB.r,
+                                max(sampleB.g, sampleB.b)
+                        );
+
+                        alphaB = clamp(sampleB.a * peakB, 0.0, 1.0);
+
+                        if (peakB > 0.00001) {
+                            chromaticB = sampleB.rgb / peakB;
+                        }
                     }
                 }
 
@@ -729,7 +796,18 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                         + chromaticB * alphaB
                 ) / max(goboAlpha, 0.0001);
 
-                float shutterSoft = 0.012 + focus * 0.06;
+                // Shutter data is fetched only when the gobo has a visible sample.
+                vec4 bladeA = texelFetch(
+                        GoboData,
+                        ivec2(7, projectorIndex),
+                        0
+                );
+
+                vec4 bladeB = texelFetch(
+                        GoboData,
+                        ivec2(8, projectorIndex),
+                        0
+                );
 
                 goboAlpha *= goboShutterMask(
                         u,
@@ -738,8 +816,12 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                         bladeA,
                         bladeB,
                         frameOcclusion.x,
-                        shutterSoft
+                        0.012 + focus * 0.06
                 );
+
+                if (goboAlpha <= 0.001) {
+                    return vec3(0.0);
+                }
 
                 goboAlpha *= goboAnimationMask(
                         u,
@@ -751,53 +833,19 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                         animationWheel.w
                 );
 
-                if (frameOcclusion.y > 0.5) {
-                    vec3 occlusionPosition = texelFetch(
-                            GoboData,
-                            ivec2(10, projectorIndex),
-                            0
-                    ).xyz;
-
-                    vec3 occlusionNormal = normalize(
-                            texelFetch(
-                                    GoboData,
-                                    ivec2(11, projectorIndex),
-                                    0
-                            ).xyz
-                    );
-
-                    float surfaceDistance = length(fromLight);
-
-                    if (surfaceDistance > 0.0001) {
-                        vec3 surfaceRayDirection = fromLight / surfaceDistance;
-
-                        float denominator = dot(
-                                surfaceRayDirection,
-                                occlusionNormal
-                        );
-
-                        if (abs(denominator) > 0.00001) {
-                            float hitDistance = dot(
-                                    occlusionPosition - lightPosition,
-                                    occlusionNormal
-                            ) / denominator;
-
-                            float bias = max(
-                                    0.08,
-                                    surfaceDistance * 0.03
-                            );
-
-                            if (hitDistance > 0.001
-                                    && hitDistance < surfaceDistance - bias) {
-                                return vec3(0.0);
-                            }
-                        }
-                    }
-                }
-
                 if (goboAlpha <= 0.001) {
                     return vec3(0.0);
                 }
+
+                float ndotl = surfaceNormalValid
+                        ? abs(dot(surfaceNormal, toLight))
+                        : 1.0;
+
+                float angleAttenuation = mix(
+                        0.90,
+                        1.0,
+                        smoothstep(0.0, 0.25, ndotl)
+                );
 
                 float edgeStart = mix(0.88, 0.72, focus);
 
@@ -807,8 +855,8 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                         radial
                 );
 
-                float radialCore = 1.0 - radial * radial;
-                float opticalHotspot = exp(-radial * radial * 12.0);
+                float radialCore = 1.0 - radialSquared;
+                float opticalHotspot = exp(-radialSquared * 12.0);
 
                 float beamProfile =
                         mix(0.78, 1.12, radialCore)
@@ -825,23 +873,6 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                         + forwardDistance * forwardDistance * 0.0015
                 );
 
-                distanceFade *= physicalFalloff;
-
-                vec3 toLight = normalize(-fromLight);
-
-                float normalLength = length(viewNormal);
-                vec3 surfaceNormal = normalLength > 0.0001
-                        ? viewNormal / normalLength
-                        : toLight;
-
-                float ndotl = abs(dot(surfaceNormal, toLight));
-
-                float angleAttenuation = mix(
-                        0.90,
-                        1.0,
-                        smoothstep(0.0, 0.25, ndotl)
-                );
-
                 float finalFactor = clamp(
                         goboAlpha
                         * edgeFade
@@ -849,6 +880,7 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                         * GoboBrightness
                         * vertexAlpha
                         * distanceFade
+                        * physicalFalloff
                         * angleAttenuation,
                         0.0,
                         1.0
@@ -892,7 +924,7 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                 }
 
                 ivec2 tile = ivec2(
-                        floor(gl_FragCoord.xy / GoboTileSize)
+                        gl_FragCoord.xy / GoboTileSize
                 );
 
                 ivec2 maxTile = ivec2(
@@ -904,13 +936,20 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
 
                 int tileIndex = tile.y * int(GoboTilesX) + tile.x;
 
+                float normalLengthSquared = dot(
+                        viewNormal,
+                        viewNormal
+                );
+
+                bool normalValid = normalLengthSquared > 0.00000001;
+
+                vec3 surfaceNormal = normalValid
+                        ? viewNormal * inversesqrt(normalLengthSquared)
+                        : vec3(0.0);
+
                 vec3 totalLighting = vec3(0.0);
 
-                for (int slot = 0; slot < 16; slot++) {
-                    if (float(slot) >= GoboMaxPerTile) {
-                        break;
-                    }
-
+                for (int slot = 0; float(slot) < GoboMaxPerTile; slot++) {
                     float encodedIndex = texelFetch(
                             GoboTileIndices,
                             ivec2(slot, tileIndex),
@@ -930,7 +969,8 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                     totalLighting += goboProjectorContribution(
                             projectorIndex,
                             viewPosition,
-                            viewNormal,
+                            surfaceNormal,
+                            normalValid,
                             albedo,
                             vertexAlpha
                     );

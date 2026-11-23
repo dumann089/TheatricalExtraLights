@@ -29,8 +29,10 @@ import java.util.List;
 
 public final class GoboDirectLightManager {
     public static final int MAX_PROJECTORS = 2048;
-    public static final int MAX_PER_TILE = 16; // Initial allocation only; not a tile limit.
+    public static final int MAX_PER_TILE = 8;
     public static final int TILE_SIZE = 64;
+
+    private static int saturatedTileCount;
 
     private static final int GOBO_DATA_TEXTURE_UNIT = 8;
     private static final int GOBO_TILE_TEXTURE_UNIT = 9;
@@ -578,11 +580,13 @@ public final class GoboDirectLightManager {
         }
 
         Arrays.fill(cpuTileCounts, 0);
+        saturatedTileCount = 0;
 
         ACTIVE.sort(PROJECTOR_IMPORTANCE_ORDER);
 
         for (Projector projector : ACTIVE) {
-            if (preparedProjectorCount >= MAX_PROJECTORS) {
+            if (preparedProjectorCount >= MAX_PROJECTORS
+                    || saturatedTileCount >= tileCount) {
                 break;
             }
 
@@ -594,6 +598,7 @@ public final class GoboDirectLightManager {
             );
 
             int projectorIndex = preparedProjectorCount;
+
             packProjector(PROJECTOR_DATA, projectorIndex, view);
 
             addToScreenTiles(

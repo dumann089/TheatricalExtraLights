@@ -18,7 +18,7 @@ public abstract class ManualParGoboBlockEntity extends ExtraLightsLightBlockEnti
 
     @Override
     public GoboLibrary getGoboLibrary() {
-        return GoboLibrary.PAR1000;
+        return GoboLibrary.WASH;
     }
 
     @Override
