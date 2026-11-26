@@ -246,6 +246,14 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
             tag.putFloat("MountYaw", mountYaw);
             tag.putFloat("MountPitch", mountPitch);
             tag.putFloat("MountRoll", mountRoll);
+            if (trackedEntity != null) {
+                tag.putUUID("TrackedEntity", trackedEntity);
+
+                if (trackAngles) {
+                    tag.putFloat("TrackedPan", trackPan);
+                    tag.putFloat("TrackedTilt", trackTilt);
+                }
+            }
         }
     }
 
@@ -302,16 +310,21 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
      * Utilise le batch DMXFrame si Theatrical récent est présent, sinon vanilla.
      */
     protected void finishDmxUpdate(boolean valuesChanged, boolean prevAdvanced) {
+        restoreTrackedPanTilt();
+
         if (level == null || level.isClientSide) {
             return;
         }
+
         if (valuesChanged || prevAdvanced) {
             boolean batchQueued = !hasExtraDmxChannelsBeyondBatch()
                     && TheatricalDmxFrameBridge.markDirtyIfBatchEnabled(getBlockPos());
+
             if (!batchQueued) {
                 BlockEntitySync.sendData(this);
             }
         }
+
         if (valuesChanged) {
             setChanged();
         }
@@ -319,10 +332,16 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
 
     /** Sync pan/tilt for operator mode — keeps prev* aligned to avoid interpolation flicker. */
     public void syncOperatorAngles(float pan, float tilt) {
+        if (isFixtureTrackingActive()) {
+            return;
+        }
+
         int pi = FollowspotDmxHelper.quantizePan(pan);
         int ti = FollowspotDmxHelper.quantizeTilt(tilt);
+
         setPan(pi);
         setTilt(ti);
+
         prevPan = pi;
         prevTilt = ti;
     }
@@ -332,8 +351,16 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         if (level == null || level.isClientSide) {
             return;
         }
-        int qi = FollowspotDmxHelper.quantizePan(pan);
-        int qt = FollowspotDmxHelper.quantizeTilt(tilt);
+        boolean tracking = isFixtureTrackingActive();
+
+        int qi = tracking
+                ? this.pan
+                : FollowspotDmxHelper.quantizePan(pan);
+
+        int qt = tracking
+                ? this.tilt
+                : FollowspotDmxHelper.quantizeTilt(tilt);
+
         boolean changed = (int) this.intensity != intensity
                 || this.red != red
                 || this.green != green
@@ -344,6 +371,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         if (!changed) {
             return;
         }
+
         this.intensity = intensity;
         this.red = red;
         this.green = green;
@@ -384,7 +412,7 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
 
     /** Pan/tilt only — leaves intensity / RGB / focus to Art-Net / desk software. */
     public void applyDirectPanTilt(int pan, int tilt) {
-        if (level == null || level.isClientSide) {
+        if (level == null || level.isClientSide || isFixtureTrackingActive()) {
             return;
         }
         int qi = FollowspotDmxHelper.quantizePan(pan);
@@ -463,12 +491,16 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
 
     public void applyDmxFramePanTiltFocus(int pan, int tilt, int focus,
                                           int prevPan, int prevTilt, int prevFocus) {
-        this.pan = pan;
-        this.tilt = tilt;
+        if (!isFixtureTrackingActive()) {
+            this.pan = pan;
+            this.tilt = tilt;
+            this.prevPan = prevPan;
+            this.prevTilt = prevTilt;
+        }
+
         this.focus = focus;
-        this.prevPan = prevPan;
-        this.prevTilt = prevTilt;
         this.prevFocus = prevFocus;
+
         if (level != null && level.isClientSide) {
             StrobeRenderHelper.markSectionDirty(getBlockPos());
         }
@@ -493,17 +525,77 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         }
     }
 
+    public boolean isFixtureTrackingActive() {
+        return trackedEntity != null && supportsTracking();
+    }
+
+    protected void restoreTrackedPanTilt() {
+        if (!isFixtureTrackingActive()) {
+            return;
+        }
+
+        if (!trackAngles) {
+            trackPan = pan;
+            trackTilt = tilt;
+            trackAngles = true;
+        }
+
+        pan = FollowspotDmxHelper.quantizePan(trackPan);
+        tilt = FollowspotDmxHelper.quantizeTilt(trackTilt);
+    }
+
+    /**
+     * Prevents DMX consumers from advancing or replacing the interpolation
+     * state of pan/tilt while the Fixture Tracker owns those axes.
+     */
+    @Override
+    protected boolean storePrev() {
+        if (!isFixtureTrackingActive()) {
+            return super.storePrev();
+        }
+
+        int savedPrevPan = prevPan;
+        int savedPrevTilt = prevTilt;
+
+        boolean nonAngularChanged =
+                focus != prevFocus
+                        || intensity != prevIntensity
+                        || red != prevRed
+                        || green != prevGreen
+                        || blue != prevBlue;
+
+        restoreTrackedPanTilt();
+
+        super.storePrev();
+
+        prevPan = savedPrevPan;
+        prevTilt = savedPrevTilt;
+
+        return nonAngularChanged;
+    }
+
     public UUID getTrackedEntity() {
         return trackedEntity;
     }
 
     public void setTrackedEntity(UUID id) {
-        this.trackedEntity = id;
-        this.trackAngles = false;
+        UUID previousTarget = trackedEntity;
+        trackedEntity = id;
+
+        if (id == null) {
+            trackAngles = false;
+        } else if (!id.equals(previousTarget) || !trackAngles) {
+            trackPan = pan;
+            trackTilt = tilt;
+            trackAngles = true;
+        }
+
         if (level instanceof ServerLevel serverLevel) {
             FixtureTrackingRegistry.setTracking(serverLevel, getBlockPos(), id != null);
         }
+
         setChanged();
+
         if (level != null && !level.isClientSide) {
             BlockEntitySync.sendData(this);
         }
@@ -522,22 +614,42 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
     }
 
     /** Aplica os angulos calculados pelo FixtureTrackingHelper (so no servidor). */
+    private static int quantizeTrackedAngle(float angle, int current) {
+        if (!Float.isFinite(angle)) {
+            return current;
+        }
+
+        float difference = angle - current;
+
+        if (Math.abs(difference) < 0.65F) {
+            return current;
+        }
+
+        return Math.round(angle);
+    }
+
     public void applyTrackedAngles(float newPan, float newTilt, boolean snap) {
         if (level == null || level.isClientSide) {
             return;
         }
+
         trackPan = newPan;
         trackTilt = newTilt;
         trackAngles = true;
-        int qp = FollowspotDmxHelper.quantizePan(newPan);
-        int qt = FollowspotDmxHelper.quantizeTilt(newTilt);
+
+        int qp = quantizeTrackedAngle(newPan, this.pan);
+        int qt = quantizeTrackedAngle(newTilt, this.tilt);
+
         if (this.pan == qp && this.tilt == qt) {
             return;
         }
+
         prevPan = snap ? qp : this.pan;
         prevTilt = snap ? qt : this.tilt;
+
         this.pan = qp;
         this.tilt = qt;
+
         setChanged();
         BlockEntitySync.sendData(this);
     }
@@ -644,8 +756,24 @@ public abstract class ExtraLightsLightBlockEntity extends BaseDMXConsumerLightBl
         prevBlue = savedPrevBlue;
 
         readMountTransform(tag);
-        trackedEntity = tag.hasUUID("TrackedEntity") ? tag.getUUID("TrackedEntity") : null;
-        trackAngles = false;
+        trackedEntity = tag.hasUUID("TrackedEntity")
+                ? tag.getUUID("TrackedEntity")
+                : null;
+
+        if (trackedEntity != null) {
+            trackPan = tag.contains("TrackedPan")
+                    ? tag.getFloat("TrackedPan")
+                    : pan;
+
+            trackTilt = tag.contains("TrackedTilt")
+                    ? tag.getFloat("TrackedTilt")
+                    : tilt;
+
+            trackAngles = true;
+        } else {
+            trackAngles = false;
+        }
+
         if (this instanceof HasSafetyArm) {
             safetyArmed = !tag.contains("Armed") || tag.getBoolean("Armed");
         }

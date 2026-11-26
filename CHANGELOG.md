@@ -1,6 +1,32 @@
 # Changelog
 
 
+## Version 1.5.4 (V2 - Unreleased) — mc 1.20.1
+
+### Gobo lighting
+
+- Optimized the Gobo Direct Projector system with improved tile culling, GPU data alignment and texture uploads.
+- Improved projector data handling to support multiple overlapping gobos without artificial per-tile limits.
+- Added **zoom-dependent light attenuation** for all fixtures using the Gobo projection system.
+- Narrower beam angles now produce more concentrated lighting, preserving brightness over longer distances.
+- Wider beam angles progressively lose intensity with distance, creating a more natural lighting response.
+- Improved distance fading with a smoother transition based on the actual beam angle.
+- Applied consistent zoom-dependent attenuation to both **vanilla and Sodium/Embeddium shader paths**.
+- Restored **Shimmer-based lighting** for **BigScroller, HorizontalScroller and VerticalScroller**. These fixtures no longer use the Gobo projection system.
+- **PARScroller** continues to use the Gobo projection system.
+- Shimmer and the projection system now illuminate the models/characters from the BBS FS mod.
+- The pivot issue with the Fixture Wrench was resolved.
+
+### Fixture tracking and movement
+
+- Added a shared, per-fixture **Pan/Tilt interpolation system** to improve movement smoothness across moving fixtures.
+- Replaced abrupt one-tick angle transitions with continuous, time-based interpolation that preserves movement continuity between updates.
+- Improved synchronization between fixture model rotations and delayed beam/gobo rendering.
+- Prevented tracking updates from restarting visual interpolation, reducing jitter caused by frequent DMX and network updates.
+- Kept the Followspot's dedicated interpolation behavior to avoid applying smoothing twice.
+- Preserved individual fixture pivots, mounting transforms and rotation orientations.
+
+
 ## Version 1.5.4 (Unreleased) — mc 1.20.1
 
 ### Gobo lighting

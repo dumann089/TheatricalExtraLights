@@ -1,3 +1,4 @@
+
 package com.github.dumann089.theatricalextralights.util;
 
 import net.minecraft.util.Mth;
@@ -5,7 +6,8 @@ import net.minecraft.util.Mth;
 public final class FollowspotDmxHelper {
 
     public static final float PAN_TILT_STEP = 2.0f;
-    public static final int MAX_DMX_ADDRESS = 512 - FollowspotTargetHelper.REQUIRED_CHANNEL_COUNT + 1;
+    public static final int MAX_DMX_ADDRESS =
+            512 - FollowspotTargetHelper.REQUIRED_CHANNEL_COUNT + 1;
 
     private FollowspotDmxHelper() {
     }
@@ -15,11 +17,15 @@ public final class FollowspotDmxHelper {
     }
 
     public static int panToDmxByte(int pan) {
-        return Math.round((Mth.clamp(pan, -90, 90) + 90f) / 180f * 255f);
+        return Math.round(
+                (Mth.clamp(pan, -90, 90) + 90f) / 180f * 255f
+        );
     }
 
     public static int tiltToDmxByte(int tilt) {
-        return Math.round((Mth.clamp(tilt, -45, 45) + 45f) / 90f * 255f);
+        return Math.round(
+                (Mth.clamp(tilt, -45, 45) + 45f) / 90f * 255f
+        );
     }
 
     public static int dmxByteToPan(int dmx) {
@@ -30,13 +36,12 @@ public final class FollowspotDmxHelper {
         return (int) ((dmx * 90) / 255f) - 45;
     }
 
-    /** Round-trip through DMX encoding so client, console and fixture stay aligned. */
     public static int quantizePan(float pan) {
-        return dmxByteToPan(panToDmxByte(Math.round(pan)));
+        return Math.round(pan);
     }
 
     public static int quantizeTilt(float tilt) {
-        return dmxByteToTilt(tiltToDmxByte(Math.round(tilt)));
+        return Math.round(tilt);
     }
 
     public static float quantizePanAngle(float pan) {

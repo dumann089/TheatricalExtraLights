@@ -150,8 +150,10 @@ public final class GoboDirectLightManager {
         ACTIVE.clear();
         ACTIVE.addAll(PENDING);
         PENDING.clear();
+
         frameSerial++;
         preparedSerial = -1L;
+
         prepareGpuData();
     }
 
@@ -200,14 +202,20 @@ public final class GoboDirectLightManager {
         projector.direction = direction.normalize();
         projector.axisU = axisU.normalize();
         projector.axisV = axisV.normalize();
-        projector.baseRadius = Math.max(0.001f, Float.isFinite(baseRadius) ? baseRadius : 0.001f);
+        projector.baseRadius = Math.max(
+                0.001f,
+                Float.isFinite(baseRadius) ? baseRadius : 0.001f
+        );
         projector.tanHalfAngle = tanHalfAngle;
         projector.maxDistance = maxDistance;
         projector.rotationRadians = (float) Math.toRadians(rotationDegrees);
         projector.intensity = intensity;
         projector.focus = clamp(focus, 0.0f, 1.0f);
         projector.blurLod = clamp(
-                (float) (Math.log(1.0 + projector.focus * projector.focus * 11.52) / Math.log(2.0)),
+                (float) (
+                        Math.log(1.0 + projector.focus * projector.focus * 11.52)
+                                / Math.log(2.0)
+                ),
                 0.0f,
                 4.0f
         );
@@ -342,6 +350,7 @@ public final class GoboDirectLightManager {
         }
 
         int previousActive = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
+
         try {
             GL13.glActiveTexture(GL13.GL_TEXTURE0 + dataUnit);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, dataTexture);
@@ -397,6 +406,7 @@ public final class GoboDirectLightManager {
         }
 
         int previousActive = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
+
         try {
             RenderSystem.activeTexture(GL13.GL_TEXTURE8);
             RenderSystem.bindTexture(dataTexture);
@@ -459,6 +469,7 @@ public final class GoboDirectLightManager {
         activeTileSize = TILE_SIZE;
 
         long tileCountLong;
+
         while (true) {
             tilesX = (screenWidth + activeTileSize - 1) / activeTileSize;
             tilesY = (screenHeight + activeTileSize - 1) / activeTileSize;
@@ -469,6 +480,7 @@ public final class GoboDirectLightManager {
             }
 
             activeTileSize *= 2;
+
             if (activeTileSize > 4096) {
                 throw new IllegalStateException(
                         "[TheatricalExtraLights/Gobo] Screen tile grid exceeds GPU limits: "
@@ -478,6 +490,7 @@ public final class GoboDirectLightManager {
         }
 
         int tileCount = (int) tileCountLong;
+
         if (ACTIVE.size() > maxTextureSize) {
             throw new IllegalStateException(
                     "[TheatricalExtraLights/Gobo] Active projector count " + ACTIVE.size()
@@ -487,6 +500,7 @@ public final class GoboDirectLightManager {
         }
 
         Camera camera = minecraft.gameRenderer.getMainCamera();
+
         if (camera == null) {
             preparedSerial = frameSerial;
             return;
@@ -505,6 +519,7 @@ public final class GoboDirectLightManager {
 
         for (Projector projector : ACTIVE) {
             int projectorIndex = preparedProjectorCount;
+
             ViewProjector view = toViewSpace(
                     projector,
                     camera.getPosition(),
@@ -550,27 +565,33 @@ public final class GoboDirectLightManager {
 
     private static void ensureProjectorDataCapacity(int projectorCount) {
         long requiredLong = (long) projectorCount * DATA_FLOATS_PER_PROJECTOR;
+
         if (requiredLong > Integer.MAX_VALUE) {
             throw new IllegalStateException(
-                    "[TheatricalExtraLights/Gobo] Projector CPU buffer is too large: " + requiredLong
+                    "[TheatricalExtraLights/Gobo] Projector CPU buffer is too large: "
+                            + requiredLong
             );
         }
 
         int required = (int) requiredLong;
+
         if (PROJECTOR_DATA.length >= required) {
             return;
         }
 
         int newCapacity = PROJECTOR_DATA.length;
+
         while (newCapacity < required) {
             int next = newCapacity <= Integer.MAX_VALUE / 2
                     ? newCapacity * 2
                     : Integer.MAX_VALUE;
+
             if (next <= newCapacity) {
                 throw new IllegalStateException(
                         "[TheatricalExtraLights/Gobo] Cannot grow projector CPU buffer"
                 );
             }
+
             newCapacity = next;
         }
 
@@ -591,6 +612,7 @@ public final class GoboDirectLightManager {
                 (float) (projector.origin.z - cameraPosition.z),
                 1.0f
         );
+
         viewMatrix.transform(SCRATCH_POSITION);
 
         result.px = SCRATCH_POSITION.x;
@@ -598,16 +620,19 @@ public final class GoboDirectLightManager {
         result.pz = SCRATCH_POSITION.z;
 
         transformDirection(viewMatrix, projector.direction, SCRATCH_DIRECTION);
+
         result.dx = SCRATCH_DIRECTION.x;
         result.dy = SCRATCH_DIRECTION.y;
         result.dz = SCRATCH_DIRECTION.z;
 
         transformDirection(viewMatrix, projector.axisU, SCRATCH_AXIS_U);
+
         result.ux = SCRATCH_AXIS_U.x;
         result.uy = SCRATCH_AXIS_U.y;
         result.uz = SCRATCH_AXIS_U.z;
 
         transformDirection(viewMatrix, projector.axisV, SCRATCH_AXIS_V);
+
         result.vx = SCRATCH_AXIS_V.x;
         result.vy = SCRATCH_AXIS_V.y;
         result.vz = SCRATCH_AXIS_V.z;
@@ -627,6 +652,7 @@ public final class GoboDirectLightManager {
                     (float) (projector.occlusionPosition.z - cameraPosition.z),
                     1.0f
             );
+
             viewMatrix.transform(SCRATCH_OCCLUSION_POSITION);
 
             transformDirection(
@@ -657,6 +683,7 @@ public final class GoboDirectLightManager {
                 (float) direction.z,
                 0.0f
         );
+
         matrix.transform(result);
 
         float length = (float) Math.sqrt(
@@ -727,15 +754,19 @@ public final class GoboDirectLightManager {
         );
 
         int featureFlags = 0;
+
         if (projector.occlusionEnabled) {
             featureFlags |= FLAG_OCCLUSION;
         }
+
         if (projector.wheelTransitionEnabled) {
             featureFlags |= FLAG_WHEEL_TRANSITION;
         }
+
         if (projector.shuttersEnabled) {
             featureFlags |= FLAG_SHUTTERS;
         }
+
         if (projector.animationEnabled) {
             featureFlags |= FLAG_ANIMATION;
         }
@@ -748,8 +779,25 @@ public final class GoboDirectLightManager {
                 0.0f,
                 0.0f
         );
-        put4(data, offset + 40, view.opx, view.opy, view.opz, 0.0f);
-        put4(data, offset + 44, view.onx, view.ony, view.onz, 0.0f);
+
+        put4(
+                data,
+                offset + 40,
+                view.opx,
+                view.opy,
+                view.opz,
+                0.0f
+        );
+
+        put4(
+                data,
+                offset + 44,
+                view.onx,
+                view.ony,
+                view.onz,
+                0.0f
+        );
+
         put4(
                 data,
                 offset + 48,
@@ -758,9 +806,40 @@ public final class GoboDirectLightManager {
                 projector.frameRotation,
                 0.0f
         );
-        put4(data, offset + 52, 0.0f, 0.0f, 0.0f, 0.0f);
-        put4(data, offset + 56, 0.0f, 0.0f, 0.0f, 0.0f);
-        put4(data, offset + 60, 0.0f, 0.0f, 0.0f, 0.0f);
+
+        float rotationCos = (float) Math.cos(projector.rotationRadians);
+        float rotationSin = (float) Math.sin(projector.rotationRadians);
+        float animationCos = (float) Math.cos(projector.animationAngle);
+        float animationSin = (float) Math.sin(projector.animationAngle);
+        float frameRotationCos = (float) Math.cos(projector.frameRotation);
+        float frameRotationSin = (float) Math.sin(projector.frameRotation);
+
+        put4(
+                data,
+                offset + 52,
+                rotationCos,
+                rotationSin,
+                animationCos,
+                animationSin
+        );
+
+        put4(
+                data,
+                offset + 56,
+                frameRotationCos,
+                frameRotationSin,
+                0.0f,
+                0.0f
+        );
+
+        put4(
+                data,
+                offset + 60,
+                0.0f,
+                0.0f,
+                0.0f,
+                0.0f
+        );
     }
 
     private static void addToScreenTiles(
@@ -774,6 +853,7 @@ public final class GoboDirectLightManager {
 
         float centerAlongAxis = (length * length + endRadius * endRadius
                 - projector.baseRadius * projector.baseRadius) / (2.0f * length);
+
         centerAlongAxis = clamp(centerAlongAxis, 0.0f, length);
 
         float centerX = view.px + view.dx * centerAlongAxis;
@@ -782,8 +862,10 @@ public final class GoboDirectLightManager {
 
         float startSphereRadiusSquared = centerAlongAxis * centerAlongAxis
                 + projector.baseRadius * projector.baseRadius;
+
         float endOffset = length - centerAlongAxis;
         float endSphereRadiusSquared = endOffset * endOffset + endRadius * endRadius;
+
         float sphereRadius = (float) Math.sqrt(
                 Math.max(startSphereRadiusSquared, endSphereRadiusSquared)
         );
@@ -792,11 +874,13 @@ public final class GoboDirectLightManager {
         float nearDistance = Math.abs(projectionA) > 1.0E-6f
                 ? projection.m32() / projectionA
                 : 0.05f;
+
         if (!Float.isFinite(nearDistance) || nearDistance <= 0.0001f) {
             nearDistance = 0.05f;
         }
 
         float centerDepth = -centerZ;
+
         if (centerDepth + sphereRadius < nearDistance) {
             return;
         }
@@ -854,16 +938,19 @@ public final class GoboDirectLightManager {
                 0,
                 tilesX - 1
         );
+
         int minTileY = clampInt(
                 (int) Math.floor(minPixelY / activeTileSize),
                 0,
                 tilesY - 1
         );
+
         int maxTileX = clampInt(
                 (int) Math.floor(maxPixelX / activeTileSize),
                 0,
                 tilesX - 1
         );
+
         int maxTileY = clampInt(
                 (int) Math.floor(maxPixelY / activeTileSize),
                 0,
@@ -872,6 +959,7 @@ public final class GoboDirectLightManager {
 
         for (int y = minTileY; y <= maxTileY; y++) {
             int rowOffset = y * tilesX;
+
             for (int x = minTileX; x <= maxTileX; x++) {
                 appendProjectorToTile(projectorIndex, rowOffset + x);
             }
@@ -909,6 +997,7 @@ public final class GoboDirectLightManager {
 
         double denominator = depthSquared - radiusSquared;
         double discriminant = radiusSquared * (lateralDistanceSquared - radiusSquared);
+
         if (denominator <= 1.0E-8 || discriminant < 0.0) {
             result[0] = 0.0f;
             result[1] = viewportSize - 1.0f;
@@ -922,19 +1011,23 @@ public final class GoboDirectLightManager {
         if (depth - sphereRadius < nearDistance) {
             double nearDelta = depth - nearDistance;
             double capSquared = radiusSquared - nearDelta * nearDelta;
+
             if (capSquared < 0.0) {
                 return false;
             }
 
             double capRadius = Math.sqrt(Math.max(0.0, capSquared));
+
             double lowerContactDepth = (lateral * lowerSlope + depth)
                     / (1.0 + lowerSlope * lowerSlope);
+
             double upperContactDepth = (lateral * upperSlope + depth)
                     / (1.0 + upperSlope * upperSlope);
 
             if (lowerContactDepth < nearDistance) {
                 lowerSlope = (lateral - capRadius) / nearDistance;
             }
+
             if (upperContactDepth < nearDistance) {
                 upperSlope = (lateral + capRadius) / nearDistance;
             }
@@ -942,6 +1035,7 @@ public final class GoboDirectLightManager {
 
         double ndcA = projectionScale * lowerSlope + projectionOffset;
         double ndcB = projectionScale * upperSlope + projectionOffset;
+
         double pixelA = (Math.min(ndcA, ndcB) * 0.5 + 0.5) * viewportSize;
         double pixelB = (Math.max(ndcA, ndcB) * 0.5 + 0.5) * viewportSize;
 
@@ -967,11 +1061,13 @@ public final class GoboDirectLightManager {
             int newCapacity = list.length <= Integer.MAX_VALUE / 2
                     ? list.length * 2
                     : Integer.MAX_VALUE;
+
             if (newCapacity <= count) {
                 throw new IllegalStateException(
                         "[TheatricalExtraLights/Gobo] Tile projector list overflow"
                 );
             }
+
             list = Arrays.copyOf(list, newCapacity);
             cpuTileLists[tileIndex] = list;
         }
@@ -990,6 +1086,7 @@ public final class GoboDirectLightManager {
         RenderSystem.assertOnRenderThread();
 
         int maxTextureSize = GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE);
+
         if (tileCount <= 0 || tileCount > maxTextureSize || DATA_COLUMNS > maxTextureSize) {
             throw new IllegalStateException(
                     "[TheatricalExtraLights/Gobo] Invalid GPU texture dimensions: "
@@ -998,6 +1095,7 @@ public final class GoboDirectLightManager {
         }
 
         long requiredProjectorFloats = (long) preparedProjectorCount * DATA_FLOATS_PER_PROJECTOR;
+
         if (projectorData.length < requiredProjectorFloats) {
             throw new IllegalArgumentException(
                     "[TheatricalExtraLights/Gobo] Projector data buffer is too small"
@@ -1013,12 +1111,16 @@ public final class GoboDirectLightManager {
         GoboTextureArray.finishUploads();
 
         int previousActive = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
+
         RenderSystem.activeTexture(GL13.GL_TEXTURE0);
+
         int previousBinding = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
 
         try (GoboPixelUnpackState unpackState = new GoboPixelUnpackState()) {
             ensureDataTexture(preparedProjectorCount);
+
             boolean tileTextureChanged = ensureTileTexture(tileCount, maxPerTile);
+
             if (tileTextureChanged || uploadedTileCounts.length != tileCount) {
                 uploadedTileCounts = new int[tileCount];
                 Arrays.fill(uploadedTileCounts, -1);
@@ -1027,6 +1129,7 @@ public final class GoboDirectLightManager {
 
             if (preparedProjectorCount > 0) {
                 int projectorFloatCount = preparedProjectorCount * DATA_FLOATS_PER_PROJECTOR;
+
                 if (projectorUploadBuffer == null
                         || projectorUploadBuffer.capacity() < projectorFloatCount) {
                     projectorUploadBuffer = BufferUtils.createFloatBuffer(projectorFloatCount);
@@ -1037,6 +1140,7 @@ public final class GoboDirectLightManager {
                 projectorUploadBuffer.flip();
 
                 bindTexture2D(dataTexture, "uploadProjectorData");
+
                 GL11.glTexSubImage2D(
                         GL11.GL_TEXTURE_2D,
                         0,
@@ -1048,6 +1152,7 @@ public final class GoboDirectLightManager {
                         GL11.GL_FLOAT,
                         projectorUploadBuffer
                 );
+
                 checkUploadError("projector data");
             }
 
@@ -1065,6 +1170,7 @@ public final class GoboDirectLightManager {
     ) {
         int floatsPerTileRow = tileTextureWidth * 4;
         long requiredFloatsLong = (long) tileCount * floatsPerTileRow;
+
         if (requiredFloatsLong > Integer.MAX_VALUE) {
             throw new IllegalStateException(
                     "[TheatricalExtraLights/Gobo] Tile upload buffer is too large: "
@@ -1073,23 +1179,28 @@ public final class GoboDirectLightManager {
         }
 
         int requiredFloats = (int) requiredFloatsLong;
+
         if (tileUploadBuffer == null || tileUploadBuffer.capacity() < requiredFloats) {
             tileUploadBuffer = BufferUtils.createFloatBuffer(requiredFloats);
         }
+
         tileUploadBuffer.clear();
 
         if (dirtyTileRows.length != tileCount) {
             dirtyTileRows = new boolean[tileCount];
         }
+
         Arrays.fill(dirtyTileRows, false);
 
         for (int tile = 0; tile < tileCount; tile++) {
             int count = tileCounts[tile];
             int[] list = tileLists[tile];
+
             boolean changed = uploadedTileCounts[tile] != count;
 
             if (!changed && count > 0) {
                 int[] uploaded = uploadedTileLists[tile];
+
                 if (uploaded == null || uploaded.length != count) {
                     changed = true;
                 } else {
@@ -1107,31 +1218,39 @@ public final class GoboDirectLightManager {
             }
 
             int base = tile * floatsPerTileRow;
+
             for (int slot = 0; slot < floatsPerTileRow; slot++) {
                 int projectorSlot = slot;
+
                 float value = projectorSlot < count
                         ? (float) list[projectorSlot]
                         : -1.0f;
+
                 tileUploadBuffer.put(base + slot, value);
             }
+
             dirtyTileRows[tile] = true;
         }
 
         bindTexture2D(tileTexture, "uploadTileIndices");
 
         int tile = 0;
+
         while (tile < tileCount) {
             while (tile < tileCount && !dirtyTileRows[tile]) {
                 tile++;
             }
+
             if (tile >= tileCount) {
                 break;
             }
 
             int start = tile;
+
             while (tile < tileCount && dirtyTileRows[tile]) {
                 tile++;
             }
+
             int end = tile;
 
             tileUploadBuffer.clear();
@@ -1149,6 +1268,7 @@ public final class GoboDirectLightManager {
                     GL11.GL_FLOAT,
                     tileUploadBuffer
             );
+
             checkUploadError("tile indices");
         }
 
@@ -1160,6 +1280,7 @@ public final class GoboDirectLightManager {
             }
 
             int count = tileCounts[i];
+
             uploadedTileCounts[i] = count;
             uploadedTileLists[i] = count > 0
                     ? Arrays.copyOf(tileLists[i], count)
@@ -1180,17 +1301,39 @@ public final class GoboDirectLightManager {
 
         if (dataTexture == 0) {
             dataTexture = GL11.glGenTextures();
+
             bindTexture2D(dataTexture, "createDataTexture");
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
+
+            GL11.glTexParameteri(
+                    GL11.GL_TEXTURE_2D,
+                    GL11.GL_TEXTURE_MIN_FILTER,
+                    GL11.GL_NEAREST
+            );
+
+            GL11.glTexParameteri(
+                    GL11.GL_TEXTURE_2D,
+                    GL11.GL_TEXTURE_MAG_FILTER,
+                    GL11.GL_NEAREST
+            );
+
+            GL11.glTexParameteri(
+                    GL11.GL_TEXTURE_2D,
+                    GL11.GL_TEXTURE_WRAP_S,
+                    GL12.GL_CLAMP_TO_EDGE
+            );
+
+            GL11.glTexParameteri(
+                    GL11.GL_TEXTURE_2D,
+                    GL11.GL_TEXTURE_WRAP_T,
+                    GL12.GL_CLAMP_TO_EDGE
+            );
         } else {
             bindTexture2D(dataTexture, "ensureDataTexture");
         }
 
         if (dataTextureHeight < required) {
             int newHeight = Math.min(nextPowerOfTwo(required), maxTextureSize);
+
             if (newHeight < required) {
                 newHeight = required;
             }
@@ -1206,6 +1349,7 @@ public final class GoboDirectLightManager {
                     GL11.GL_FLOAT,
                     (ByteBuffer) null
             );
+
             checkUploadError("resize projector data texture");
             dataTextureHeight = newHeight;
         }
@@ -1217,12 +1361,33 @@ public final class GoboDirectLightManager {
         }
 
         bindTexture2D(tileTexture, "ensureTileTexture");
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
+
+        GL11.glTexParameteri(
+                GL11.GL_TEXTURE_2D,
+                GL11.GL_TEXTURE_MIN_FILTER,
+                GL11.GL_NEAREST
+        );
+
+        GL11.glTexParameteri(
+                GL11.GL_TEXTURE_2D,
+                GL11.GL_TEXTURE_MAG_FILTER,
+                GL11.GL_NEAREST
+        );
+
+        GL11.glTexParameteri(
+                GL11.GL_TEXTURE_2D,
+                GL11.GL_TEXTURE_WRAP_S,
+                GL12.GL_CLAMP_TO_EDGE
+        );
+
+        GL11.glTexParameteri(
+                GL11.GL_TEXTURE_2D,
+                GL11.GL_TEXTURE_WRAP_T,
+                GL12.GL_CLAMP_TO_EDGE
+        );
 
         int maxTextureSize = GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE);
+
         int requiredWidth = Math.max(1, (maxPerTile + 3) / 4);
         int newWidth = Math.max(tileTextureWidth, requiredWidth);
 
@@ -1235,6 +1400,7 @@ public final class GoboDirectLightManager {
         }
 
         boolean changed = tileTextureWidth != newWidth || tileTextureHeight != tileCount;
+
         if (changed) {
             GL11.glTexImage2D(
                     GL11.GL_TEXTURE_2D,
@@ -1247,10 +1413,13 @@ public final class GoboDirectLightManager {
                     GL11.GL_FLOAT,
                     (ByteBuffer) null
             );
+
             checkUploadError("resize RGBA tile index texture");
+
             tileTextureWidth = newWidth;
             tileTextureHeight = tileCount;
         }
+
         return changed;
     }
 
@@ -1261,6 +1430,7 @@ public final class GoboDirectLightManager {
 
         int actualBinding = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
         int error = GL11.glGetError();
+
         if (actualBinding != texture || error != GL11.GL_NO_ERROR) {
             throw new IllegalStateException(
                     "[TheatricalExtraLights/Gobo] Texture binding failed during "
@@ -1275,6 +1445,7 @@ public final class GoboDirectLightManager {
 
     private static void checkUploadError(String operation) {
         int error = GL11.glGetError();
+
         if (error != GL11.GL_NO_ERROR) {
             throw new IllegalStateException(
                     "[TheatricalExtraLights/Gobo] OpenGL error during "
@@ -1289,9 +1460,11 @@ public final class GoboDirectLightManager {
         }
 
         int highest = Integer.highestOneBit(value - 1);
+
         if (highest >= (1 << 30)) {
             return value;
         }
+
         return highest << 1;
     }
 
@@ -1320,6 +1493,7 @@ public final class GoboDirectLightManager {
         if (!Float.isFinite(value)) {
             return min;
         }
+
         return Math.max(min, Math.min(max, value));
     }
 

@@ -1,3 +1,4 @@
+
 package com.github.dumann089.theatricalextralights.util;
 
 import com.github.dumann089.theatricalextralights.blockentities.ExtraLightsLightBlockEntity;
@@ -12,19 +13,11 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-/**
- * Applies user-configurable mount offsets before fixture facing / pan / tilt transforms.
- */
 public final class FixtureMountTransform {
 
     public static final float MAX_OFFSET = 2.5f;
     public static final float MAX_ANGLE = 180f;
 
-    /**
-     * CSC truss chords sit lower than Theatrical's truss centre. The fixture transform was
-     * authored against Theatrical trusses, so on CSC the body ended up a little too high; drop it
-     * by a quarter block while keeping it centred on its own block.
-     */
     public static final float CSC_MOUNT_DROP = 0.25f;
 
     private FixtureMountTransform() {
@@ -47,21 +40,28 @@ public final class FixtureMountTransform {
             float offsetX = mountable.getMountOffsetX();
             float offsetY = mountable.getMountOffsetY();
             float offsetZ = mountable.getMountOffsetZ();
+
             float yaw = mountable.getMountYaw();
             float pitch = mountable.getMountPitch();
             float roll = mountable.getMountRoll();
 
+            // Move the fixture to its configured offset first.
             poseStack.translate(0.5F, 0.5F, 0.5F);
+            poseStack.translate(offsetX, offsetY, offsetZ);
+
+            // Rotate around the fixture's displaced center.
             if (yaw != 0.0F) {
                 poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
             }
+
             if (pitch != 0.0F) {
                 poseStack.mulPose(Axis.XP.rotationDegrees(pitch));
             }
+
             if (roll != 0.0F) {
                 poseStack.mulPose(Axis.ZP.rotationDegrees(roll));
             }
-            poseStack.translate(offsetX, offsetY, offsetZ);
+
             poseStack.translate(-0.5F, -0.5F, -0.5F);
         }
 
@@ -76,55 +76,102 @@ public final class FixtureMountTransform {
                 .orElse(false);
     }
 
-    /** World-space point after the same mount transform used for rendering. */
-    public static Vec3 transformWorldPoint(ExtraLightsLightBlockEntity mountable, BlockPos pos, Vec3 worldPoint) {
+    /**
+     * World-space point after the same mount transform used for rendering.
+     */
+    public static Vec3 transformWorldPoint(
+            ExtraLightsLightBlockEntity mountable,
+            BlockPos pos,
+            Vec3 worldPoint
+    ) {
         if (!mountable.hasMountTransform()) {
             return worldPoint;
         }
-        Matrix4f m = buildMatrix(mountable);
-        Vector4f v = m.transform(new Vector4f(
+
+        Matrix4f matrix = buildMatrix(mountable);
+
+        Vector4f vector = matrix.transform(new Vector4f(
                 (float) (worldPoint.x - pos.getX()),
                 (float) (worldPoint.y - pos.getY()),
                 (float) (worldPoint.z - pos.getZ()),
                 1.0f
         ));
-        return new Vec3(pos.getX() + v.x, pos.getY() + v.y, pos.getZ() + v.z);
+
+        return new Vec3(
+                pos.getX() + vector.x,
+                pos.getY() + vector.y,
+                pos.getZ() + vector.z
+        );
     }
 
-    /** Direction after mount rotation (offsets ignored). */
-    public static Vector3f transformDirection(ExtraLightsLightBlockEntity mountable, Vector3f direction) {
+    /**
+     * Direction after mount rotation (offsets ignored).
+     */
+    public static Vector3f transformDirection(
+            ExtraLightsLightBlockEntity mountable,
+            Vector3f direction
+    ) {
         if (!mountable.hasMountTransform()) {
             return direction;
         }
-        Matrix4f m = buildMatrix(mountable);
-        Vector4f v = m.transform(new Vector4f(direction.x, direction.y, direction.z, 0.0f));
-        Vector3f out = new Vector3f(v.x, v.y, v.z);
-        if (out.lengthSquared() > 1.0e-8f) {
-            out.normalize();
+
+        Matrix4f matrix = buildMatrix(mountable);
+
+        Vector4f vector = matrix.transform(new Vector4f(
+                direction.x,
+                direction.y,
+                direction.z,
+                0.0f
+        ));
+
+        Vector3f result = new Vector3f(
+                vector.x,
+                vector.y,
+                vector.z
+        );
+
+        if (result.lengthSquared() > 1.0e-8f) {
+            result.normalize();
         }
-        return out;
+
+        return result;
     }
 
     private static Matrix4f buildMatrix(ExtraLightsLightBlockEntity mountable) {
-        Matrix4f m = new Matrix4f().identity();
-        m.translate(0.5f, 0.5f, 0.5f);
+        Matrix4f matrix = new Matrix4f().identity();
+
+        // First move the pivot to the configured offset position.
+        matrix.translate(0.5f, 0.5f, 0.5f);
+
+        matrix.translate(
+                mountable.getMountOffsetX(),
+                mountable.getMountOffsetY(),
+                mountable.getMountOffsetZ()
+        );
+
+        // Apply rotation around the displaced fixture center.
         float yaw = mountable.getMountYaw();
         float pitch = mountable.getMountPitch();
         float roll = mountable.getMountRoll();
+
         if (yaw != 0.0F) {
-            m.rotateY((float) Math.toRadians(yaw));
+            matrix.rotateY((float) Math.toRadians(yaw));
         }
+
         if (pitch != 0.0F) {
-            m.rotateX((float) Math.toRadians(pitch));
+            matrix.rotateX((float) Math.toRadians(pitch));
         }
+
         if (roll != 0.0F) {
-            m.rotateZ((float) Math.toRadians(roll));
+            matrix.rotateZ((float) Math.toRadians(roll));
         }
-        m.translate(mountable.getMountOffsetX(), mountable.getMountOffsetY(), mountable.getMountOffsetZ());
-        m.translate(-0.5f, -0.5f, -0.5f);
+
+        matrix.translate(-0.5f, -0.5f, -0.5f);
+
         if (isOnCscTruss(mountable)) {
-            m.translate(0.0f, -CSC_MOUNT_DROP, 0.0f);
+            matrix.translate(0.0f, -CSC_MOUNT_DROP, 0.0f);
         }
-        return m;
+
+        return matrix;
     }
 }

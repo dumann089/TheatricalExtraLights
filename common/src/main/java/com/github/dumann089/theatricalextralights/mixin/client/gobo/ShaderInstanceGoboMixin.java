@@ -1,7 +1,9 @@
 package com.github.dumann089.theatricalextralights.mixin.client.gobo;
 
+import com.github.dumann089.theatricalextralights.client.gobo.GoboBBSFSShaderResourceProvider;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboDirectLightManager;
 import com.github.dumann089.theatricalextralights.client.gobo.GoboShaderResourceProvider;
+import com.github.dumann089.theatricalextralights.client.gobo.ShimmerBBSFSCompat;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,20 +25,26 @@ public abstract class ShaderInstanceGoboMixin {
             ResourceProvider provider
     ) {
         if (provider == null
-                || provider instanceof GoboShaderResourceProvider) {
+                || provider instanceof GoboShaderResourceProvider
+                || provider instanceof GoboBBSFSShaderResourceProvider) {
             return provider;
         }
 
-        return new GoboShaderResourceProvider(provider);
+        ResourceProvider goboProvider =
+                new GoboShaderResourceProvider(provider);
+
+        if (GoboBBSFSShaderResourceProvider.isBbsFsFactory(provider)) {
+            return new GoboBBSFSShaderResourceProvider(goboProvider);
+        }
+
+        return goboProvider;
     }
 
     @Inject(
             method = "apply",
             at = @At("HEAD")
     )
-    private void extralights$applyGoboLighting(
-            CallbackInfo ci
-    ) {
+    private void extralights$applyGoboLighting(CallbackInfo ci) {
         GoboDirectLightManager.apply(
                 (ShaderInstance) (Object) this
         );
@@ -46,11 +54,11 @@ public abstract class ShaderInstanceGoboMixin {
             method = "apply",
             at = @At("TAIL")
     )
-    private void extralights$bindGoboSamplers(
-            CallbackInfo ci
-    ) {
-        GoboDirectLightManager.bindSamplers(
-                (ShaderInstance) (Object) this
-        );
+    private void extralights$bindExternalLighting(CallbackInfo ci) {
+        ShaderInstance shader = (ShaderInstance) (Object) this;
+
+        GoboDirectLightManager.bindSamplers(shader);
+
+        ShimmerBBSFSCompat.bind(shader);
     }
 }

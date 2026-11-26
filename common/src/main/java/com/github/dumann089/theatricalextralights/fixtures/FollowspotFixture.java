@@ -102,6 +102,6 @@ public class FollowspotFixture extends Fixture {
 
     @Override
     public double getLightRadius() {
-        return 6.5;
+        return 0.1;
     }
 }

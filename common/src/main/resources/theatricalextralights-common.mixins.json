@@ -20,7 +20,9 @@
     "client.gobo.sodium.SodiumShaderLoaderMixin",
     "client.gobo.sodium.SodiumGlProgramMixin",
     "client.gobo.embeddium.EmbeddiumShaderLoaderMixin",
-    "client.gobo.embeddium.EmbeddiumGlProgramMixin"
+    "client.gobo.embeddium.EmbeddiumGlProgramMixin",
+    "client.ExtraLightsFixtureRendererMixin",
+    "client.PoseStackFixtureAngleMixin"
   ],
   "mixins": [
     "compat.BlockEntityTheatricalDmxExtendedMixin"

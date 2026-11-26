@@ -551,25 +551,37 @@ public final class GoboShaderResourceProvider implements ResourceProvider {
                 float radialCore2 = radialCore * radialCore;
                 float opticalHotspot = radialCore2 * radialCore2;
                 float beamProfile = mix(0.78, 1.12, radialCore) + opticalHotspot * 0.13;
+
+                float angularSpread = clamp(p1.w * 2.0, 0.0, 1.0);
+                float fadeStartRatio = mix(0.90, 0.30, angularSpread);
+
                 float distanceFade = 1.0 - smoothstep(
-                        maxDistance * 0.30, maxDistance, forwardDistance
+                        maxDistance * fadeStartRatio,
+                        maxDistance,
+                        forwardDistance
                 );
+
                 float physicalFalloff = 1.0 / (
-                        1.0 + forwardDistance * forwardDistance * 0.0015
+                        1.0 + forwardDistance * forwardDistance * 0.00015
                 );
-                float finalFactor = clamp(
-                        goboAlpha * edgeFade * intensity * GoboBrightness
-                        * vertexAlpha * distanceFade * physicalFalloff * angleAttenuation,
+
+                float spreadRadius = forwardDistance * max(p1.w, 0.0);
+                float spreadFalloff = 1.0 / (
+                        1.0 + spreadRadius * spreadRadius * 0.00075
+                );
+
+                float illumination = clamp(
+                        goboAlpha * edgeFade * distanceFade
+                        * physicalFalloff * spreadFalloff
+                        * angleAttenuation * beamProfile * intensity
+                        * GoboBrightness * vertexAlpha,
                         0.0,
                         1.0
                 );
-                if (finalFactor <= 0.001) {
-                    return vec3(0.0);
-                }
 
                 vec3 effectiveAlbedo = max(albedo, vec3(0.012));
                 vec3 lightSpectrum = max(p4.rgb, vec3(0.0)) * max(goboColor, vec3(0.0));
-                return effectiveAlbedo * lightSpectrum * beamProfile * 1.85 * finalFactor;
+                return effectiveAlbedo * lightSpectrum * illumination * 1.85;
             }
 
             vec3 goboApplyTileLighting(

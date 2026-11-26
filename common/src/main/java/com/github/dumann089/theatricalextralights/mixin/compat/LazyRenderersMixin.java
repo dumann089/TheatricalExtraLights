@@ -1,5 +1,6 @@
 package com.github.dumann089.theatricalextralights.mixin.compat;
 
+import com.github.dumann089.theatricalextralights.client.render.FixtureRenderAngleContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.imabad.theatrical.client.LazyRenderers;
 import net.minecraft.client.Camera;
@@ -16,40 +17,105 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Substitui o {@code doRender} original por uma cópia idêntica, SEM o {@code endBatch()} no fim.
- * O flush de verdade agora acontece em {@link TheatricalClientMixin}, depois do composite do
- * bloom — sem isso o miolo branco é desenhado antes do bloom e fica coberto por ele.
- *
- * <p>(Não usamos @Redirect no {@code endBatch} porque o nome desse método é do Minecraft e
- * mudaria entre dev/produção — assim a string de injeção só cita nomes do próprio Theatrical.)
- */
 @Mixin(targets = "dev.imabad.theatrical.client.LazyRenderers", remap = false)
 public class LazyRenderersMixin {
 
-    @Shadow @Final private static List<LazyRenderers.LazyRenderer> renderers;
+    @Shadow
+    @Final
+    private static List<LazyRenderers.LazyRenderer> renderers;
 
-    @Inject(method = "doRender", at = @At("HEAD"), cancellable = true)
-    private static void extralights$doRenderWithoutEndBatch(Camera camera, PoseStack poseStack,
-                                                            MultiBufferSource.BufferSource renderer,
-                                                            float partialTick, CallbackInfo ci) {
+    @Inject(
+            method = "addLazyRender",
+            at = @At("HEAD"),
+            require = 0
+    )
+    private static void extralights$captureFixture(
+            LazyRenderers.LazyRenderer renderer,
+            CallbackInfo ci
+    ) {
+        FixtureRenderAngleContext.captureLazyRenderer(renderer);
+    }
+
+    @Inject(
+            method = "doRender",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private static void extralights$doRenderWithoutEndBatch(
+            Camera camera,
+            PoseStack poseStack,
+            MultiBufferSource.BufferSource bufferSource,
+            float partialTick,
+            CallbackInfo ci
+    ) {
         ci.cancel();
+
         if (renderers.isEmpty()) {
             return;
         }
+
         if (renderers.size() == 1) {
-            renderers.get(0).render(renderer, poseStack, camera, partialTick);
+            renderWithContext(
+                    renderers.get(0),
+                    bufferSource,
+                    poseStack,
+                    camera,
+                    partialTick
+            );
         } else {
-            List<Tuple<LazyRenderers.LazyRenderer, Double>> distanced = new ArrayList<>();
-            for (LazyRenderers.LazyRenderer lazyRenderer : renderers) {
-                distanced.add(new Tuple<>(lazyRenderer, camera.getPosition().distanceToSqr(lazyRenderer.getPos(partialTick))));
+            List<Tuple<LazyRenderers.LazyRenderer, Double>> distanced =
+                    new ArrayList<>();
+
+            for (LazyRenderers.LazyRenderer renderer : renderers) {
+                distanced.add(new Tuple<>(
+                        renderer,
+                        camera.getPosition().distanceToSqr(
+                                renderer.getPos(partialTick)
+                        )
+                ));
             }
-            distanced.sort(Comparator.comparingDouble(t -> -t.getB()));
+
+            distanced.sort(
+                    Comparator.comparingDouble(entry -> -entry.getB())
+            );
+
             for (Tuple<LazyRenderers.LazyRenderer, Double> entry : distanced) {
-                entry.getA().render(renderer, poseStack, camera, partialTick);
+                renderWithContext(
+                        entry.getA(),
+                        bufferSource,
+                        poseStack,
+                        camera,
+                        partialTick
+                );
             }
         }
-        // (o renderer.endBatch() original fica de fora de propósito)
+
         renderers.clear();
+    }
+
+    private static void renderWithContext(
+            LazyRenderers.LazyRenderer renderer,
+            MultiBufferSource.BufferSource bufferSource,
+            PoseStack poseStack,
+            Camera camera,
+            float partialTick
+    ) {
+        boolean pushed = FixtureRenderAngleContext.pushLazyRenderer(
+                renderer,
+                partialTick
+        );
+
+        try {
+            renderer.render(
+                    bufferSource,
+                    poseStack,
+                    camera,
+                    partialTick
+            );
+        } finally {
+            if (pushed) {
+                FixtureRenderAngleContext.pop();
+            }
+        }
     }
 }
