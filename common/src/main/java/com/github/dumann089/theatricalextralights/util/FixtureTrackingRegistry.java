@@ -6,11 +6,13 @@ import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class FixtureTrackingRegistry {
@@ -41,6 +43,28 @@ public final class FixtureTrackingRegistry {
         }
     }
 
+    /**
+     * Guarda la identidad de BBS FS asociada al fixture.
+     * Si el objetivo no es un Actor de BBS, elimina cualquier identidad anterior.
+     */
+    public static void setActorTarget(
+            ServerLevel level,
+            BlockPos pos,
+            Entity target
+    ) {
+        BBSActorTracking.Identity identity =
+                BBSActorTracking.getIdentity(target);
+
+        FixtureTrackingActorData.get(level).set(pos, identity);
+    }
+
+    public static void clearActorTarget(
+            ServerLevel level,
+            BlockPos pos
+    ) {
+        FixtureTrackingActorData.get(level).remove(pos);
+    }
+
     private static void onServerLevelTick(ServerLevel level) {
         Set<BlockPos> positions = TRACKING.get(level.dimension());
 
@@ -55,16 +79,85 @@ public final class FixtureTrackingRegistry {
 
             BlockEntity blockEntity = level.getBlockEntity(pos);
 
-            if (!(blockEntity instanceof ExtraLightsLightBlockEntity fixture)
-                    || fixture.getTrackedEntity() == null) {
+            if (!(blockEntity instanceof ExtraLightsLightBlockEntity fixture)) {
+                positions.remove(pos);
+                clearActorTarget(level, pos);
+                continue;
+            }
+
+            if (!fixture.supportsTracking()) {
+                fixture.setTrackedEntity(null);
+                clearActorTarget(level, pos);
                 positions.remove(pos);
                 continue;
+            }
+
+            UUID targetId = fixture.getTrackedEntity();
+
+            if (targetId == null) {
+                positions.remove(pos);
+                clearActorTarget(level, pos);
+                continue;
+            }
+
+            Entity target = level.getEntity(targetId);
+
+            if (target == null || target.isRemoved() || !target.isAlive()) {
+                BBSActorTracking.Identity identity =
+                        FixtureTrackingActorData.get(level).get(pos);
+
+                if (identity == null) {
+                    continue;
+                }
+
+                Entity replacement =
+                        BBSActorTracking.findActor(level, identity);
+
+                if (replacement == null
+                        || replacement.isRemoved()
+                        || !replacement.isAlive()) {
+                    continue;
+                }
+
+                /*
+                 * setTrackedEntity() inicializa sus ángulos desde pan/tilt.
+                 * Guardamos los valores float anteriores y los restauramos
+                 * para que el cambio de UUID no provoque un salto angular.
+                 */
+                float previousPan = fixture.hasTrackAngles()
+                        ? fixture.getTrackPan()
+                        : fixture.getPan();
+
+                float previousTilt = fixture.hasTrackAngles()
+                        ? fixture.getTrackTilt()
+                        : fixture.getTilt();
+
+                fixture.setTrackedEntity(replacement.getUUID());
+
+                fixture.applyTrackedAngles(
+                        previousPan,
+                        previousTilt,
+                        true
+                );
+
+                target = replacement;
+            } else {
+                /*
+                 * También aprende la identidad si el fixture ya estaba
+                 * siguiendo un Actor antes de instalar esta integración.
+                 */
+                BBSActorTracking.Identity identity =
+                        BBSActorTracking.getIdentity(target);
+
+                if (identity != null) {
+                    FixtureTrackingActorData.get(level).set(pos, identity);
+                }
             }
 
             FixtureTrackingHelper.tick(
                     fixture,
                     level,
-                    fixture.getTrackedEntity()
+                    target.getUUID()
             );
         }
     }
