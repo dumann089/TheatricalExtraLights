@@ -40,5 +40,20 @@ public class ModNetworkHandler {
                 SetBigScrollerGelConfigPacket::handle
         );
         CHANNEL.register(SetLaserProjectorSettingsPacket.class, SetLaserProjectorSettingsPacket::encode, SetLaserProjectorSettingsPacket::decode, SetLaserProjectorSettingsPacket::handle);
+
+        // --- Cameras / broadcast (no fim: o ID do packet depende da ordem de registro) ---
+        CHANNEL.register(BroadcastCameraAimPacket.class, BroadcastCameraAimPacket::encode, BroadcastCameraAimPacket::decode, BroadcastCameraAimPacket::handle);
+        CHANNEL.register(BroadcastCameraExitPacket.class, BroadcastCameraExitPacket::encode, BroadcastCameraExitPacket::decode, BroadcastCameraExitPacket::handle);
+        CHANNEL.register(BroadcastCameraHeightPacket.class, BroadcastCameraHeightPacket::encode, BroadcastCameraHeightPacket::decode, BroadcastCameraHeightPacket::handle);
+        CHANNEL.register(JibCameraBoomPacket.class, JibCameraBoomPacket::encode, JibCameraBoomPacket::decode, JibCameraBoomPacket::handle);
+        CHANNEL.register(SyncRequestCamerasPacket.class, SyncRequestCamerasPacket::encode, SyncRequestCamerasPacket::decode, SyncRequestCamerasPacket::handle);
+        CHANNEL.register(SyncCameraListPacket.class, SyncCameraListPacket::encode, SyncCameraListPacket::decode, SyncCameraListPacket::handle);
+        CHANNEL.register(VideoSwitcherConfigPacket.class, VideoSwitcherConfigPacket::encode, VideoSwitcherConfigPacket::decode, VideoSwitcherConfigPacket::handle);
+        CHANNEL.register(VideoSwitcherProgramPacket.class, VideoSwitcherProgramPacket::encode, VideoSwitcherProgramPacket::decode, VideoSwitcherProgramPacket::handle);
+        CHANNEL.register(VideoSwitcherSequencePacket.class, VideoSwitcherSequencePacket::encode, VideoSwitcherSequencePacket::decode, VideoSwitcherSequencePacket::handle);
+        CHANNEL.register(JumbotronConfigPacket.class, JumbotronConfigPacket::encode, JumbotronConfigPacket::decode, JumbotronConfigPacket::handle);
+        CHANNEL.register(BroadcastCameraSettingsPacket.class, BroadcastCameraSettingsPacket::encode, BroadcastCameraSettingsPacket::decode, BroadcastCameraSettingsPacket::handle);
+        CHANNEL.register(CameraSyncControlPacket.class, CameraSyncControlPacket::encode, CameraSyncControlPacket::decode, CameraSyncControlPacket::handle);
+        CHANNEL.register(CameraPlaybackPacket.class, CameraPlaybackPacket::encode, CameraPlaybackPacket::decode, CameraPlaybackPacket::handle);
     }
 }

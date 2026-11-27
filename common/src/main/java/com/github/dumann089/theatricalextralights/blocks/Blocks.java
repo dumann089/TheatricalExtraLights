@@ -245,6 +245,8 @@ public class Blocks {
     public static final RegistrySupplier<Block> TRUSS_CORNER_T_BLOCK = BLOCKS.register("truss_corner_t", TrussCornerTBlock::new);
     public static final RegistrySupplier<Block> FOLLOWSPOT_CONSOLE_BLOCK = BLOCKS.register("followspot_console", FollowspotConsoleBlock::new);
     public static final RegistrySupplier<Block> LED_FACADE = BLOCKS.register("led_facade", LedFacadeBlock::new);
+    public static final RegistrySupplier<Block> VIDEO_SWITCHER_BLOCK = BLOCKS.register("video_switcher", VideoSwitcherBlock::new);
+    public static final RegistrySupplier<Block> JUMBOTRON_BLOCK = BLOCKS.register("jumbotron", JumbotronBlock::new);
 
 
 

@@ -105,6 +105,11 @@ public class TheatricalExtraLightsConfig {
 
     private Integer ledFacadeMaxUniverses = 64;
 
+    /** Jumbotron: liga/desliga a imagem ao vivo (desligado = telas pretas, custo zero). */
+    private Boolean jumbotronEnabled = true;
+    /** Jumbotron: teto de quadros por segundo da imagem (o jogo reduz sozinho se o FPS cair). */
+    private Integer jumbotronMaxFps = 30;
+
     private Boolean etherDreamEnabled = true;
     private String etherDreamBindAddress = "0.0.0.0";
     private Integer etherDreamTcpPort = 7765;
@@ -494,6 +499,12 @@ public class TheatricalExtraLightsConfig {
     public static float getColorTransitionSpeed() {
         float v = INSTANCE.colorTransitionSpeed != null ? INSTANCE.colorTransitionSpeed : 0.35f;
         return Math.max(0.01f, Math.min(1.0f, v));
+    }
+
+    public static boolean isJumbotronEnabled() { return INSTANCE.jumbotronEnabled == null || INSTANCE.jumbotronEnabled; }
+    public static int getJumbotronMaxFps() {
+        int v = INSTANCE.jumbotronMaxFps != null ? INSTANCE.jumbotronMaxFps : 30;
+        return Math.max(1, Math.min(60, v));
     }
 
     public static boolean isEtherDreamEnabled() { return INSTANCE.etherDreamEnabled == null || INSTANCE.etherDreamEnabled; }

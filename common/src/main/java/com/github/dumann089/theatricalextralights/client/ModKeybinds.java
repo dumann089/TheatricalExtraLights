@@ -16,6 +16,21 @@ public class ModKeybinds {
             "category.theatricalextralights"
     );
 
+    /** Zoom da câmera de broadcast pelo teclado (também dá zoom pela roda do mouse). Configuráveis em Controles. */
+    public static final KeyMapping BROADCAST_ZOOM_IN = new KeyMapping(
+            "key.theatricalextralights.broadcast_zoom_in",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_PERIOD,
+            "category.theatricalextralights"
+    );
+
+    public static final KeyMapping BROADCAST_ZOOM_OUT = new KeyMapping(
+            "key.theatricalextralights.broadcast_zoom_out",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_COMMA,
+            "category.theatricalextralights"
+    );
+
     private static boolean registered;
 
     /**
@@ -29,6 +44,8 @@ public class ModKeybinds {
         }
         registered = true;
         KeyMappingRegistry.register(CONFIG_MENU);
+        KeyMappingRegistry.register(BROADCAST_ZOOM_IN);
+        KeyMappingRegistry.register(BROADCAST_ZOOM_OUT);
         ClientTickEvent.CLIENT_POST.register(minecraft -> {
             while (CONFIG_MENU.consumeClick()) {
                 minecraft.setScreen(new ExtraLightsSettingsScreen(minecraft.screen));

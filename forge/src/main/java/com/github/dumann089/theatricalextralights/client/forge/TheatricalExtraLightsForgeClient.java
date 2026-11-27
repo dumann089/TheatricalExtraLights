@@ -10,6 +10,9 @@ import com.github.dumann089.theatricalextralights.client.render.laser.LaserRayma
 import com.github.dumann089.theatricalextralights.config.TheatricalExtraLightsConfig;
 import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.fml.ModLoadingContext;
+import com.github.dumann089.theatricalextralights.client.entities.BroadcastCameraEntityRenderer;
+import com.github.dumann089.theatricalextralights.client.entities.JibCameraEntityRenderer;
+import com.github.dumann089.theatricalextralights.client.entities.ShoulderCameraEntityRenderer;
 import com.github.dumann089.theatricalextralights.client.entities.FireworkRocketRenderer;
 import com.github.dumann089.theatricalextralights.entities.ModEntities;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -76,6 +79,11 @@ public final class TheatricalExtraLightsForgeClient {
 
     private static void registerEntityRenderers(final EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.FIREWORK_ROCKET.get(), FireworkRocketRenderer::new);
+        // Tem que ser aqui: no Forge este evento dispara antes do FMLClientSetupEvent (onde roda
+        // TheatricalExtraLightsClient.init()), então o registro do Architectury chegaria tarde.
+        event.registerEntityRenderer(ModEntities.BROADCAST_CAMERA.get(), BroadcastCameraEntityRenderer::new);
+        event.registerEntityRenderer(ModEntities.JIB_CAMERA.get(), JibCameraEntityRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHOULDER_CAMERA.get(), ShoulderCameraEntityRenderer::new);
     }
 
     private static void clientSetup(final FMLClientSetupEvent event) {

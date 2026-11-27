@@ -1,0 +1,36 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "theatricalextralights:item/shoulder_camera"
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "scale": [
+        0.001,
+        0.001,
+        0.001
+      ]
+    },
+    "thirdperson_lefthand": {
+      "scale": [
+        0.001,
+        0.001,
+        0.001
+      ]
+    },
+    "firstperson_righthand": {
+      "scale": [
+        0.001,
+        0.001,
+        0.001
+      ]
+    },
+    "firstperson_lefthand": {
+      "scale": [
+        0.001,
+        0.001,
+        0.001
+      ]
+    }
+  }
+}

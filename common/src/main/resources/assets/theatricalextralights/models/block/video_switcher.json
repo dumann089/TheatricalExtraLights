@@ -1,0 +1,138 @@
+{
+  "textures": {
+    "particle": "theatricalextralights:block/video_switcher_side",
+    "top": "theatricalextralights:block/video_switcher_top",
+    "side": "theatricalextralights:block/video_switcher_side",
+    "front": "theatricalextralights:block/video_switcher_front",
+    "screen": "theatricalextralights:block/video_switcher_screen"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        8,
+        16
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#top"
+        },
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            8
+          ],
+          "texture": "#front"
+        },
+        "south": {
+          "uv": [
+            0,
+            8,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            0,
+            8,
+            16,
+            16
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            0,
+            8,
+            16,
+            16
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        8,
+        9
+      ],
+      "to": [
+        16,
+        14,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            7
+          ],
+          "texture": "#side"
+        },
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ],
+          "texture": "#screen"
+        },
+        "south": {
+          "uv": [
+            0,
+            8,
+            16,
+            14
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            9,
+            8,
+            16,
+            14
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            0,
+            8,
+            7,
+            14
+          ],
+          "texture": "#side"
+        }
+      }
+    }
+  ]
+}

@@ -28,6 +28,9 @@ public class TheatricalExtraLightsClient {
         ModKeybinds.register();
         ModNetworking.register();
 
+        BlockEntityRendererRegistry.register(BlockEntities.JUMBOTRON.get(),
+                com.github.dumann089.theatricalextralights.client.jumbotron.JumbotronRenderer::new);
+
 
         BlockEntityRendererRegistry.register(BlockEntities.MOVING_SCAN.get(), MovingScanRenderer::new);
         BlockEntityRendererRegistry.register(BlockEntities.MOVING_VL2C.get(), MovingVL2CRenderer::new);
@@ -171,6 +174,10 @@ public class TheatricalExtraLightsClient {
 
         EntityRendererRegistry.register(ModEntities.FIREWORK_ROCKET, FireworkRocketRenderer::new);
         com.github.dumann089.theatricalextralights.client.followspot.FollowspotCameraClient.init();
+        com.github.dumann089.theatricalextralights.client.broadcast.BroadcastCameraClient.init();
+        EntityRendererRegistry.register(ModEntities.BROADCAST_CAMERA, com.github.dumann089.theatricalextralights.client.entities.BroadcastCameraEntityRenderer::new);
+        EntityRendererRegistry.register(ModEntities.SHOULDER_CAMERA, com.github.dumann089.theatricalextralights.client.entities.ShoulderCameraEntityRenderer::new);
+        EntityRendererRegistry.register(ModEntities.JIB_CAMERA, com.github.dumann089.theatricalextralights.client.entities.JibCameraEntityRenderer::new);
 
         // Forge FMLClientSetup runs after CLIENT_STARTED, so waiting on that event
         // never starts the DAC. Start now, then keep the lifecycle hooks as backup.

@@ -3,6 +3,7 @@ package com.github.dumann089.theatricalextralights.items;
 import com.github.dumann089.theatricalextralights.TheatricalExtraLights;
 import com.github.dumann089.theatricalextralights.TheatricalExtraLightsRegistry;
 import com.github.dumann089.theatricalextralights.blocks.Blocks;
+import com.github.dumann089.theatricalextralights.entities.ModEntities;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
@@ -861,6 +862,35 @@ public class Items {
             "dwt_panel",
             () -> new BlockItem(Blocks.DWT_PANEL_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.MISC_TAB))
     );
+
+    // --- Cameras / broadcast ---
+    public static final RegistrySupplier<Item> BROADCAST_CAMERA = ITEMS.register(
+            "broadcast_camera",
+            () -> new BroadcastCameraItem(new Item.Properties().stacksTo(16).arch$tab(TheatricalExtraLights.TAB))
+    );
+    public static final RegistrySupplier<Item> JIB_CAMERA = ITEMS.register(
+            "jib_camera",
+            () -> new BroadcastCameraItem(new Item.Properties().stacksTo(16).arch$tab(TheatricalExtraLights.TAB),
+                    ModEntities.JIB_CAMERA)
+    );
+    public static final RegistrySupplier<Item> SHOULDER_CAMERA = ITEMS.register(
+            "shoulder_camera",
+            () -> new ShoulderCameraItem(new Item.Properties().stacksTo(1).arch$tab(TheatricalExtraLights.TAB))
+    );
+    public static final RegistrySupplier<Item> ANIMATION_SYNCHRONIZER = ITEMS.register(
+            "animation_synchronizer",
+            () -> new AnimationSynchronizerItem(new Item.Properties().stacksTo(1).arch$tab(TheatricalExtraLights.TAB))
+    );
+    public static final RegistrySupplier<Item> VIDEO_SWITCHER = ITEMS.register(
+            "video_switcher",
+            () -> new BlockItem(Blocks.VIDEO_SWITCHER_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
+
+    public static final RegistrySupplier<Item> JUMBOTRON = ITEMS.register(
+            "jumbotron",
+            () -> new BlockItem(Blocks.JUMBOTRON_BLOCK.get(), new Item.Properties().arch$tab(TheatricalExtraLights.TAB))
+    );
+
     public static void init(){
         ITEMS.register();
     }

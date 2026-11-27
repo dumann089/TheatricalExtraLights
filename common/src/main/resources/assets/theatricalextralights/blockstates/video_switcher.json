@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "theatricalextralights:block/video_switcher"
+    },
+    "facing=east": {
+      "model": "theatricalextralights:block/video_switcher",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "theatricalextralights:block/video_switcher",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "theatricalextralights:block/video_switcher",
+      "y": 270
+    }
+  }
+}

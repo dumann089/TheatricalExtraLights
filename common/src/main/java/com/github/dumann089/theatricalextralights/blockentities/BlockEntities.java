@@ -246,6 +246,12 @@ public class BlockEntities {
     public static final RegistrySupplier<BlockEntityType<LedFacadeBlockEntity>> LED_FACADE =
             BLOCK_ENTITIES.register("led_facade",
                     () -> BlockEntityType.Builder.of(LedFacadeBlockEntity::new, Blocks.LED_FACADE.get()).build(null));
+    public static final RegistrySupplier<BlockEntityType<VideoSwitcherBlockEntity>> VIDEO_SWITCHER =
+            BLOCK_ENTITIES.register("video_switcher",
+                    () -> BlockEntityType.Builder.of(VideoSwitcherBlockEntity::new, Blocks.VIDEO_SWITCHER_BLOCK.get()).build(null));
+    public static final RegistrySupplier<BlockEntityType<JumbotronBlockEntity>> JUMBOTRON =
+            BLOCK_ENTITIES.register("jumbotron",
+                    () -> BlockEntityType.Builder.of(JumbotronBlockEntity::new, Blocks.JUMBOTRON_BLOCK.get()).build(null));
 
     public static void init(){
         BLOCK_ENTITIES.register();

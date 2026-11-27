@@ -19,6 +19,31 @@ public final class ModEntities {
                             .updateInterval(1)
                             .build("firework_rocket"));
 
+    public static final RegistrySupplier<EntityType<BroadcastCameraEntity>> BROADCAST_CAMERA =
+            ENTITY_TYPES.register("broadcast_camera", () ->
+                    EntityType.Builder.<BroadcastCameraEntity>of(BroadcastCameraEntity::new, MobCategory.MISC)
+                            .sized(0.9f, 1.7f)
+                            .clientTrackingRange(10)
+                            .updateInterval(1)
+                            .build("broadcast_camera"));
+
+    public static final RegistrySupplier<EntityType<JibCameraEntity>> JIB_CAMERA =
+            ENTITY_TYPES.register("jib_camera", () ->
+                    EntityType.Builder.<JibCameraEntity>of(JibCameraEntity::new, MobCategory.MISC)
+                            .sized(1.0f, 1.9f)
+                            .clientTrackingRange(16)
+                            .updateInterval(1)
+                            .build("jib_camera"));
+
+    public static final RegistrySupplier<EntityType<ShoulderCameraEntity>> SHOULDER_CAMERA =
+            ENTITY_TYPES.register("shoulder_camera", () ->
+                    EntityType.Builder.<ShoulderCameraEntity>of(ShoulderCameraEntity::new, MobCategory.MISC)
+                            .sized(0.6f, 1.8f)
+                            .clientTrackingRange(16)
+                            .updateInterval(1)
+                            .fireImmune()
+                            .build("shoulder_camera"));
+
     private ModEntities() {
     }
 

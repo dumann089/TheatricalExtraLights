@@ -39,6 +39,16 @@ public final class SceneDepthCopy {
         capturedThisFrame = false;
     }
 
+    /**
+     * Descarta a cópia de profundidade já feita. Usado depois de um passe EXTRA de mundo (imagem da câmera
+     * do jumbotron) no mesmo quadro: sem isto, o desenho principal reaproveitava a profundidade vista da
+     * câmera e os feixes/lasers eram cobertos pela silhueta da cena dela (luzes piscando).
+     */
+    public static void invalidate() {
+        capturedThisFrame = false;
+        captureFrameKey = Long.MIN_VALUE;
+    }
+
     private static long frameKey() {
         Minecraft mc = Minecraft.getInstance();
         long tick = mc.level != null ? mc.level.getGameTime() : 0L;

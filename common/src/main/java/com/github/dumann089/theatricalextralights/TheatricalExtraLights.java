@@ -68,6 +68,7 @@ public class TheatricalExtraLights {
         FixtureTrackerItem.registerEvents();
         com.github.dumann089.theatricalextralights.util.FixtureTrackingRegistry.registerEvents();
         ModNetworking.register();
+        com.github.dumann089.theatricalextralights.blockentities.VideoSwitcherBlockEntity.registerEvents();
     }
 }
 

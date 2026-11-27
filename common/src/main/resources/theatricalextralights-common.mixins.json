@@ -8,6 +8,15 @@
     "defaultRequire": 1
   },
   "client": [
+    "client.broadcast.CameraMixin",
+    "client.broadcast.EntityRenderDispatcherMixin",
+    "client.broadcast.GameRendererAccessor",
+    "client.broadcast.GameRendererFovMixin",
+    "client.broadcast.GameRendererMixin",
+    "client.broadcast.GuiMixin",
+    "client.broadcast.PlayerRendererMixin",
+    "client.broadcast.PostChainAccessor",
+    "client.broadcast.ViewAreaMixin",
     "client.shimmer.ReloadShaderManagerMixin",
     "client.sfx.SoundBufferAccessor",
     "client.sfx.SoundBufferLibraryMixin",
