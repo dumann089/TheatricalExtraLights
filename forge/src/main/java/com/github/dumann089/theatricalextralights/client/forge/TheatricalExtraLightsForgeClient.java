@@ -86,17 +86,19 @@ public final class TheatricalExtraLightsForgeClient {
         event.registerEntityRenderer(ModEntities.SHOULDER_CAMERA.get(), ShoulderCameraEntityRenderer::new);
     }
 
-    private static void clientSetup(final FMLClientSetupEvent event) {
-        // Inicializamos los renders generales a través de Architectury/común
-        TheatricalExtraLightsClient.init();
 
-        // Bouton « Configuration » dans la liste des mods de Forge.
+    private static void clientSetup(final FMLClientSetupEvent event) {
         ModLoadingContext.get().registerExtensionPoint(
                 ConfigScreenHandler.ConfigScreenFactory.class,
                 () -> new ConfigScreenHandler.ConfigScreenFactory(
                         (minecraft, parent) -> new ExtraLightsSettingsScreen(parent))
         );
+
+        event.enqueueWork(() -> {
+            TheatricalExtraLightsClient.init();
+        });
     }
+
 
     /**
      * Copie la profondeur juste apres les block entities, avant le translucide et les particules,

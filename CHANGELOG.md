@@ -1,6 +1,11 @@
 # Changelog
 
 
+## Version 1.5.5 (Unreleased) — mc 1.20.1
+- Cameras (Broadcast, shoulder and Jib Camera), Animation Synchronizer, Video Switcher and Jumbotron system
+ (see the Docs folder within the Guides folder to understand how they work)
+
+
 ## Version 1.5.4 (V3 - Unreleased) — mc 1.20.1
 - The fixture tracker now correctly saves data for the Actor from the BBS FS mod.
 - LensBloom now renders correctly in the BBS FS movie player.
